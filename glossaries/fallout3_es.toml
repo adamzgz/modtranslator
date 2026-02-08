@@ -1,0 +1,115 @@
+# Glossary Fallout 3 (Capital Wasteland) → Spanish
+# Solo términos específicos de Fallout 3.
+# Se carga junto con fallout_base_es.toml (términos compartidos FO3/FNV).
+# Terminología oficial verificada con El Refugio Wiki (fallout.fandom.com/es)
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# LOCALIZACIONES
+# ═══════════════════════════════════════════════════════════════
+"Capital Wasteland" = "Yermo Capital"
+"Megaton" = "Megaton"
+"Rivet City" = "Rivet City"
+"Tenpenny Tower" = "Torre Tenpenny"
+"The Citadel" = "La Ciudadela"
+"Underworld" = "Inframundo"
+"Galaxy News Radio" = "Radio Galaxia"
+"GNR" = "GNR"
+"Little Lamplight" = "Little Lamplight"
+"Paradise Falls" = "Paradise Falls"
+"Springvale" = "Springvale"
+"Grayditch" = "Grayditch"
+"Arefu" = "Arefu"
+"Canterbury Commons" = "Canterbury Commons"
+"Oasis" = "Oasis"
+"Raven Rock" = "Raven Rock"
+"Jefferson Memorial" = "Memorial Jefferson"
+"Museum of History" = "Museo de Historia"
+"National Mall" = "National Mall"
+"Vault 101" = "Refugio 101"
+"Vault 87" = "Refugio 87"
+"Vault 112" = "Refugio 112"
+"Vault 108" = "Refugio 108"
+"Vault 106" = "Refugio 106"
+"Vault 92" = "Refugio 92"
+
+# --- DLCs ---
+"The Pitt" = "El Pozo"
+"Point Lookout" = "Point Lookout"
+"Mothership Zeta" = "Nave Nodriza Zeta"
+"Operation: Anchorage" = "Operación: Anchorage"
+"Broken Steel" = "Acero Roto"
+"Adams Air Force Base" = "Base Aérea Adams"
+
+# ═══════════════════════════════════════════════════════════════
+# FACCIONES
+# ═══════════════════════════════════════════════════════════════
+"Talon Company" = "Compañía Talon"
+"Outcast" = "Proscrito"
+"Outcasts" = "Proscritos"
+"Regulator" = "Regulador"
+"Regulators" = "Reguladores"
+"Tunnel Snakes" = "Serpientes del Túnel"
+"Lyons' Pride" = "Orgullo de Lyons"
+"Super Mutants" = "Supermutantes"
+"Slavers" = "Esclavistas"
+"Swampfolk" = "Lugareños del pantano"
+
+# ═══════════════════════════════════════════════════════════════
+# PERSONAJES
+# ═══════════════════════════════════════════════════════════════
+"Three Dog" = "Three Dog"
+"Dad" = "Papá"
+"Dogmeat" = "Albóndiga"
+"President Eden" = "Presidente Eden"
+"Colonel Autumn" = "Coronel Autumn"
+"Moira Brown" = "Moira Brown"
+"Lucas Simms" = "Lucas Simms"
+"Amata" = "Amata"
+"Fawkes" = "Fawkes"
+"Charon" = "Caronte"
+"Star Paladin Cross" = "Estelar Paladín Cross"
+"Butch DeLoria" = "Butch DeLoria"
+"Jericho" = "Jericó"
+"Sergeant RL-3" = "Sargento RL-3"
+"Mr. Burke" = "Sr. Burke"
+"Elder Lyons" = "Anciano Lyons"
+"Sarah Lyons" = "Sarah Lyons"
+"Dr. Li" = "Dra. Li"
+"Scribe Rothchild" = "Escriba Rothchild"
+"Lone Wanderer" = "Trotamundos Solitario"
+
+# ═══════════════════════════════════════════════════════════════
+# RANGOS DE LA HERMANDAD DEL ACERO
+# ═══════════════════════════════════════════════════════════════
+"Star Paladin" = "Estelar Paladín"
+"Paladin" = "Paladín"
+"Sentinel" = "Centinela"
+"Scribe" = "Escriba"
+"Initiate" = "Iniciado"
+
+# ═══════════════════════════════════════════════════════════════
+# ITEMS Y ARMAS ÚNICAS
+# ═══════════════════════════════════════════════════════════════
+"Nuka-Cola Quantum" = "Nuka-Cola Quantum"
+"Alien Blaster" = "Bláster alienígena"
+"Lincoln's Repeater" = "Repetidor de Lincoln"
+"Rock-It Launcher" = "Lanzabasura"
+"Railway Rifle" = "Rifle de clavos"
+"Dart Gun" = "Pistola de dardos"
+"Deathclaw Gauntlet" = "Guantelete de sanguinario"
+"Wasteland Survival Guide" = "Guía de supervivencia del Yermo"
+
+# ═══════════════════════════════════════════════════════════════
+# CRIATURAS ESPECÍFICAS FO3
+# ═══════════════════════════════════════════════════════════════
+"Albino Radscorpion" = "Radescorpión albino"
+"Giant Radscorpion" = "Radescorpión gigante"
+"Mirelurk Cake" = "Pastel de mirelurk"
+"Yao Guai Meat" = "Carne de yao guai"
+"Radroach Meat" = "Carne de mutaracha"
+"Mirelurk Meat" = "Carne de mirelurk"
+"Moldy Food" = "Comida mohosa"
+"Strange Meat" = "Carne extraña"
+"Strange Meat Pie" = "Pastel de carne extraña"

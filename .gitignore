@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# mypy
+.mypy_cache/
+
+# ruff
+.ruff_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# modtranslator cache (user data, not repo)
+.modtranslator/
+
+# Claude session data
+.claude/
+
+# Internal technical notes and dev context (not for public repo)
+NOTAS_TECNICAS.md
+CLAUDE.md
+
+# Game data and translation output (not tracked)
+fallout3_backup/
+fallout3_backup_clean/
+fallout3_hybrid/
+fallout3_hybridData/
+fallout3_test/
+fallout3_translated/
+test_output/
+text_to_keys_mapping.json
+translation_strings.json
+unique_strings.json
+TRANSLATION_LOG.md

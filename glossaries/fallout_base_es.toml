@@ -1,0 +1,234 @@
+# Glossary base compartido Fallout 3 / Fallout New Vegas → Spanish
+# Terminología oficial verificada con El Refugio Wiki (fallout.fandom.com/es)
+# Solo incluye términos que Opus-MT no traduce correctamente por sí solo
+# (palabras inventadas, compuestas, nombres propios, traducciones no literales).
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# CONSUMIBLES Y QUÍMICOS
+# ═══════════════════════════════════════════════════════════════
+"Sweetroll" = "Bollo dulce"
+"Stimpak" = "Estimulante"
+"Super Stimpak" = "Superestimulante"
+"Nuka-Cola" = "Nuka-Cola"
+"Rad-X" = "Rad-X"
+"RadAway" = "RadAway"
+"Mentats" = "Mentats"
+"Buffout" = "Buffout"
+"Jet" = "Jet"
+"Ultrajet" = "Ultrajet"
+"Psycho" = "Psico"
+"Med-X" = "Med-X"
+"Stealth Boy" = "Stealth Boy"
+"Bobby Pin" = "Horquilla"
+"Holotape" = "Holodisco"
+"Blood Pack" = "Bolsa de sangre"
+"Purified Water" = "Agua purificada"
+"Dirty Water" = "Agua sucia"
+
+# --- Comida envasada (marcas del mundo Fallout) ---
+"Sugar Bombs" = "Bombas de azúcar"
+"Fancy Lads Snack Cakes" = "Pastelitos Fancy Lads"
+"Dandy Boy Apples" = "Manzanas Dandy Boy"
+"Salisbury Steak" = "Filete Salisbury"
+"InstaMash" = "InstaMash"
+"Cram" = "Cram"
+"Pork n' Beans" = "Cerdo con judías"
+"YumYum Deviled Eggs" = "Huevos rellenos YumYum"
+"Iguana Bits" = "Trozos de iguana"
+"Squirrel Stew" = "Estofado de ardilla"
+"Squirrel on a Stick" = "Ardilla en un palo"
+
+# --- Productos Fallout (marcas inventadas, proteger) ---
+"Abraxo Cleaner" = "Limpiador Abraxo"
+"Wonderglue" = "Wonderglue"
+"Turpentine" = "Trementina"
+
+# ═══════════════════════════════════════════════════════════════
+# MUNICIÓN
+# ═══════════════════════════════════════════════════════════════
+"Mini Nuke" = "Mininuque"
+"Microfusion Cell" = "Célula de microfusión"
+"Electron Charge Pack" = "Paquete de carga electrónica"
+
+# ═══════════════════════════════════════════════════════════════
+# MECÁNICAS DE JUEGO
+# ═══════════════════════════════════════════════════════════════
+"V.A.T.S." = "V.A.T.S."
+"S.P.E.C.I.A.L." = "S.P.E.C.I.A.L."
+"Pip-Boy" = "Pip-Boy"
+"Perk" = "Extra"
+"Bobblehead" = "Cabezón"
+"Bottlecap" = "Chapas"
+"Karma" = "Karma"
+"Lockpick" = "Ganzúa"
+"Pre-War" = "Preguerra"
+"Overseer" = "Supervisor"
+"Vault Dweller" = "Morador del Refugio"
+"Workbench" = "Banco de trabajo"
+
+# ═══════════════════════════════════════════════════════════════
+# STATS S.P.E.C.I.A.L.
+# ═══════════════════════════════════════════════════════════════
+"Strength" = "Fuerza"
+"Perception" = "Percepción"
+"Endurance" = "Resistencia"
+"Charisma" = "Carisma"
+"Intelligence" = "Inteligencia"
+"Agility" = "Agilidad"
+"Luck" = "Suerte"
+
+# ═══════════════════════════════════════════════════════════════
+# HABILIDADES (solo las que Opus-MT traduce mal)
+# ═══════════════════════════════════════════════════════════════
+"Melee Weapons" = "Armas cuerpo a cuerpo"
+"Energy Weapons" = "Armas de energía"
+"Small Guns" = "Armas pequeñas"
+"Big Guns" = "Armas grandes"
+"Unarmed" = "Desarmado"
+
+# ═══════════════════════════════════════════════════════════════
+# CRIATURAS
+# ═══════════════════════════════════════════════════════════════
+"Super Mutant Behemoth" = "Behemoth supermutante"
+"Super Mutant Overlord" = "Supermutante señor supremo"
+"Super Mutant Master" = "Supermutante maestro"
+"Super Mutant Brute" = "Supermutante bruto"
+"Super Mutant" = "Supermutante"
+"Feral Ghoul Reaver" = "Necrófago salvaje devastador"
+"Feral Ghoul Roamer" = "Necrófago salvaje errante"
+"Feral Ghoul" = "Necrófago salvaje"
+"Glowing One" = "Luminiscente"
+"Ghoul" = "Necrófago"
+"Deathclaw" = "Sanguinario"
+"Radroach" = "Mutaracha"
+"Radscorpion" = "Radescorpión"
+"Bloatfly" = "Tochomosca"
+"Mole Rat" = "Rata topo"
+"Brahmin" = "Brahmán"
+"Yao Guai" = "Yao Guai"
+"Mirelurk King" = "Rey mirelurk"
+"Mirelurk Hunter" = "Cazador mirelurk"
+"Mirelurk" = "Mirelurk"
+"Centaur" = "Centauro"
+"Fire Ant" = "Hormiga de fuego"
+"Giant Ant" = "Hormiga gigante"
+"Raider" = "Saqueador"
+
+# ═══════════════════════════════════════════════════════════════
+# FACCIONES COMPARTIDAS
+# ═══════════════════════════════════════════════════════════════
+"Brotherhood of Steel" = "Hermandad del Acero"
+"Enclave" = "Enclave"
+
+# ═══════════════════════════════════════════════════════════════
+# MUNDO Y CONCEPTOS
+# ═══════════════════════════════════════════════════════════════
+"Wasteland" = "Yermo"
+"Vault" = "Refugio"
+"Vault-Tec" = "Vault-Tec"
+"Power Armor" = "Servoarmadura"
+"Nuka-World" = "Nuka-World"
+
+# ═══════════════════════════════════════════════════════════════
+# ROPA Y ARMADURA
+# ═══════════════════════════════════════════════════════════════
+"Utility Jumpsuit" = "Mono de trabajo"
+"Jumpsuit" = "Mono"
+"Power Helmet" = "Casco de servoarmadura"
+"Raider Armor" = "Armadura de saqueador"
+"Tesla Armor" = "Armadura Tesla"
+
+# ═══════════════════════════════════════════════════════════════
+# ARMAS
+# ═══════════════════════════════════════════════════════════════
+# --- Armas pesadas / únicas ---
+"Fat Man" = "Gordo"
+"Minigun" = "Ametralladora"
+"Missile Launcher" = "Lanzamisiles"
+"Flamer" = "Lanzallamas"
+"Gatling Laser" = "Láser Gatling"
+"Gauss Rifle" = "Rifle Gauss"
+"Super Sledge" = "Supermazo"
+"Power Fist" = "Puño de poder"
+"Ripper" = "Destripador"
+"Shishkebab" = "Shishkebab"
+
+# --- Armas de energía ---
+"Laser Rifle" = "Rifle láser"
+"Laser Pistol" = "Pistola láser"
+"Plasma Rifle" = "Rifle de plasma"
+"Plasma Pistol" = "Pistola de plasma"
+
+# --- Armas convencionales ---
+"Chinese Assault Rifle" = "Rifle de asalto chino"
+"Assault Rifle" = "Rifle de asalto"
+"Hunting Rifle" = "Rifle de caza"
+"Sniper Rifle" = "Rifle de francotirador"
+"Combat Shotgun" = "Escopeta de combate"
+"Sawed-Off Shotgun" = "Escopeta recortada"
+"10mm Submachine Gun" = "Subfusil de 10 mm"
+"10mm Pistol" = "Pistola de 10 mm"
+"Combat Knife" = "Cuchillo de combate"
+"Baseball Bat" = "Bate de béisbol"
+"Frag Grenade" = "Granada de fragmentación"
+"Frag Mine" = "Mina de fragmentación"
+"Pulse Grenade" = "Granada de pulso"
+"Plasma Grenade" = "Granada de plasma"
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-PROTECCIÓN: palabras en español que NO deben re-traducirse
+# Si un string ya contiene estos términos en español, se protegen
+# para que Opus-MT no los destroce.
+# ═══════════════════════════════════════════════════════════════
+
+# --- Términos Fallout traducidos ---
+"Estimulante" = "Estimulante"
+"Superestimulante" = "Superestimulante"
+"Necrófago" = "Necrófago"
+"Saqueador" = "Saqueador"
+"Sanguinario" = "Sanguinario"
+"Mutaracha" = "Mutaracha"
+"Tochomosca" = "Tochomosca"
+"Radescorpión" = "Radescorpión"
+"Supermutante" = "Supermutante"
+"Servoarmadura" = "Servoarmadura"
+"Luminiscente" = "Luminiscente"
+"Brahmán" = "Brahmán"
+"Supermazo" = "Supermazo"
+"Destripador" = "Destripador"
+"Lanzamisiles" = "Lanzamisiles"
+"Lanzallamas" = "Lanzallamas"
+"Preguerra" = "Preguerra"
+"Holodisco" = "Holodisco"
+"Horquilla" = "Horquilla"
+"Ganzúa" = "Ganzúa"
+
+# --- Palabras españolas genéricas ---
+"Chico" = "Chico"
+"Chica" = "Chica"
+"Refugio" = "Refugio"
+"Arma" = "Arma"
+"Espada" = "Espada"
+"Escudo" = "Escudo"
+"Agua" = "Agua"
+"Fuego" = "Fuego"
+"Hierro" = "Hierro"
+"Oro" = "Oro"
+"Plata" = "Plata"
+"Muerte" = "Muerte"
+"Vida" = "Vida"
+"Sangre" = "Sangre"
+"Piedra" = "Piedra"
+"Madera" = "Madera"
+"Basura" = "Basura"
+"Trampa" = "Trampa"
+"Comida" = "Comida"
+"Chatarra" = "Chatarra"
+"Llave" = "Llave"
+"Puerta" = "Puerta"
+"Nota" = "Nota"
+"Carta" = "Carta"
+"Libro" = "Libro"
+"Mapa" = "Mapa"

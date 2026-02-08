@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "modtranslator"
+version = "0.1.0"
+description = "Automatic translator for Bethesda ESP/ESM mod files (Fallout 3, Fallout: New Vegas)"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "modtranslator contributors" }]
+keywords = ["fallout", "bethesda", "esp", "esm", "translation", "modding"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment",
+    "Topic :: Text Processing :: Linguistic",
+]
+dependencies = [
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+deepl = [
+    "deepl>=1.16.0",
+]
+opus-mt = [
+    "ctranslate2>=4.0.0",
+    "transformers>=4.35.0",
+    "sentencepiece>=0.1.99",
+]
+nllb = [
+    "ctranslate2>=4.0.0",
+    "transformers>=4.35.0",
+    "sentencepiece>=0.1.99",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+modtranslator = "modtranslator.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/modtranslator"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "--cov=modtranslator --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["modtranslator"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+fail_under = 60
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# B008: typer.Option/Argument in function defaults is the standard Typer pattern
+"src/modtranslator/cli.py" = ["B008"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true

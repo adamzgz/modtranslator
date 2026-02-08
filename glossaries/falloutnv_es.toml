@@ -1,0 +1,154 @@
+# Glossary Fallout New Vegas (Mojave Wasteland) → Spanish
+# Solo términos específicos de Fallout New Vegas.
+# Se carga junto con fallout_base_es.toml (términos compartidos FO3/FNV).
+# Terminología oficial verificada con El Refugio Wiki (fallout.fandom.com/es)
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# LOCALIZACIONES
+# ═══════════════════════════════════════════════════════════════
+"Mojave Wasteland" = "Yermo de Mojave"
+"New Vegas" = "New Vegas"
+"The Strip" = "The Strip"
+"Freeside" = "Freeside"
+"Goodsprings" = "Goodsprings"
+"Primm" = "Primm"
+"Novac" = "Novac"
+"Hoover Dam" = "Presa Hoover"
+"Lucky 38" = "Lucky 38"
+"Camp McCarran" = "Camp McCarran"
+"Nellis Air Force Base" = "Base Aérea de Nellis"
+"Jacobstown" = "Jacobstown"
+"Nipton" = "Nipton"
+"Searchlight" = "Searchlight"
+"Cottonwood Cove" = "Cottonwood Cove"
+"Nelson" = "Nelson"
+"Camp Forlorn Hope" = "Camp Forlorn Hope"
+"Hidden Valley" = "Hidden Valley"
+"Helios One" = "Helios One"
+"Black Mountain" = "Black Mountain"
+"Vault 34" = "Refugio 34"
+"Vault 22" = "Refugio 22"
+"Vault 3" = "Refugio 3"
+"Vault 11" = "Refugio 11"
+
+# --- Casinos ---
+"The Tops" = "The Tops"
+"Gomorrah" = "Gomorrah"
+"Ultra-Luxe" = "Ultra-Luxe"
+
+# --- DLCs ---
+"Sierra Madre" = "Sierra Madre"
+"Big MT" = "Gran MT"
+"Big Mountain" = "Gran Montaña"
+"Zion Canyon" = "Cañón de Zion"
+"The Divide" = "La División"
+"Dead Money" = "Dead Money"
+"Honest Hearts" = "Honest Hearts"
+"Old World Blues" = "Old World Blues"
+"Lonesome Road" = "Lonesome Road"
+
+# ═══════════════════════════════════════════════════════════════
+# FACCIONES
+# ═══════════════════════════════════════════════════════════════
+"New California Republic" = "República de Nueva California"
+"NCR" = "RNC"
+"Caesar's Legion" = "Legión de César"
+"Boomers" = "Boomers"
+"Great Khans" = "Grandes Khans"
+"Powder Gangers" = "Bandidos de la Pólvora"
+"Kings" = "Reyes"
+"Followers of the Apocalypse" = "Seguidores del Apocalipsis"
+"White Glove Society" = "Sociedad del Guante Blanco"
+"Omertas" = "Omertas"
+"Chairmen" = "Chairmen"
+"Fiends" = "Demonios"
+"Bright Brotherhood" = "Hermandad de Bright"
+"Brotherhood Outcasts" = "Proscritos de la Hermandad"
+
+# ═══════════════════════════════════════════════════════════════
+# PERSONAJES Y COMPAÑEROS
+# ═══════════════════════════════════════════════════════════════
+"Courier" = "Mensajero"
+"Mr. House" = "Sr. House"
+"Caesar" = "César"
+"Benny" = "Benny"
+"Yes Man" = "Servibot"
+"Legate Lanius" = "Legado Lanius"
+"Chief Hanlon" = "Jefe Hanlon"
+"Colonel Moore" = "Coronel Moore"
+"Ambassador Crocker" = "Embajador Crocker"
+"The King" = "El Rey"
+"Vulpes Inculta" = "Vulpes Inculta"
+"Mr. New Vegas" = "Sr. New Vegas"
+
+# --- Compañeros ---
+"Boone" = "Boone"
+"Veronica" = "Veronica"
+"Arcade Gannon" = "Arcade Gannon"
+"Cass" = "Cass"
+"Rose of Sharon Cassidy" = "Rose of Sharon Cassidy"
+"Raul" = "Raul"
+"Lily" = "Lily"
+"Lily Bowen" = "Lily Bowen"
+"Rex" = "Rex"
+"ED-E" = "ED-E"
+
+# ═══════════════════════════════════════════════════════════════
+# CRIATURAS ESPECÍFICAS FNV
+# ═══════════════════════════════════════════════════════════════
+"Nightstalker" = "Acechador nocturno"
+"Night Stalker" = "Acechador nocturno"
+"Bighorner" = "Borrego cimarrón"
+"Cazador" = "Cazador"
+"Gecko" = "Gecko"
+"Golden Gecko" = "Gecko dorado"
+"Giant Gecko" = "Gecko gigante"
+"Fire Gecko" = "Gecko de fuego"
+"Lakelurk" = "Lakelurk"
+"Securitron" = "Securitron"
+"Deathclaw Alpha Male" = "Sanguinario macho alfa"
+"Deathclaw Mother" = "Sanguinario madre"
+"Young Deathclaw" = "Sanguinario joven"
+"Baby Deathclaw" = "Sanguinario bebé"
+"Bark Scorpion" = "Escorpión de corteza"
+"Cazadores" = "Cazadores"
+"Giant Rat" = "Rata gigante"
+"Spore Plant" = "Planta espora"
+"Spore Carrier" = "Portador de esporas"
+"Ghost People" = "Gente fantasma"
+"Tunneler" = "Excavador"
+"Marked Men" = "Hombres marcados"
+"Lobotomite" = "Lobotomizado"
+"Robo-Scorpion" = "Robo-escorpión"
+"Think Tank" = "Think Tank"
+
+# ═══════════════════════════════════════════════════════════════
+# ITEMS Y ARMAS
+# ═══════════════════════════════════════════════════════════════
+"Sunset Sarsaparilla" = "Sunset Sarsaparilla"
+"Platinum Chip" = "Chip de Platino"
+"Sierra Madre Chip" = "Ficha de Sierra Madre"
+"Caravan" = "Caravana"
+"Auto-Doc" = "Auto-Doc"
+"Gecko Steak" = "Filete de gecko"
+"Bighorner Meat" = "Carne de borrego cimarrón"
+"Nightstalker Blood" = "Sangre de acechador nocturno"
+"Cazador Poison Gland" = "Glándula de veneno de cazador"
+"Anti-Materiel Rifle" = "Rifle antimaterial"
+"Trail Carbine" = "Carabina de montaña"
+"Brush Gun" = "Rifle de maleza"
+"Cowboy Repeater" = "Repetidor vaquero"
+"Varmint Rifle" = "Rifle de alimañas"
+"Caravan Shotgun" = "Escopeta de caravana"
+"Service Rifle" = "Rifle de servicio"
+"Marksman Carbine" = "Carabina de tirador"
+"Hunting Revolver" = "Revólver de caza"
+"Ranger Sequoia" = "Ranger Sequoia"
+"This Machine" = "Esta Máquina"
+"That Gun" = "Esa Pistola"
+"Lucky" = "Lucky"
+"Maria" = "Maria"
+"Chance's Knife" = "Cuchillo de Chance"
+"Holorifle" = "Holorrifle"
