@@ -1,7 +1,13 @@
 """Tests for string extraction."""
 
+from modtranslator.core.string_table import StringTable, StringTableSet, StringTableType
 from modtranslator.translation.extractor import extract_strings
-from tests.conftest import make_plugin, make_subrecord
+from tests.conftest import (
+    make_plugin,
+    make_skyrim_plugin,
+    make_string_id_subrecord,
+    make_subrecord,
+)
 
 
 class TestExtractor:
@@ -169,3 +175,95 @@ class TestExtractor:
         ])
         strings = extract_strings(plugin)
         assert len(strings) == 0
+
+
+class TestSkyrimExtractor:
+    def test_skyrim_inline_extraction(self):
+        """Skyrim plugin without LOCALIZED flag extracts strings inline (like FO3)."""
+        plugin = make_skyrim_plugin(
+            records=[("WEAP", 0x100, [
+                make_subrecord("EDID", "TestSword"),
+                make_subrecord("FULL", "Iron Sword"),
+            ])],
+            localized=False,
+        )
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+        assert strings[0].original_text == "Iron Sword"
+        assert strings[0].string_id is None
+
+    def test_localized_extraction(self):
+        """Localized plugin reads text from string tables via StringID."""
+        sts = StringTableSet()
+        sts.strings = StringTable(StringTableType.STRINGS, {42: "Iron Sword"})
+        sts.build_merged()
+
+        plugin = make_skyrim_plugin(
+            records=[("WEAP", 0x100, [
+                make_subrecord("EDID", "TestSword"),
+                make_string_id_subrecord("FULL", 42),
+            ])],
+            localized=True,
+            string_tables=sts,
+        )
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+        assert strings[0].original_text == "Iron Sword"
+        assert strings[0].string_id == 42
+
+    def test_localized_string_id_zero_skipped(self):
+        """StringID 0 means no string — should be skipped."""
+        sts = StringTableSet()
+        sts.build_merged()
+
+        plugin = make_skyrim_plugin(
+            records=[("WEAP", 0x100, [
+                make_string_id_subrecord("FULL", 0),
+            ])],
+            localized=True,
+            string_tables=sts,
+        )
+        strings = extract_strings(plugin)
+        assert len(strings) == 0
+
+    def test_localized_missing_string_id_skipped(self):
+        """StringID not found in string tables should be skipped."""
+        sts = StringTableSet()
+        sts.strings = StringTable(StringTableType.STRINGS, {1: "Hello"})
+        sts.build_merged()
+
+        plugin = make_skyrim_plugin(
+            records=[("WEAP", 0x100, [
+                make_string_id_subrecord("FULL", 999),  # not in tables
+            ])],
+            localized=True,
+            string_tables=sts,
+        )
+        strings = extract_strings(plugin)
+        assert len(strings) == 0
+
+    def test_skyrim_flora_extracted(self):
+        """FLOR record FULL should be extracted (Skyrim-specific)."""
+        plugin = make_skyrim_plugin(
+            records=[("FLOR", 0x100, [
+                make_subrecord("EDID", "TestFlora"),
+                make_subrecord("FULL", "Mountain Flower"),
+            ])],
+        )
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+        assert strings[0].original_text == "Mountain Flower"
+
+    def test_skyrim_woop_dnam_extracted(self):
+        """DNAM in WOOP records should be extracted (Word of Power text)."""
+        plugin = make_skyrim_plugin(
+            records=[("WOOP", 0x100, [
+                make_subrecord("EDID", "TestWord"),
+                make_subrecord("FULL", "Force"),
+                make_subrecord("DNAM", "Fus"),
+            ])],
+        )
+        strings = extract_strings(plugin)
+        texts = {s.original_text for s in strings}
+        assert "Force" in texts
+        assert "Fus" in texts

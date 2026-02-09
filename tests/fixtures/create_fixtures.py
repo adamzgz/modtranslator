@@ -202,8 +202,149 @@ def create_compressed_record_esp() -> None:
     print(f"Created {path} ({path.stat().st_size} bytes)")
 
 
+def create_skyrim_inline_esp() -> None:
+    """Create a Skyrim ESP without LOCALIZED flag (inline strings like FO3)."""
+    path = FIXTURES_DIR / "skyrim_inline.esp"
+
+    hedr_data = struct.pack("<f", 1.70) + struct.pack("<I", 0) + struct.pack("<I", 0x000800)
+    edid_data = make_string("TestWeapon")
+    full_data = make_string("Iron Sword")
+
+    tes4_data_size = 6 + len(hedr_data)
+    weap_data_size = (6 + len(edid_data)) + (6 + len(full_data))
+    grup_size = 24 + 24 + weap_data_size
+
+    with open(path, "wb") as f:
+        # TES4 header (no LOCALIZED flag)
+        f.write(b"TES4")
+        write_uint32(f, tes4_data_size)
+        write_uint32(f, 0)  # flags: no LOCALIZED
+        write_uint32(f, 0)
+        write_uint32(f, 0)
+        write_uint32(f, 0)
+        write_subrecord(f, "HEDR", hedr_data)
+
+        # GRUP
+        f.write(b"GRUP")
+        write_uint32(f, grup_size)
+        f.write(b"WEAP")
+        write_uint32(f, 0)
+        write_uint32(f, 0)
+        write_uint32(f, 0)
+
+        # WEAP record
+        f.write(b"WEAP")
+        write_uint32(f, weap_data_size)
+        write_uint32(f, 0)
+        write_uint32(f, 0x00003000)
+        write_uint32(f, 0)
+        write_uint32(f, 0)
+        write_subrecord(f, "EDID", edid_data)
+        write_subrecord(f, "FULL", full_data)
+
+    print(f"Created {path} ({path.stat().st_size} bytes)")
+
+
+def create_skyrim_localized_esp() -> None:
+    """Create a Skyrim ESP with LOCALIZED flag + external string tables."""
+    path = FIXTURES_DIR / "skyrim_localized.esp"
+
+    hedr_data = struct.pack("<f", 1.70) + struct.pack("<I", 0) + struct.pack("<I", 0x000800)
+    edid_data = make_string("TestWeapon")
+    # FULL subrecord: uint32 StringID = 42
+    full_data = struct.pack("<I", 42)
+    # DESC subrecord: uint32 StringID = 100
+    desc_data = struct.pack("<I", 100)
+
+    tes4_data_size = 6 + len(hedr_data)
+    weap_data_size = (6 + len(edid_data)) + (6 + len(full_data)) + (6 + len(desc_data))
+    grup_size = 24 + 24 + weap_data_size
+
+    with open(path, "wb") as f:
+        # TES4 header with LOCALIZED flag (0x80)
+        f.write(b"TES4")
+        write_uint32(f, tes4_data_size)
+        write_uint32(f, 0x00000080)  # LOCALIZED flag
+        write_uint32(f, 0)
+        write_uint32(f, 0)
+        write_uint32(f, 0)
+        write_subrecord(f, "HEDR", hedr_data)
+
+        # GRUP
+        f.write(b"GRUP")
+        write_uint32(f, grup_size)
+        f.write(b"WEAP")
+        write_uint32(f, 0)
+        write_uint32(f, 0)
+        write_uint32(f, 0)
+
+        # WEAP record
+        f.write(b"WEAP")
+        write_uint32(f, weap_data_size)
+        write_uint32(f, 0)
+        write_uint32(f, 0x00004000)
+        write_uint32(f, 0)
+        write_uint32(f, 0)
+        write_subrecord(f, "EDID", edid_data)
+        write_subrecord(f, "FULL", full_data)
+        write_subrecord(f, "DESC", desc_data)
+
+    # Create string table files
+    # STRINGS: string_id=42 -> "Iron Sword"
+    strings_data = _build_strings_file([(42, "Iron Sword")])
+    (FIXTURES_DIR / "skyrim_localized_English.STRINGS").write_bytes(strings_data)
+
+    # DLSTRINGS: string_id=100 -> "A fine iron sword."
+    dlstrings_data = _build_dlstrings_file([(100, "A fine iron sword.")])
+    (FIXTURES_DIR / "skyrim_localized_English.DLSTRINGS").write_bytes(dlstrings_data)
+
+    # ILSTRINGS: empty
+    ilstrings_data = struct.pack("<II", 0, 0)
+    (FIXTURES_DIR / "skyrim_localized_English.ILSTRINGS").write_bytes(ilstrings_data)
+
+    print(f"Created {path} ({path.stat().st_size} bytes) + string tables")
+
+
+def _build_strings_file(entries: list[tuple[int, str]]) -> bytes:
+    """Build a STRINGS file (null-terminated, no length prefix)."""
+    count = len(entries)
+    data_parts: list[bytes] = []
+    directory: list[tuple[int, int]] = []
+    offset = 0
+    for sid, text in entries:
+        encoded = text.encode("utf-8") + b"\x00"
+        directory.append((sid, offset))
+        data_parts.append(encoded)
+        offset += len(encoded)
+    data_block = b"".join(data_parts)
+    header = struct.pack("<II", count, len(data_block))
+    dir_bytes = b"".join(struct.pack("<II", sid, off) for sid, off in directory)
+    return header + dir_bytes + data_block
+
+
+def _build_dlstrings_file(entries: list[tuple[int, str]]) -> bytes:
+    """Build a DLSTRINGS/ILSTRINGS file (length-prefixed)."""
+    count = len(entries)
+    data_parts: list[bytes] = []
+    directory: list[tuple[int, int]] = []
+    offset = 0
+    for sid, text in entries:
+        encoded = text.encode("utf-8") + b"\x00"
+        length = len(encoded)
+        part = struct.pack("<I", length) + encoded
+        directory.append((sid, offset))
+        data_parts.append(part)
+        offset += len(part)
+    data_block = b"".join(data_parts)
+    header = struct.pack("<II", count, len(data_block))
+    dir_bytes = b"".join(struct.pack("<II", sid, off) for sid, off in directory)
+    return header + dir_bytes + data_block
+
+
 if __name__ == "__main__":
     create_minimal_fo3_esp()
     create_multi_record_esp()
     create_compressed_record_esp()
+    create_skyrim_inline_esp()
+    create_skyrim_localized_esp()
     print("All fixtures created.")

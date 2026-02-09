@@ -337,9 +337,22 @@ class TestCLIGameFlag:
             "translate", str(esp),
             "--dummy",
             "--no-cache",
-            "--game", "skyrim",
+            "--game", "oblivion",
         ])
         assert result.exit_code != 0
+
+    def test_game_skyrim_accepted(self, tmp_path):
+        """--game skyrim is a valid option."""
+        esp = FIXTURES / "minimal_fo3.esp"
+        output = tmp_path / "out.esp"
+        result = runner.invoke(app, [
+            "translate", str(esp),
+            "--dummy",
+            "--output", str(output),
+            "--no-cache",
+            "--game", "skyrim",
+        ])
+        assert result.exit_code == 0
 
     def test_glossary_overrides_game(self, tmp_path):
         """Explicit --glossary takes priority over --game."""

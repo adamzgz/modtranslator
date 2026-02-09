@@ -1,6 +1,8 @@
 """Tests for record data classes, focusing on encoding fallbacks."""
 
+from modtranslator.core.constants import Game
 from modtranslator.core.records import Subrecord
+from tests.conftest import make_plugin, make_skyrim_plugin
 
 
 class TestDecodeStringFallback:
@@ -58,3 +60,31 @@ class TestDecodeStringFallback:
         sub = Subrecord(type=b"FULL", data=bytearray())
         sub.encode_string("café")
         assert sub.data == bytearray(b"caf\xe9\x00")
+
+
+class TestDetectGame:
+    def test_detect_fo3(self):
+        plugin = make_plugin(version=0.94)
+        assert plugin.detect_game() == Game.FALLOUT3
+
+    def test_detect_skyrim(self):
+        plugin = make_skyrim_plugin()
+        assert plugin.detect_game() == Game.SKYRIM
+
+    def test_detect_unknown(self):
+        plugin = make_plugin(version=2.0)
+        assert plugin.detect_game() == Game.UNKNOWN
+
+
+class TestIsLocalized:
+    def test_not_localized(self):
+        plugin = make_skyrim_plugin(localized=False)
+        assert not plugin.is_localized
+
+    def test_localized(self):
+        plugin = make_skyrim_plugin(localized=True)
+        assert plugin.is_localized
+
+    def test_fo3_never_localized(self):
+        plugin = make_plugin()
+        assert not plugin.is_localized

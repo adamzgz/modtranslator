@@ -35,6 +35,7 @@ class GameChoice(str, Enum):
     auto = "auto"
     fo3 = "fo3"
     fnv = "fnv"
+    skyrim = "skyrim"
 
 app = typer.Typer(
     name="modtranslator",
@@ -74,7 +75,12 @@ def _resolve_glossary_paths(
         return []
 
     # Determine effective game
-    effective = game if game != GameChoice.auto else GameChoice.fo3
+    if game != GameChoice.auto:
+        effective = game
+    elif detected_game == Game.SKYRIM:
+        effective = GameChoice.skyrim
+    else:
+        effective = GameChoice.fo3
 
     # Resolve paths
     if effective == GameChoice.fo3:
@@ -86,6 +92,10 @@ def _resolve_glossary_paths(
         candidates = [
             glossaries_dir / "fallout_base_es.toml",
             glossaries_dir / "falloutnv_es.toml",
+        ]
+    elif effective == GameChoice.skyrim:
+        candidates = [
+            glossaries_dir / "skyrim_base_es.toml",
         ]
     else:
         return []
@@ -307,7 +317,8 @@ def _writeback_file(
                 s.source_file = file_stem
 
         # Patch plugin in memory
-        patched = apply_translations(ctx.all_strings, translations)
+        st = getattr(ctx.plugin, "string_tables", None)
+        patched = apply_translations(ctx.all_strings, translations, string_tables=st)
         ctx.patched_count = patched
 
         # Write to disk
@@ -644,7 +655,7 @@ def translate(
     ),
     game: GameChoice = typer.Option(
         GameChoice.auto, "--game",
-        help="Game: fo3, fnv, auto.",
+        help="Game: fo3, fnv, skyrim, auto.",
     ),
 ) -> None:
     """Translate an ESP/ESM file."""
@@ -881,7 +892,8 @@ def _translate_file(
                     s.source_file = file_stem
 
         with console.status("Patching plugin..."):
-            patched = apply_translations(strings, translations)
+            st = getattr(plugin, "string_tables", None)
+            patched = apply_translations(strings, translations, string_tables=st)
             rpt.strings_patched = patched
 
         _print(f"Patched [green]{patched}[/green] strings")
@@ -1013,7 +1025,7 @@ def batch(
     ),
     game: GameChoice = typer.Option(
         GameChoice.auto, "--game",
-        help="Game: fo3, fnv, auto.",
+        help="Game: fo3, fnv, skyrim, auto.",
     ),
 ) -> None:
     """Translate all matching files in a directory."""
@@ -1060,6 +1072,8 @@ def batch(
             detected_game = first_plugin.game
         except Exception:
             detected_game = Game.FALLOUT3
+    elif game == GameChoice.skyrim:
+        detected_game = Game.SKYRIM
     else:
         detected_game = Game.FALLOUT3
 
