@@ -55,6 +55,8 @@ La interfaz gráfica permite traducir mods sin usar la terminal:
 
 La GUI hace backup automático de los archivos que va a modificar. Si algo sale mal, pulsa **Restaurar backup** para volver a los originales.
 
+![Ventana principal](docs/gui_main.png)
+
 ### Ejecutable (Windows)
 
 Descarga el ZIP de la sección Releases — no necesita Python ni dependencias.
@@ -122,6 +124,8 @@ El backend **híbrido** enruta strings cortos (1–3 palabras) a Opus-MT tc-big 
 
 ## Cómo Funciona
 
+### Fallout 3 / Fallout: New Vegas (strings inline, cp1252)
+
 ```
 Archivo ESP/ESM (binario, codificación Windows-1252)
     │
@@ -145,6 +149,69 @@ Archivo ESP/ESM (binario, codificación Windows-1252)
     │
     ▼
 7. ESCRIBIR ───────── Serializar árbol con tamaños recalculados → ESP/ESM válido
+```
+
+### Skyrim SE/AE (string tables externas, UTF-8)
+
+Skyrim usa un sistema completamente diferente: los plugins **localizados** (flag `0x80` en la cabecera) no almacenan texto inline, sino **StringIDs** (uint32) que apuntan a string tables externas.
+
+```
+Plugin ESP/ESM + String tables ({Plugin}_English.STRINGS/.DLSTRINGS/.ILSTRINGS)
+    │
+    ▼
+1. DETECTAR ───────── Leer flag LOCALIZED (0x80) en cabecera del plugin
+    │                  Si está activo → flujo de string tables
+    ▼
+2. CARGAR TABLAS ──── Parsear las 3 tablas: .STRINGS, .DLSTRINGS, .ILSTRINGS
+    │                  Formato: [count:u32][data_size:u32] + directorio [id:u32][offset:u32]
+    │                  Fusionar en un solo diccionario {StringID → texto} (IDs únicos entre tablas)
+    ▼
+3. EXTRAER ────────── Recorrer árbol de records, resolver StringIDs → texto original
+    │                  Mismos subrecords traducibles que FO3/FNV (FULL, DESC, etc.)
+    ▼
+4. TRADUCIR ───────── Mismo pipeline: detectar idioma → proteger → traducir → restaurar
+    │
+    ▼
+5. ESCRIBIR TABLAS ── Generar nuevas string tables con textos traducidos
+    │                  Recalcular offsets y data_size para cada tabla
+    │                  Guardar como {Plugin}_Spanish.STRINGS/.DLSTRINGS/.ILSTRINGS
+```
+
+Las string tables usan UTF-8 (no cp1252). `.STRINGS` almacena texto null-terminated; `.DLSTRINGS` e `.ILSTRINGS` usan formato length-prefixed (`[length:u32 incl null] + texto + null`).
+
+### Scripts PEX (Papyrus compilado)
+
+```
+Archivo .pex (big-endian, magic 0xFA57C0DE)
+    │
+    ▼
+1. PARSEAR ────────── Leer string table: [count:u16] + [len:u16 + chars]×N
+    │                  Cada string tiene un tipo: 0x01 (identificador) o 0x02 (literal)
+    ▼
+2. FILTRAR ────────── Solo traducir strings con tipo puro 0x02 (literales de texto)
+    │                  NUNCA tocar 0x01 (nombres de funciones, variables, propiedades)
+    │                  Filtros adicionales: rutas de archivo, nombres de eventos, etc.
+    ▼
+3. TRADUCIR ───────── Mismo pipeline de traducción que ESP/ESM
+    │
+    ▼
+4. ESCRIBIR ───────── Reescribir string table con longitudes actualizadas
+                       Mantener el resto del archivo intacto byte a byte
+```
+
+### Archivos MCM (menús de configuración)
+
+```
+Archivo de traducción MCM (UTF-16-LE con BOM, tab-separated)
+    │                        Formato: $KEY\tValue (una entrada por línea)
+    ▼
+1. PARSEAR ────────── Leer como UTF-16-LE, separar clave ($KEY) y valor por tabulación
+    │                  Solo traducir el valor, nunca la clave
+    ▼
+2. TRADUCIR ───────── Pipeline estándar sobre los valores
+    │
+    ▼
+3. ESCRIBIR ───────── Reescribir manteniendo BOM, encoding UTF-16-LE y tabulaciones
 ```
 
 ### Pipeline Batch
@@ -233,7 +300,8 @@ El parser maneja el formato de plugins TES4 usado por los motores Gamebryo/Creat
 - **Cabecera de Record**: `Type(4) + DataSize(4) + Flags(4) + FormID(4) + VCS1(4) + VCS2(4)` — 24 bytes
 - **Subrecord**: `Type(4) + Size(2, uint16) + Data(N)`
 - **Group (GRUP)**: cabecera de 24 bytes, `GroupSize` incluye la propia cabecera
-- **Strings**: null-terminated, codificación Windows-1252
+- **Strings (FO3/FNV)**: null-terminated, codificación Windows-1252 (inline en subrecords)
+- **Strings (Skyrim)**: flag `LOCALIZED` (`0x80`) en cabecera → strings almacenados en tablas externas UTF-8, subrecords contienen StringIDs (uint32) en vez de texto
 - **Records comprimidos**: flag `0x00040000`, payload = `decompressed_size(4) + zlib`
 - **Detección de juego**: float de versión en subrecord HEDR (0.94 = FO3/FNV, 1.70 = Skyrim)
 
@@ -323,6 +391,8 @@ The graphical interface lets you translate mods without using the terminal:
 
 The GUI automatically backs up files before modifying them. If anything goes wrong, click **Restore backup** to revert.
 
+![Main window](docs/gui_main.png)
+
 ### Executable (Windows)
 
 Download the ZIP from Releases — no Python or dependencies needed.
@@ -390,6 +460,8 @@ The **hybrid** backend routes short strings (1–3 words) to Opus-MT tc-big and 
 
 ## How It Works
 
+### Fallout 3 / Fallout: New Vegas (inline strings, cp1252)
+
 ```
 ESP/ESM file (binary, Windows-1252 encoded)
     │
@@ -413,6 +485,69 @@ ESP/ESM file (binary, Windows-1252 encoded)
     │
     ▼
 7. WRITE ─────────── Serialize tree with recalculated sizes → valid ESP/ESM
+```
+
+### Skyrim SE/AE (external string tables, UTF-8)
+
+Skyrim uses an entirely different system: **localized** plugins (flag `0x80` in the header) don't store text inline — they store **StringIDs** (uint32) that point to external string tables.
+
+```
+ESP/ESM plugin + String tables ({Plugin}_English.STRINGS/.DLSTRINGS/.ILSTRINGS)
+    │
+    ▼
+1. DETECT ────────── Read LOCALIZED flag (0x80) from plugin header
+    │                 If set → string table pipeline
+    ▼
+2. LOAD TABLES ───── Parse all 3 tables: .STRINGS, .DLSTRINGS, .ILSTRINGS
+    │                 Format: [count:u32][data_size:u32] + directory [id:u32][offset:u32]
+    │                 Merge into single {StringID → text} dictionary (IDs unique across tables)
+    ▼
+3. EXTRACT ───────── Walk record tree, resolve StringIDs → original text
+    │                 Same translatable subrecords as FO3/FNV (FULL, DESC, etc.)
+    ▼
+4. TRANSLATE ─────── Same pipeline: detect language → protect → translate → restore
+    │
+    ▼
+5. WRITE TABLES ──── Generate new string tables with translated text
+    │                 Recalculate offsets and data_size for each table
+    │                 Save as {Plugin}_Spanish.STRINGS/.DLSTRINGS/.ILSTRINGS
+```
+
+String tables use UTF-8 (not cp1252). `.STRINGS` stores null-terminated text; `.DLSTRINGS` and `.ILSTRINGS` use length-prefixed format (`[length:u32 incl null] + text + null`).
+
+### PEX Scripts (compiled Papyrus)
+
+```
+.pex file (big-endian, magic 0xFA57C0DE)
+    │
+    ▼
+1. PARSE ─────────── Read string table: [count:u16] + [len:u16 + chars]×N
+    │                 Each string has a type: 0x01 (identifier) or 0x02 (literal)
+    ▼
+2. FILTER ────────── Only translate strings with pure 0x02 type (text literals)
+    │                 NEVER touch 0x01 (function names, variables, properties)
+    │                 Additional filters: file paths, event names, etc.
+    ▼
+3. TRANSLATE ─────── Same translation pipeline as ESP/ESM
+    │
+    ▼
+4. WRITE ─────────── Rewrite string table with updated lengths
+                      Keep the rest of the file intact byte-for-byte
+```
+
+### MCM Files (configuration menus)
+
+```
+MCM translation file (UTF-16-LE with BOM, tab-separated)
+    │                    Format: $KEY\tValue (one entry per line)
+    ▼
+1. PARSE ─────────── Read as UTF-16-LE, split key ($KEY) and value by tab
+    │                 Only translate the value, never the key
+    ▼
+2. TRANSLATE ─────── Standard pipeline on values
+    │
+    ▼
+3. WRITE ─────────── Rewrite preserving BOM, UTF-16-LE encoding, and tabs
 ```
 
 ### Batch Pipeline
@@ -501,7 +636,8 @@ The parser handles the TES4 plugin format used by Gamebryo/Creation Engine games
 - **Record Header**: `Type(4) + DataSize(4) + Flags(4) + FormID(4) + VCS1(4) + VCS2(4)` — 24 bytes
 - **Subrecord**: `Type(4) + Size(2, uint16) + Data(N)`
 - **Group (GRUP)**: 24-byte header, `GroupSize` includes the header itself
-- **Strings**: null-terminated, Windows-1252 encoding
+- **Strings (FO3/FNV)**: null-terminated, Windows-1252 encoding (inline in subrecords)
+- **Strings (Skyrim)**: `LOCALIZED` flag (`0x80`) in header → strings stored in external UTF-8 tables, subrecords contain StringIDs (uint32) instead of text
 - **Compressed records**: flag `0x00040000`, payload = `decompressed_size(4) + zlib`
 - **Game detection**: HEDR subrecord version float (0.94 = FO3/FNV, 1.70 = Skyrim)
 
