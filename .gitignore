@@ -42,9 +42,7 @@ desktop.ini
 .modtranslator/
 
 # Internal dev notes and local config (not for public repo)
-.claude/
 NOTAS_TECNICAS.md
-CLAUDE.md
 
 # Game data and translation output (not tracked)
 fallout3_backup/
