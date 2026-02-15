@@ -119,7 +119,7 @@ def download_model(model_description: str, on_progress: object = None) -> bool:
     except ImportError:
         # Try with transformers
         try:
-            from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
             AutoTokenizer.from_pretrained(model_description)
             AutoModelForSeq2SeqLM.from_pretrained(model_description)
             return True

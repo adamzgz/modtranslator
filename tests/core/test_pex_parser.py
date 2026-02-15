@@ -9,9 +9,7 @@ from modtranslator.core.pex_parser import (
     PexFile,
     PexHeader,
     _is_translatable_literal,
-    load_pex,
     parse_pex,
-    save_pex,
     serialize_pex,
 )
 
@@ -58,7 +56,7 @@ class TestParsePex:
         data = b"\x00\x00\x00\x00" + b"\x00" * 50
         try:
             parse_pex(data)
-            assert False, "Should have raised ValueError"
+            raise AssertionError("Should have raised ValueError")
         except ValueError as e:
             assert "Not a PEX file" in str(e)
 
@@ -193,7 +191,8 @@ class TestTranslatableLiteral:
 
     def test_papyrus_auto_comment_rejected(self):
         """Papyrus auto-generated state function comments."""
-        assert not _is_translatable_literal("Function that switches this object to the specified state")
+        text = "Function that switches this object to the specified state"
+        assert not _is_translatable_literal(text)
         assert not _is_translatable_literal("Function that returns the current state")
 
     def test_mod_tag_debug_rejected(self):
@@ -251,7 +250,8 @@ class TestTranslatableLiteral:
     def test_skyui_internal_error_rejected(self):
         """SkyUI/MCM internal error messages."""
         assert not _is_translatable_literal("AddTextOptionST has been called in an invalid state.")
-        assert not _is_translatable_literal("SetSliderOptionValueST has been called in an invalid state.")
+        text = "SetSliderOptionValueST has been called in an invalid state."
+        assert not _is_translatable_literal(text)
         assert not _is_translatable_literal("Option type mismatch. Expected toggle option, page \"")
         assert not _is_translatable_literal("Animating: SEQ:")
 
@@ -263,7 +263,8 @@ class TestTranslatableLiteral:
     def test_api_call_rejected(self):
         """API-style function calls."""
         assert not _is_translatable_literal("iWidgets.setZoom(myApple, 200, 200)")
-        assert not _is_translatable_literal("iWidgets.doTransition(mySheep[0], 180, 300, 'rotation')")
+        text = "iWidgets.doTransition(mySheep[0], 180, 300, 'rotation')"
+        assert not _is_translatable_literal(text)
 
     def test_internal_function_trace_rejected(self):
         """CamelCase function name traces: 'AnimateMyLover: Serana'."""
@@ -281,7 +282,8 @@ class TestTranslatableLiteral:
         assert _is_translatable_literal("You have won the entire game!")
         assert _is_translatable_literal("I've gained new insight from defeating the enemy.")
         assert _is_translatable_literal("Blessed of Azura")
-        assert _is_translatable_literal("The chance that a new quest is put up or an old one taken down.")
+        text = "The chance that a new quest is put up or an old one taken down."
+        assert _is_translatable_literal(text)
         assert _is_translatable_literal("Your musical talent increases")
         assert _is_translatable_literal("Enable Developer Mode")
         assert _is_translatable_literal("General Settings")

@@ -185,7 +185,7 @@ def _translate_file(
     from modtranslator.translation.glossary import Glossary
     from modtranslator.translation.patcher import apply_translations
 
-    _LARGE_FILE_THRESHOLD = 150 * 1024 * 1024
+    large_file_threshold = 150 * 1024 * 1024
 
     if not file.exists():
         console.print(f"[red]Error:[/red] File not found: {file}")
@@ -292,7 +292,7 @@ def _translate_file(
     _plugin_freed = False
     to_translate_keys = [s.key for s in to_translate]
     to_translate_originals = [s.original_text for s in to_translate]
-    if texts and file.stat().st_size > _LARGE_FILE_THRESHOLD:
+    if texts and file.stat().st_size > large_file_threshold:
         _plugin_freed = True
         _print("Large file: freeing plugin memory before translation...", verbose_only=True)
         del plugin, strings, to_translate

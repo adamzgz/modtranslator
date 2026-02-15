@@ -12,11 +12,11 @@ import hashlib
 import json
 import re as _re
 import time as _time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from threading import Event
-from typing import Callable
 
 from modtranslator.backends.base import TranslationBackend
 from modtranslator.core.constants import Game
