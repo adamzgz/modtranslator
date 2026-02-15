@@ -396,8 +396,6 @@ class TestModelConversion:
 
     def test_convert_cleanup_on_failure(self, mock_opus_env, tmp_path):
         """Failed conversion cleans up partial directory."""
-        import subprocess
-
         backend = mock_opus_env.OpusMTBackend(
             device="cpu", models_dir=mock_opus_env.models_dir
         )
@@ -406,15 +404,17 @@ class TestModelConversion:
         new_dir = mock_opus_env.models_dir / "opus-mt-en-fr-ct2"
         assert not new_dir.exists()
 
-        with patch("subprocess.run") as mock_run:
-            mock_run.side_effect = subprocess.CalledProcessError(
-                1, "ct2", stderr="conversion failed"
-            )
-            with pytest.raises(RuntimeError, match="Failed to convert"):
-                backend._convert_model("Helsinki-NLP/opus-mt-en-fr", new_dir)
+        mock_converter = MagicMock()
+        mock_converter.convert.side_effect = RuntimeError("conversion failed")
+        mock_cls = MagicMock(return_value=mock_converter)
+        ct2_conv_t = sys.modules["ctranslate2.converters.transformers"]
+        ct2_conv_t.TransformersConverter = mock_cls
 
-            # Directory should have been cleaned up
-            assert not new_dir.exists()
+        with pytest.raises(RuntimeError, match="Failed to convert"):
+            backend._convert_model("Helsinki-NLP/opus-mt-en-fr", new_dir)
+
+        # Directory should have been cleaned up
+        assert not new_dir.exists()
 
 
 class TestModelVariants:

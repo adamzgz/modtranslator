@@ -7,8 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from modtranslator.core.constants import Game
+from modtranslator.core.constants import Game, RecordFlag
 from modtranslator.core.records import GroupRecord, PluginFile, Record, Subrecord
+from modtranslator.core.string_table import StringTableSet
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -76,6 +77,55 @@ def make_plugin(
     """
     header = make_tes4_header(version)
     plugin = PluginFile(header=header, groups=[], game=Game.FALLOUT3)
+
+    if records:
+        children = []
+        for rec_type, form_id, subs in records:
+            children.append(make_record(rec_type, form_id, subs))
+        group = make_group(records[0][0][:4], children)
+        plugin.groups.append(group)
+
+    return plugin
+
+
+def make_skyrim_header(localized: bool = False) -> Record:
+    """Create a minimal Skyrim TES4 header record (HEDR version 1.7)."""
+    hedr_data = struct.pack("<f", 1.70) + struct.pack("<I", 0) + struct.pack("<I", 0)
+    flags = RecordFlag.LOCALIZED if localized else 0
+    return Record(
+        type=b"TES4",
+        flags=flags,
+        form_id=0,
+        vcs1=0,
+        vcs2=0,
+        subrecords=[
+            Subrecord(type=b"HEDR", data=bytearray(hedr_data)),
+        ],
+    )
+
+
+def make_string_id_subrecord(type_tag: str, string_id: int) -> Subrecord:
+    """Create a subrecord containing a uint32 StringID (for localized plugins)."""
+    return Subrecord(
+        type=type_tag.encode("ascii"),
+        data=bytearray(struct.pack("<I", string_id)),
+    )
+
+
+def make_skyrim_plugin(
+    records: list[tuple[str, int, list[Subrecord]]] | None = None,
+    localized: bool = False,
+    string_tables: StringTableSet | None = None,
+) -> PluginFile:
+    """Build a minimal valid Skyrim PluginFile.
+
+    Args:
+        records: List of (record_type, form_id, subrecords) tuples.
+        localized: Whether to set the LOCALIZED flag on the TES4 header.
+        string_tables: Optional StringTableSet for localized plugins.
+    """
+    header = make_skyrim_header(localized)
+    plugin = PluginFile(header=header, groups=[], game=Game.SKYRIM, string_tables=string_tables)
 
     if records:
         children = []

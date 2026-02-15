@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import struct
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from modtranslator.core.constants import (
     GRUP_HEADER_SIZE,
@@ -12,6 +13,9 @@ from modtranslator.core.constants import (
     Game,
     RecordFlag,
 )
+
+if TYPE_CHECKING:
+    from modtranslator.core.string_table import StringTableSet
 
 
 @dataclass
@@ -138,12 +142,20 @@ class PluginFile:
     header: Record  # The TES4 record
     groups: list[GroupRecord] = field(default_factory=list)
     game: Game = Game.FALLOUT3
+    string_tables: StringTableSet | None = field(default=None, repr=False)
+
+    @property
+    def is_localized(self) -> bool:
+        """Check if this plugin uses external string tables (LOCALIZED flag)."""
+        return bool(self.header.flags & RecordFlag.LOCALIZED)
 
     def detect_game(self) -> Game:
         """Detect game from the HEDR subrecord version float."""
         for sub in self.header.subrecords:
             if sub.type == b"HEDR" and len(sub.data) >= 4:
                 version = struct.unpack("<f", bytes(sub.data[:4]))[0]
+                if abs(version - 1.70) < 0.02:
+                    return Game.SKYRIM
                 if abs(version - 0.94) < 0.01:
                     return Game.FALLOUT3
         return Game.UNKNOWN

@@ -1,0 +1,234 @@
+# Glossary base Skyrim → Spanish
+# Terminología oficial verificada con la localización española del juego.
+# Solo incluye términos que los modelos MT no traducen correctamente
+# (palabras inventadas, nombres propios, traducciones no literales).
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# RAZAS
+# ═══════════════════════════════════════════════════════════════
+"Altmer" = "Altmer"
+"High Elf" = "Alto Elfo"
+"Bosmer" = "Bosmer"
+"Wood Elf" = "Elfo del Bosque"
+"Dunmer" = "Dunmer"
+"Dark Elf" = "Elfo Oscuro"
+"Orsimer" = "Orsimer"
+"Breton" = "Bretón"
+"Imperial" = "Imperial"
+"Nord" = "Nórdico"
+"Redguard" = "Guardián Rojo"
+"Argonian" = "Argoniano"
+"Khajiit" = "Khajiit"
+
+# ═══════════════════════════════════════════════════════════════
+# CIUDADES Y HOLDS
+# ═══════════════════════════════════════════════════════════════
+"Whiterun" = "Carrera Blanca"
+"Solitude" = "Soledad"
+"Windhelm" = "Ventalia"
+"Riften" = "Riften"
+"Markarth" = "Markarth"
+"Falkreath" = "Falkreath"
+"Morthal" = "Morthal"
+"Dawnstar" = "Estrella del Alba"
+"Winterhold" = "Hibernalia"
+"Dragonsreach" = "Mirador del Dragón"
+"Jorrvaskr" = "Jorrvaskr"
+"Dragonsbridge" = "Puente del Dragón"
+"Riverwood" = "Cauce Boscoso"
+"Ivarstead" = "Ivarstead"
+"Helgen" = "Helgen"
+"Rorikstead" = "Rorikstead"
+
+# ═══════════════════════════════════════════════════════════════
+# FACCIONES Y GREMIOS
+# ═══════════════════════════════════════════════════════════════
+"Companions" = "Compañeros"
+"Thieves Guild" = "Gremio de Ladrones"
+"Dark Brotherhood" = "Hermandad Oscura"
+"College of Winterhold" = "Colegio de Hibernalia"
+"Stormcloaks" = "Capas de la Tormenta"
+"Blades" = "Cuchillas"
+"Greybeards" = "Barbas Grises"
+"Thalmor" = "Thalmor"
+"Forsworn" = "Renegados"
+"Silver Hand" = "Mano de Plata"
+"Volkihar" = "Volkihar"
+"Dawnguard" = "Guardia del Alba"
+"Penitus Oculatus" = "Penitus Oculatus"
+"Bards College" = "Colegio de Bardos"
+
+# ═══════════════════════════════════════════════════════════════
+# GRITOS DE DRAGÓN (SHOUTS)
+# ═══════════════════════════════════════════════════════════════
+"Unrelenting Force" = "Fuerza Implacable"
+"Fus Ro Dah" = "Fus Ro Dah"
+"Whirlwind Sprint" = "Espíritu de Torbellino"
+"Fire Breath" = "Aliento de Fuego"
+"Frost Breath" = "Aliento de Escarcha"
+"Ice Form" = "Forma de Hielo"
+"Storm Call" = "Llamada de Tormenta"
+"Clear Skies" = "Cielos Despejados"
+"Dragonrend" = "Deshacedragones"
+"Marked for Death" = "Marca de Muerte"
+"Slow Time" = "Tiempo Lento"
+"Become Ethereal" = "Ser Etéreo"
+"Aura Whisper" = "Susurro del Aura"
+"Throw Voice" = "Lanzar la Voz"
+"Dismay" = "Desaliento"
+"Animal Allegiance" = "Alianza Animal"
+"Kyne's Peace" = "Paz de Kyne"
+"Elemental Fury" = "Furia Elemental"
+"Call Dragon" = "Llamar Dragón"
+"Call of Valor" = "Llamada del Valor"
+"Dragon Aspect" = "Aspecto de Dragón"
+"Bend Will" = "Doblegar Voluntad"
+"Soul Tear" = "Desgarro del Alma"
+"Summon Durnehviir" = "Invocar a Durnehviir"
+"Battle Fury" = "Furia de Batalla"
+"Cyclone" = "Ciclón"
+
+# ═══════════════════════════════════════════════════════════════
+# CRIATURAS
+# ═══════════════════════════════════════════════════════════════
+"Draugr" = "Draugr"
+"Draugr Deathlord" = "Draugr señor de la muerte"
+"Falmer" = "Falmer"
+"Chaurus" = "Chaurus"
+"Spriggan" = "Spriggan"
+"Hagraven" = "Arpía"
+"Wisp" = "Luz fatua"
+"Wispmother" = "Madre de las luces fatuas"
+"Mudcrab" = "Cangrejo del barro"
+"Skeever" = "Skeever"
+"Sabre Cat" = "Gato dientes de sable"
+"Troll" = "Trol"
+"Frost Troll" = "Trol de escarcha"
+"Giant" = "Gigante"
+"Mammoth" = "Mamut"
+"Horker" = "Horker"
+"Frostbite Spider" = "Araña de escarcha"
+"Dragon" = "Dragón"
+"Dragon Priest" = "Sacerdote dragón"
+"Dwarven Centurion" = "Centurión enano"
+"Dwarven Sphere" = "Esfera enana"
+"Dwarven Spider" = "Araña enana"
+"Gargoyle" = "Gárgola"
+"Death Hound" = "Perro de la muerte"
+"Ash Spawn" = "Engendro de ceniza"
+"Riekling" = "Riekling"
+"Lurker" = "Acechador"
+"Seeker" = "Buscador"
+"Werebear" = "Hombre oso"
+"Werewolf" = "Hombre lobo"
+
+# ═══════════════════════════════════════════════════════════════
+# TÉRMINOS DEL JUEGO
+# ═══════════════════════════════════════════════════════════════
+"Dragonborn" = "Sangre de Dragón"
+"Dovahkiin" = "Dovahkiin"
+"Shout" = "Grito"
+"Word of Power" = "Palabra de Poder"
+"Word Wall" = "Muro de Palabras"
+"Dragon Soul" = "Alma de Dragón"
+"Thu'um" = "Thu'um"
+"Daedric" = "Daédrico"
+"Daedra" = "Daedra"
+"Aedra" = "Aedra"
+"Dwemer" = "Dwemer"
+"Akaviri" = "Akaviri"
+"Septim" = "Septim"
+
+# ═══════════════════════════════════════════════════════════════
+# CONSUMIBLES Y OBJETOS
+# ═══════════════════════════════════════════════════════════════
+"Skooma" = "Skooma"
+"Moon Sugar" = "Azúcar de Luna"
+"Sweetroll" = "Bollo dulce"
+"Mead" = "Hidromiel"
+"Black-Briar Mead" = "Hidromiel Zarza Negra"
+"Honningbrew Mead" = "Hidromiel Honningbrew"
+"Alto Wine" = "Vino Alto"
+"Soul Gem" = "Gema del Alma"
+"Black Soul Gem" = "Gema del Alma Negra"
+"Grand Soul Gem" = "Gran Gema del Alma"
+"Azura's Star" = "Estrella de Azura"
+"Black Star" = "Estrella Negra"
+"Elder Scroll" = "Pergamino de los Ancestros"
+"Lockpick" = "Ganzúa"
+"Dragon Bone" = "Hueso de dragón"
+"Dragon Scale" = "Escama de dragón"
+
+# ═══════════════════════════════════════════════════════════════
+# HABILIDADES Y PIEDRAS
+# ═══════════════════════════════════════════════════════════════
+"One-Handed" = "Una mano"
+"Two-Handed" = "Dos manos"
+"Archery" = "Tiro con arco"
+"Block" = "Bloqueo"
+"Heavy Armor" = "Armadura pesada"
+"Light Armor" = "Armadura ligera"
+"Smithing" = "Herrería"
+"Enchanting" = "Encantamiento"
+"Alchemy" = "Alquimia"
+"Speech" = "Elocuencia"
+"Pickpocket" = "Carterismo"
+"Lockpicking" = "Abrir cerraduras"
+"Sneak" = "Sigilo"
+"Conjuration" = "Conjuración"
+"Destruction" = "Destrucción"
+"Illusion" = "Ilusión"
+"Restoration" = "Restauración"
+"Alteration" = "Alteración"
+"Guardian Stone" = "Piedra Guardiana"
+"Standing Stone" = "Piedra Erguida"
+
+# ═══════════════════════════════════════════════════════════════
+# MATERIALES DE EQUIPO
+# ═══════════════════════════════════════════════════════════════
+"Iron" = "Hierro"
+"Steel" = "Acero"
+"Dwarven" = "Enano"
+"Elven" = "Élfico"
+"Orcish" = "Orco"
+"Glass" = "Cristal"
+"Ebony" = "Ébano"
+"Dragonplate" = "Placa de dragón"
+"Dragonscale" = "Escama de dragón"
+"Stalhrim" = "Stahlrim"
+"Nordic" = "Nórdico"
+
+# ═══════════════════════════════════════════════════════════════
+# LUGARES IMPORTANTES
+# ═══════════════════════════════════════════════════════════════
+"Skyrim" = "Skyrim"
+"Sovngarde" = "Sovngarde"
+"Blackreach" = "Abismo Negro"
+"Soul Cairn" = "Túmulo de Almas"
+"Apocrypha" = "Apócrifo"
+"High Hrothgar" = "Alto Hrothgar"
+"Throat of the World" = "Garganta del Mundo"
+"Bleak Falls Barrow" = "Túmulo de Caídas Lúgubres"
+"Labyrinthian" = "Laberintia"
+"Ustengrav" = "Ustengrav"
+"Skuldafn" = "Skuldafn"
+"Forgotten Vale" = "Valle Olvidado"
+"Castle Volkihar" = "Castillo Volkihar"
+"Fort Dawnguard" = "Fuerte Guardia del Alba"
+
+# ═══════════════════════════════════════════════════════════════
+# PERSONAJES IMPORTANTES
+# ═══════════════════════════════════════════════════════════════
+"Alduin" = "Alduin"
+"Paarthurnax" = "Paarthurnax"
+"Miraak" = "Miraak"
+"Harkon" = "Harkon"
+"Ulfric Stormcloak" = "Ulfric Capa de la Tormenta"
+"General Tullius" = "General Tullius"
+"Jarl Balgruuf" = "Jarl Balgruuf"
+"Delphine" = "Delphine"
+"Esbern" = "Esbern"
+"Serana" = "Serana"
+"Hermaeus Mora" = "Hermaeus Mora"

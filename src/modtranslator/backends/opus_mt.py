@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -229,7 +228,7 @@ class OpusMTBackend(TranslationBackend):
         key = (source, target)
         self._ensure_model(source, target)
         model_name = self._model_name(source, target)
-        ct2_dir = str(self._ct2_model_dir(model_name))
+        ct2_dir = str(self._get_ct2_dir(model_name))
         self._translators[key] = ctranslate2.Translator(
             ct2_dir, device="cpu", compute_type="int8",
             inter_threads=_INTER_THREADS,
@@ -414,7 +413,7 @@ class OpusMTBackend(TranslationBackend):
             from transformers import AutoTokenizer
 
             model_name = self._model_name(source, target)
-            ct2_dir = self._ct2_model_dir(model_name)
+            ct2_dir = self._get_ct2_dir(model_name)
 
             self._translators[key] = ctranslate2.Translator(
                 str(ct2_dir),
@@ -447,6 +446,14 @@ class OpusMTBackend(TranslationBackend):
         short_name = model_name.split("/")[-1]
         return self._models_dir / f"{short_name}-ct2-{self._compute_type}"
 
+    def _find_existing_ct2(self, model_name: str) -> Path | None:
+        """Find an existing CT2 conversion in any quantization format."""
+        short_name = model_name.split("/")[-1]
+        for candidate in self._models_dir.glob(f"{short_name}-ct2-*"):
+            if (candidate / "model.bin").exists():
+                return candidate
+        return None
+
     def _ensure_model(self, source: str, target: str) -> None:
         model_name = self._model_name(source, target)
         ct2_dir = self._ct2_model_dir(model_name)
@@ -454,33 +461,40 @@ class OpusMTBackend(TranslationBackend):
         if (ct2_dir / "model.bin").exists():
             return
 
+        # Check if a conversion exists in a different quantization format
+        existing = self._find_existing_ct2(model_name)
+        if existing is not None:
+            # Reuse existing conversion (e.g. float16 when int8 is requested)
+            self._ct2_model_dir_override = existing
+            return
+
         self._convert_model(model_name, ct2_dir)
+
+    def _get_ct2_dir(self, model_name: str) -> Path:
+        """Get the actual CT2 model directory (respects overrides)."""
+        override = getattr(self, "_ct2_model_dir_override", None)
+        if override is not None:
+            return override
+        return self._ct2_model_dir(model_name)
 
     def _convert_model(self, model_name: str, output_dir: Path) -> None:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         try:
-            subprocess.run(
-                [
-                    sys.executable,
-                    "-m",
-                    "ctranslate2.converters.transformers",
-                    "--model",
-                    model_name,
-                    "--output_dir",
-                    str(output_dir),
-                    "--quantization",
-                    self._compute_type,
-                    "--force",
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
+            # Use Python API instead of subprocess to avoid re-launching
+            # the PyInstaller exe as a child process.
+            from ctranslate2.converters.transformers import TransformersConverter
+
+            converter = TransformersConverter(model_name, low_cpu_mem_usage=True)
+            converter.convert(
+                str(output_dir),
+                quantization=self._compute_type,
+                force=True,
             )
-        except subprocess.CalledProcessError as e:
+        except Exception as e:
             # Clean up partial conversion
             if output_dir.exists():
                 shutil.rmtree(output_dir)
             raise RuntimeError(
-                f"Failed to convert model {model_name}: {e.stderr}"
+                f"Failed to convert model {model_name}: {e}"
             ) from e

@@ -51,6 +51,14 @@ _FULL_ALLOWED_RECORDS: set[bytes] = {
     b"TERM",  # Terminal — crosshair prompt, terminal header
     b"WEAP",  # Weapon — Pip-Boy inventory
     b"WRLD",  # Worldspace — Pip-Boy world map header
+    # Skyrim-specific record types
+    b"FLOR",  # Flora — "Harvest X" crosshair prompt
+    b"SCRL",  # Scroll — inventory
+    b"SLGM",  # Soul Gem — inventory
+    b"TREE",  # Tree — harvestable, crosshair prompt
+    b"WOOP",  # Word of Power — Word Wall display
+    b"SHOU",  # Shout — Shout menu
+    b"LCTN",  # Location — HUD location display
 }
 
 # Mapping: subrecord_type → set of record types where it's translatable.
@@ -63,11 +71,14 @@ _TRANSLATABLE_MAP: dict[bytes, set[bytes]] = {
         b"ENCH", b"MGEF", b"LSCR", b"QUST", b"TERM",
     },
     b"NAM1": {b"INFO"},  # Dialog response text
-    b"RNAM": {b"INFO", b"TERM"},  # Dialog prompt / terminal menu text
+    b"RNAM": {b"INFO", b"TERM", b"ACTI"},  # Dialog prompt / terminal menu / activator prompt
     b"TNAM": {b"NOTE"},  # Note/holotape text
     b"NNAM": {b"QUST"},  # Quest objective text
     b"ITXT": {b"MESG"},  # Message button text
     b"CNAM": {b"QUST"},  # Quest stage log entry
+    # Skyrim-specific subrecords
+    b"DNAM": {b"WOOP"},  # Word of Power text
+    b"SHRT": {b"SHOU", b"NPC_"},  # Short name of Shout / NPC short name
 }
 
 # Subrecord types that should NEVER be translated

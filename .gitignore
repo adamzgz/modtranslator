@@ -41,12 +41,8 @@ desktop.ini
 # modtranslator cache (user data, not repo)
 .modtranslator/
 
-# Claude session data
-.claude/
-
-# Internal technical notes and dev context (not for public repo)
+# Internal dev notes and local config (not for public repo)
 NOTAS_TECNICAS.md
-CLAUDE.md
 
 # Game data and translation output (not tracked)
 fallout3_backup/

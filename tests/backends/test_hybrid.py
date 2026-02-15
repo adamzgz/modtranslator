@@ -181,9 +181,9 @@ class TestHybridCLI:
     def test_cli_creates_hybrid_backend(self):
         """Verify _create_backend handles 'hybrid' backend name."""
         with patch(_PATCH_OPUS), patch(_PATCH_NLLB):
-            from modtranslator.cli import _create_backend
+            from modtranslator.pipeline import create_backend
 
-            backend, label = _create_backend("hybrid", device="cpu")
+            backend, label = create_backend("hybrid", device="cpu")
 
             assert isinstance(backend, HybridBackend)
             assert label == "hybrid:tc-big+nllb"
