@@ -6,7 +6,32 @@ Traduce archivos ESP/ESM, scripts PEX y archivos MCM de forma completamente offl
 
 > **Probado con los 3 juegos soportados.** Fallout 3 (124 archivos, ~97K strings), Fallout: New Vegas (244 archivos, ~142K strings) y Skyrim SE/AE (542 archivos, ~128K strings + 2.302 scripts PEX + MCM) — todos funcionan correctamente con los mods traducidos.
 
----
+## Por qué
+
+Miles de mods en Nexus están solo en inglés. Las herramientas existentes como xTranslator requieren trabajo manual string por string, o importar traducciones hechas por otros que muchas veces no existen. No había ninguna solución para traducir mods de forma masiva y offline.
+
+Yo quería jugar con mods sin tener la mitad de los textos en español y la otra mitad en inglés. Así que construí una.
+
+## Tech Stack
+
+| Capa | Tecnologías |
+|------|-------------|
+| **Core** | Python, parseo binario (struct), zlib |
+| **ML/NLP** | CTranslate2, Helsinki-NLP Opus-MT, Meta NLLB-200, SentencePiece |
+| **Backend** | SQLite (cache), TOML (glosarios), DeepL API |
+| **GUI** | CustomTkinter, threading |
+| **CLI** | Typer |
+| **Build** | PyInstaller, Hatchling |
+| **Testing** | pytest (~84% cobertura), ruff, mypy strict |
+| **GPU** | NVIDIA CUDA (opcional) |
+
+## Resultados
+
+| Juego | Archivos | Strings | Errores | Juego funcional |
+|-------|----------|---------|---------|-----------------|
+| Fallout 3 | 124 ESP/ESM | ~97K | 0 | Sí |
+| Fallout: New Vegas | 244 ESP/ESM | ~142K | 0 | Sí |
+| Skyrim SE/AE | 542 ESP/ESM + 2.302 PEX + MCM | ~128K | 0 | Sí |
 
 ## Características
 
@@ -15,27 +40,10 @@ Traduce archivos ESP/ESM, scripts PEX y archivos MCM de forma completamente offl
 - **Restaurar backup** — un click para volver a los archivos originales
 - **GUI incluida** — interfaz gráfica con CustomTkinter, sin necesidad de terminal
 - **CLI completa** — para usuarios avanzados y automatización
-- **3 juegos soportados** — Fallout 3, Fallout: New Vegas, Skyrim SE/AE
 - **3 tipos de archivo** — ESP/ESM (plugins), PEX (scripts de Papyrus), MCM (menús de configuración)
 - **5 backends de traducción** — desde modelos offline hasta APIs cloud
 - **Cache de traducciones** — no retraduce strings ya procesados
 - **Glosarios por juego** — protege terminología oficial (Refugio, Estimulante, Sanguinario...)
-
-## Juegos Soportados
-
-| Juego | Estado | Tipos de archivo |
-|-------|--------|------------------|
-| **Fallout 3** | Probado — 124 archivos, ~97K strings | ESP/ESM |
-| **Fallout: New Vegas** | Probado — 244 archivos, ~142K strings | ESP/ESM |
-| **Skyrim SE/AE** | Probado — 542 archivos, ~128K strings + 2.302 PEX + MCM | ESP/ESM, PEX, MCM |
-
-## Resultados
-
-| Juego | Archivos | Strings | Errores | Juego funcional |
-|-------|----------|---------|---------|-----------------|
-| Fallout 3 | 124 | ~97K | 0 | Sí |
-| Fallout: New Vegas | 244 | ~142K | 0 | Sí |
-| Skyrim SE/AE | 542 + 2.302 PEX + MCM | ~128K | 0 | Sí |
 
 ## GUI
 
@@ -139,6 +147,29 @@ Archivo ESP/ESM (binario, codificación Windows-1252)
 7. ESCRIBIR ───────── Serializar árbol con tamaños recalculados → ESP/ESM válido
 ```
 
+### Pipeline Batch
+
+El comando `batch` ejecuta tres fases secuenciales para traducir carpetas enteras:
+
+```
+Fase 1: PREPARAR — parsear, extraer, filtrar, proteger (por archivo)
+Fase 2: TRADUCIR — deduplicar entre archivos, traducir strings únicos en chunks
+Fase 3: ESCRIBIR — restaurar placeholders, parchear subrecords, guardar archivos
+```
+
+Las fases son secuenciales porque Fallout 3 determina el orden de carga de mods por timestamp de archivo — escrituras en paralelo darían timestamps idénticos y corromperían el orden de carga.
+
+Para archivos de más de 150 MB (como Fallout3.esm con ~280 MB), se usa una estrategia de doble parseo: parsear → extraer → liberar plugin de memoria → traducir → re-parsear → parchear → escribir. Esto evita tener el árbol del plugin (~2 GB) y el modelo ML (~2 GB) en RAM a la vez.
+
+## Decisiones Técnicas
+
+- **Subrecords mutables**: `Subrecord.data` es `bytearray` — el patcher modifica in-place sin copias
+- **Tamaños calculados**: `Subrecord.size` es una property (`len(self.data)`) — se actualiza automáticamente al mutar
+- **Serialización bottom-up**: el writer recalcula todos los tamaños desde el árbol de records, así los strings traducidos de diferente longitud siempre producen archivos válidos
+- **Placeholders compactos**: `Gx{i}` tokeniza como 3 tokens SentencePiece (vs 6+ con formatos más largos), logrando 100% de supervivencia a través de los pipelines de traducción neuronal
+- **Cadena de encoding**: cp1252 → UTF-8 → latin-1 fallback para bytes edge-case (0x90, 0x8D, 0x9D)
+- **String tables de Skyrim**: las 3 tablas (.STRINGS, .DLSTRINGS, .ILSTRINGS) se fusionan en un solo diccionario por StringID único — lookup O(1) durante el parcheo
+
 ## Glosarios por Juego
 
 Glosarios TOML que protegen la terminología oficial de Bethesda:
@@ -195,7 +226,20 @@ glossaries/                 Archivos TOML de terminología por juego
 tests/                      378 tests, ~84% cobertura
 ```
 
+### Formato Binario TES4
+
+El parser maneja el formato de plugins TES4 usado por los motores Gamebryo/Creation Engine:
+
+- **Cabecera de Record**: `Type(4) + DataSize(4) + Flags(4) + FormID(4) + VCS1(4) + VCS2(4)` — 24 bytes
+- **Subrecord**: `Type(4) + Size(2, uint16) + Data(N)`
+- **Group (GRUP)**: cabecera de 24 bytes, `GroupSize` incluye la propia cabecera
+- **Strings**: null-terminated, codificación Windows-1252
+- **Records comprimidos**: flag `0x00040000`, payload = `decompressed_size(4) + zlib`
+- **Detección de juego**: float de versión en subrecord HEDR (0.94 = FO3/FNV, 1.70 = Skyrim)
+
 ## Tests
+
+378 tests cubriendo el pipeline completo:
 
 ```bash
 pytest              # con cobertura
@@ -203,6 +247,12 @@ pytest --no-cov     # más rápido
 ruff check src/     # lint
 mypy src/           # type check
 ```
+
+- **Roundtrip binario**: `parse(write(parse(file)))` preserva los datos byte a byte
+- **Todos los backends**: dependencias mockeadas, selección de dispositivo, variantes de modelo
+- **Robustez del parser**: archivos vacíos, cabeceras truncadas, zlib corrupto, subrecords de longitud cero
+- **Integración CLI**: Typer CliRunner, pipeline batch, modos verbose/quiet, aislamiento de errores
+- **Stress tests**: archivos de 500 records a través del pipeline completo
 
 ## Requisitos
 
@@ -215,7 +265,6 @@ mypy src/           # type check
 Este proyecto está bajo la licencia MIT.
 
 ---
----
 
 # modtranslator (English)
 
@@ -225,6 +274,33 @@ Translates ESP/ESM files, PEX scripts, and MCM files completely offline using ne
 
 > **Tested on all 3 supported games.** Fallout 3 (124 files, ~97K strings), Fallout: New Vegas (244 files, ~142K strings) and Skyrim SE/AE (542 files, ~128K strings + 2,302 PEX scripts + MCM) — all games work correctly with translated mods.
 
+## Why
+
+Thousands of mods on Nexus are English-only. Existing tools like xTranslator require manual per-string work or importing pre-made translations that often don't exist. There was no automated solution for mass-translating mod files offline.
+
+I wanted to play modded games without half the text in Spanish and the other half in English. So I built one.
+
+## Tech Stack
+
+| Layer | Technologies |
+|-------|-------------|
+| **Core** | Python, binary parsing (struct), zlib |
+| **ML/NLP** | CTranslate2, Helsinki-NLP Opus-MT, Meta NLLB-200, SentencePiece |
+| **Backend** | SQLite (cache), TOML (glossaries), DeepL API |
+| **GUI** | CustomTkinter, threading |
+| **CLI** | Typer |
+| **Build** | PyInstaller, Hatchling |
+| **Testing** | pytest (~84% coverage), ruff, mypy strict |
+| **GPU** | NVIDIA CUDA (optional) |
+
+## Results
+
+| Game | Files | Strings | Errors | Game functional |
+|------|-------|---------|--------|-----------------|
+| Fallout 3 | 124 ESP/ESM | ~97K | 0 | Yes |
+| Fallout: New Vegas | 244 ESP/ESM | ~142K | 0 | Yes |
+| Skyrim SE/AE | 542 ESP/ESM + 2,302 PEX + MCM | ~128K | 0 | Yes |
+
 ## Features
 
 - **In-place translation** — translates directly in the game's Data/ folder
@@ -232,19 +308,10 @@ Translates ESP/ESM files, PEX scripts, and MCM files completely offline using ne
 - **Restore backup** — one click to revert to original files
 - **GUI included** — graphical interface with CustomTkinter, no terminal needed
 - **Full CLI** — for advanced users and automation
-- **3 supported games** — Fallout 3, Fallout: New Vegas, Skyrim SE/AE
 - **3 file types** — ESP/ESM (plugins), PEX (Papyrus scripts), MCM (configuration menus)
 - **5 translation backends** — from offline models to cloud APIs
 - **Translation cache** — skips previously translated strings
 - **Per-game glossaries** — protects official terminology
-
-## Supported Games
-
-| Game | Status | File types |
-|------|--------|------------|
-| **Fallout 3** | Tested — 124 files, ~97K strings | ESP/ESM |
-| **Fallout: New Vegas** | Tested — 244 files, ~142K strings | ESP/ESM |
-| **Skyrim SE/AE** | Tested — 542 files, ~128K strings + 2,302 PEX + MCM | ESP/ESM, PEX, MCM |
 
 ## GUI
 
@@ -348,6 +415,29 @@ ESP/ESM file (binary, Windows-1252 encoded)
 7. WRITE ─────────── Serialize tree with recalculated sizes → valid ESP/ESM
 ```
 
+### Batch Pipeline
+
+The `batch` command runs three sequential phases to translate entire game folders:
+
+```
+Phase 1: PREPARE — parse, extract, filter, protect (per file)
+Phase 2: TRANSLATE — deduplicate across files, translate unique strings in chunks
+Phase 3: WRITE — restore placeholders, patch subrecords, save files
+```
+
+All phases are sequential. Fallout 3 determines mod load order from file timestamps — parallel writes would give files identical NTFS timestamps, scrambling the load order and causing crashes.
+
+For files over 150 MB (like Fallout3.esm at ~280 MB), the pipeline uses a double-parse strategy: parse → extract → free plugin from memory → translate → re-parse → patch → write. This avoids holding both the plugin tree (~2 GB) and the ML model (~2 GB) in RAM simultaneously.
+
+## Key Design Decisions
+
+- **Mutable subrecords**: `Subrecord.data` is `bytearray` — the patcher modifies in-place with zero copies
+- **Computed sizes**: `Subrecord.size` is a property (`len(self.data)`) — auto-updates on mutation
+- **Bottom-up serialization**: the writer recalculates all sizes from the record tree, so translated strings of different length always produce valid files
+- **Compact placeholders**: `Gx{i}` tokenizes as 3 SentencePiece tokens (vs 6+ for longer formats), achieving 100% survival through neural MT pipelines
+- **Encoding chain**: cp1252 → UTF-8 → latin-1 fallback for edge-case bytes (0x90, 0x8D, 0x9D)
+- **Skyrim string tables**: all 3 tables (.STRINGS, .DLSTRINGS, .ILSTRINGS) are merged into a single dictionary by unique StringID — O(1) lookup during patching
+
 ## Per-Game Glossaries
 
 TOML glossaries protect official Bethesda terminology from machine translation:
@@ -367,7 +457,57 @@ TOML glossaries protect official Bethesda terminology from machine translation:
 | `falloutnv_es.toml` | Mojave Wasteland | NCR→RNC, Mr. House→Sr. House, Yes Man→Servibot |
 | `skyrim_es.toml` | Skyrim | Dovahkiin, Whiterun→Carrera Blanca, Stormcloaks→Capas de la Tormenta |
 
+## Architecture
+
+```
+src/modtranslator/
+├── cli.py                  Typer CLI, batch pipeline (3-phase sequential)
+├── pipeline.py             Shared CLI/GUI logic
+├── core/                   Binary ESP/ESM + PEX parser/writer
+│   ├── parser.py             bytes → Record tree (TES4 format)
+│   ├── writer.py             Record tree → bytes (bottom-up size recalc)
+│   ├── records.py            Dataclasses: Subrecord, Record, GroupRecord, PluginFile
+│   ├── string_table.py       Skyrim external string tables (.STRINGS/.DLSTRINGS/.ILSTRINGS)
+│   ├── pex_parser.py         Papyrus PEX script parser
+│   └── plugin.py             Facade: load_plugin / save_plugin
+├── backends/               Translation backends (TranslationBackend ABC)
+│   ├── opus_mt.py            Helsinki-NLP + CTranslate2 (base + tc-big)
+│   ├── nllb.py               Meta NLLB-200 + CTranslate2 (600M/1.3B)
+│   ├── hybrid.py             tc-big (short) + NLLB (long) routing
+│   ├── deepl.py              DeepL API
+│   └── dummy.py              Test backend: prefixes [XX]
+├── translation/            String extraction, filtering, and patching
+│   ├── extractor.py          Record tree → list[TranslatableString]
+│   ├── registry.py           (record_type, sub_type) → translatable?
+│   ├── glossary.py           TOML glossaries + Gx{i} placeholder system
+│   ├── spanish_protect.py    Spanish word protection with Cx{i} placeholders
+│   ├── lang_detect.py        4-layer language detection heuristic
+│   ├── patcher.py            Apply translations to subrecord bytearrays
+│   └── cache.py              SQLite translation cache (~/.modtranslator/)
+├── gui/                    CustomTkinter GUI
+│   ├── app.py                Main window, selective backup, in-place translation
+│   ├── worker.py             Background thread worker
+│   └── model_manager.py      GPU detection and model management
+└── data/                   Spanish dictionary (~2,100 words)
+
+glossaries/                 Per-game TOML terminology files
+tests/                      378 tests, ~84% coverage
+```
+
+### TES4 Binary Format
+
+The parser handles the TES4 plugin format used by Gamebryo/Creation Engine games:
+
+- **Record Header**: `Type(4) + DataSize(4) + Flags(4) + FormID(4) + VCS1(4) + VCS2(4)` — 24 bytes
+- **Subrecord**: `Type(4) + Size(2, uint16) + Data(N)`
+- **Group (GRUP)**: 24-byte header, `GroupSize` includes the header itself
+- **Strings**: null-terminated, Windows-1252 encoding
+- **Compressed records**: flag `0x00040000`, payload = `decompressed_size(4) + zlib`
+- **Game detection**: HEDR subrecord version float (0.94 = FO3/FNV, 1.70 = Skyrim)
+
 ## Tests
+
+378 tests covering the full pipeline:
 
 ```bash
 pytest              # with coverage
@@ -375,6 +515,12 @@ pytest --no-cov     # faster
 ruff check src/     # lint
 mypy src/           # type check
 ```
+
+- **Binary roundtrip**: `parse(write(parse(file)))` preserves data byte-for-byte
+- **All backends**: mocked dependencies, device selection, model variants
+- **Parser robustness**: empty files, truncated headers, corrupt zlib, zero-length subrecords
+- **CLI integration**: Typer CliRunner, batch pipeline, verbose/quiet modes, error isolation
+- **Stress tests**: 500-record files through full parse → extract → translate → roundtrip
 
 ## Requirements
 
