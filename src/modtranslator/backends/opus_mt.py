@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -492,10 +491,10 @@ class OpusMTBackend(TranslationBackend):
                 quantization=self._compute_type,
                 force=True,
             )
-        except subprocess.CalledProcessError as e:
+        except Exception as e:
             # Clean up partial conversion
             if output_dir.exists():
                 shutil.rmtree(output_dir)
             raise RuntimeError(
-                f"Failed to convert model {model_name}: {e.stderr}"
+                f"Failed to convert model {model_name}: {e}"
             ) from e
