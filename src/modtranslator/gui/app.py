@@ -1,7 +1,8 @@
 """ModTranslator GUI - Main application window.
 
-Single-view interface: select input folder, output folder, click translate.
+Single-view interface: select Data/ folder, click translate (in-place).
 Auto-detects ESP/ESM, PEX, and MCM files and translates everything.
+Backs up only the files that will be modified before translating.
 """
 
 from __future__ import annotations
@@ -223,9 +224,9 @@ class ModTranslatorApp(ctk.CTk):
 
         # ── Carpetas ──
         self.input_folder = FolderSelector(
-            main, "Carpeta entrada:",
+            main, "Carpeta Data/:",
             self.settings.get("input_dir", ""),
-            placeholder="Selecciona donde están tus mods...",
+            placeholder="Selecciona la carpeta Data/ del juego...",
             on_change=self._on_input_folder_change,
         )
         self.input_folder.grid(row=row, column=0, sticky="ew", padx=10, pady=2)
@@ -233,14 +234,6 @@ class ModTranslatorApp(ctk.CTk):
 
         self.scan_label = ctk.CTkLabel(main, text="", font=ctk.CTkFont(size=12))
         self.scan_label.grid(row=row, column=0, sticky="w", padx=15, pady=(0, 2))
-        row += 1
-
-        self.output_folder = FolderSelector(
-            main, "Carpeta salida:",
-            self.settings.get("output_dir", ""),
-            placeholder="Donde guardar los mods traducidos...",
-        )
-        self.output_folder.grid(row=row, column=0, sticky="ew", padx=10, pady=2)
         row += 1
 
         # ── Opciones ──
@@ -258,7 +251,8 @@ class ModTranslatorApp(ctk.CTk):
 
         motor_label = ctk.CTkLabel(opts, text="Motor de traducción:")
         motor_label.pack(side="left", padx=(0, 5))
-        has_gpu = detect_cuda()["available"]
+        # Use saved backend preference; GPU detection happens in Settings
+        has_gpu = self.settings.get("backend", "") == "Hybrid"
         self._backend_display_to_value = {
             "Híbrido (Recomendado con GPU)": "Hybrid",
             "Opus-MT (Recomendado sin GPU)": "Opus-MT",
@@ -346,7 +340,7 @@ class ModTranslatorApp(ctk.CTk):
         row += 1
 
         self.progress_label = ctk.CTkLabel(
-            main, text="Selecciona las carpetas y pulsa Traducir para empezar",
+            main, text="Selecciona la carpeta Data/ y pulsa Traducir para empezar",
             font=ctk.CTkFont(size=12),
         )
         self.progress_label.grid(row=row, column=0, sticky="w", padx=10)
@@ -411,13 +405,10 @@ class ModTranslatorApp(ctk.CTk):
 
     def _validate(self) -> bool:
         if not self.input_folder.path:
-            messagebox.showerror("Error", "Selecciona una carpeta de entrada.")
+            messagebox.showerror("Error", "Selecciona la carpeta Data/ del juego.")
             return False
         if not Path(self.input_folder.path).is_dir():
             messagebox.showerror("Error", f"Carpeta no existe: {self.input_folder.path}")
-            return False
-        if not self.output_folder.path:
-            messagebox.showerror("Error", "Selecciona una carpeta de salida.")
             return False
 
         backend_name = self._get_backend_name()
@@ -446,7 +437,6 @@ class ModTranslatorApp(ctk.CTk):
 
     def _save_current_settings(self) -> None:
         self.settings["input_dir"] = self.input_folder.path
-        self.settings["output_dir"] = self.output_folder.path
         self.settings["game"] = self.game_var.get()
         display = self.backend_var.get()
         self.settings["backend"] = self._backend_display_to_value.get(display, "Hybrid")
@@ -479,26 +469,42 @@ class ModTranslatorApp(ctk.CTk):
         self.log.append(f"Backend: {backend_label}")
 
         input_path = Path(self.input_folder.path)
-        output_path = Path(self.output_folder.path)
-        output_path.mkdir(parents=True, exist_ok=True)
 
-        # Backup automático
+        # Backup selectivo: solo archivos que se van a modificar
         backup_dir = _SETTINGS_DIR / "backups" / input_path.name
         try:
-            if backup_dir.exists():
-                shutil.rmtree(backup_dir)
-            shutil.copytree(input_path, backup_dir)
-            self.settings["last_backup"] = str(backup_dir)
-            self.settings["last_backup_source"] = str(input_path)
-            _save_settings(self.settings)
-            self.log.append(f"Backup guardado en: {backup_dir}")
+            scan = scan_directory(input_path)
+            files_to_backup: list[Path] = []
+            # ESP/ESM y PEX se sobreescriben in-place
+            files_to_backup.extend(scan.esp_files)
+            files_to_backup.extend(scan.pex_files)
+            # MCM y string tables crean archivos nuevos, no necesitan backup
+
+            if files_to_backup:
+                if backup_dir.exists():
+                    shutil.rmtree(backup_dir)
+                backup_dir.mkdir(parents=True, exist_ok=True)
+                for f in files_to_backup:
+                    rel = f.relative_to(input_path)
+                    dest = backup_dir / rel
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(f, dest)
+                self.settings["last_backup"] = str(backup_dir)
+                self.settings["last_backup_source"] = str(input_path)
+                _save_settings(self.settings)
+                self.log.append(
+                    f"Backup de {len(files_to_backup)} archivos en: {backup_dir}"
+                )
+            else:
+                self.log.append("Sin archivos ESP/ESM/PEX para respaldar")
         except Exception as e:
             self.log.append(f"Aviso: no se pudo crear backup: {e}")
 
+        # Traducir in-place: output_dir = input_path (sobreescribe originales)
         self.worker.start(
             batch_translate_all,
             directory=input_path,
-            output_dir=output_path,
+            output_dir=input_path,
             lang="ES",
             backend=backend,
             backend_label=backend_label,
@@ -523,21 +529,29 @@ class ModTranslatorApp(ctk.CTk):
                 "Se crea uno automáticamente cada vez que traduces.",
             )
             return
+
+        backup_path = Path(backup_dir)
+        backed_up_files = list(backup_path.rglob("*"))
+        backed_up_files = [f for f in backed_up_files if f.is_file()]
+
         confirm = messagebox.askyesno(
             "Restaurar backup",
-            f"Esto reemplazará el contenido de:\n{source_dir}\n\n"
-            f"Con el backup guardado antes de la última traducción.\n"
-            f"¿Continuar?",
+            f"Esto restaurará {len(backed_up_files)} archivos originales en:\n"
+            f"{source_dir}\n\n¿Continuar?",
         )
         if not confirm:
             return
         try:
             dest = Path(source_dir)
-            if dest.exists():
-                shutil.rmtree(dest)
-            shutil.copytree(backup_dir, dest)
-            self.log.append(f"Backup restaurado en: {dest}")
-            messagebox.showinfo("Restaurado", "Backup restaurado correctamente.")
+            restored = 0
+            for f in backed_up_files:
+                rel = f.relative_to(backup_path)
+                target = dest / rel
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(f, target)
+                restored += 1
+            self.log.append(f"Restaurados {restored} archivos en: {dest}")
+            messagebox.showinfo("Restaurado", f"{restored} archivos restaurados correctamente.")
         except Exception as e:
             messagebox.showerror("Error", f"Error restaurando backup:\n{e}")
 
@@ -636,49 +650,26 @@ class SettingsWindow(ctk.CTkToplevel):
             font=ctk.CTkFont(size=14, weight="bold"),
         ).pack(anchor="w", padx=10, pady=(10, 5))
 
-        cuda_info = detect_cuda()
-        if cuda_info["available"]:
-            gpu_text = f"GPU detectada: {cuda_info['gpu_name']}"
-            gpu_color = "#28a745"
-        else:
-            gpu_text = "No se detecta GPU CUDA (se usara CPU)"
-            gpu_color = "#ffc107"
-
-        ctk.CTkLabel(gpu_frame, text=gpu_text, text_color=gpu_color).pack(
-            anchor="w", padx=10, pady=(0, 10),
+        self._gpu_label = ctk.CTkLabel(
+            gpu_frame, text="Detectando GPU...", text_color="gray",
         )
+        self._gpu_label.pack(anchor="w", padx=10, pady=(0, 10))
 
         # ── Models ──
-        models_frame = ctk.CTkFrame(self)
-        models_frame.grid(row=row, column=0, sticky="ew", padx=10, pady=5)
-        models_frame.grid_columnconfigure(1, weight=1)
+        self._models_frame = ctk.CTkFrame(self)
+        self._models_frame.grid(row=row, column=0, sticky="ew", padx=10, pady=5)
+        self._models_frame.grid_columnconfigure(1, weight=1)
         row += 1
 
         ctk.CTkLabel(
-            models_frame, text="Modelos ML",
+            self._models_frame, text="Modelos ML",
             font=ctk.CTkFont(size=14, weight="bold"),
         ).grid(row=0, column=0, columnspan=3, sticky="w", padx=10, pady=(10, 5))
 
-        models = get_model_status()
-        for i, model in enumerate(models):
-            status = "Descargado" if model.is_downloaded else "No descargado"
-            color = "#28a745" if model.is_downloaded else "#dc3545"
-
-            ctk.CTkLabel(
-                models_frame, text=f"{model.name} ({model.size_hint})",
-            ).grid(row=i + 1, column=0, sticky="w", padx=10, pady=2)
-
-            ctk.CTkLabel(
-                models_frame, text=status, text_color=color,
-            ).grid(row=i + 1, column=1, sticky="w", padx=5, pady=2)
-
-            if not model.is_downloaded:
-                ctk.CTkButton(
-                    models_frame, text="Descargar", width=80,
-                    command=lambda m=model: self._download(m),
-                ).grid(row=i + 1, column=2, padx=10, pady=2)
-
-        ctk.CTkLabel(models_frame, text="").grid(row=len(models) + 1, column=0, pady=(0, 5))
+        self._models_loading = ctk.CTkLabel(
+            self._models_frame, text="Comprobando modelos...", text_color="gray",
+        )
+        self._models_loading.grid(row=1, column=0, sticky="w", padx=10, pady=5)
 
         # ── Cache ──
         cache_frame = ctk.CTkFrame(self)
@@ -690,15 +681,15 @@ class SettingsWindow(ctk.CTkToplevel):
             font=ctk.CTkFont(size=14, weight="bold"),
         ).pack(anchor="w", padx=10, pady=(10, 5))
 
-        info = get_cache_info()
         self.cache_label = ctk.CTkLabel(
-            cache_frame, text=f"Traducciones en cache: {info['count']}",
+            cache_frame, text="Comprobando cache...", text_color="gray",
         )
         self.cache_label.pack(anchor="w", padx=10)
 
-        ctk.CTkLabel(
-            cache_frame, text=f"Ubicacion: {info['path']}", text_color="gray",
-        ).pack(anchor="w", padx=10, pady=(0, 5))
+        self._cache_path_label = ctk.CTkLabel(
+            cache_frame, text="", text_color="gray",
+        )
+        self._cache_path_label.pack(anchor="w", padx=10, pady=(0, 5))
 
         ctk.CTkButton(
             cache_frame, text="Limpiar cache", width=120,
@@ -726,6 +717,59 @@ class SettingsWindow(ctk.CTkToplevel):
             api_frame, text="Guardar", width=80,
             command=self._save_api_key,
         ).grid(row=1, column=1, padx=(5, 10), pady=(0, 5))
+
+        # Load heavy data in background thread
+        threading.Thread(target=self._load_settings_data, daemon=True).start()
+
+    def _load_settings_data(self) -> None:
+        """Load GPU, model, and cache info in background."""
+        cuda_info = detect_cuda()
+        models = get_model_status()
+        cache_info = get_cache_info()
+        self.after(0, lambda: self._populate_settings(cuda_info, models, cache_info))
+
+    def _populate_settings(
+        self, cuda_info: dict, models: list, cache_info: dict,
+    ) -> None:
+        """Populate settings UI with loaded data (runs on main thread)."""
+        # GPU
+        if cuda_info["available"]:
+            self._gpu_label.configure(
+                text=f"GPU detectada: {cuda_info['gpu_name']}",
+                text_color="#28a745",
+            )
+        else:
+            self._gpu_label.configure(
+                text="No se detecta GPU CUDA (se usara CPU)",
+                text_color="#ffc107",
+            )
+
+        # Models
+        self._models_loading.destroy()
+        for i, model in enumerate(models):
+            status = "Descargado" if model.is_downloaded else "No descargado"
+            color = "#28a745" if model.is_downloaded else "#dc3545"
+
+            ctk.CTkLabel(
+                self._models_frame, text=f"{model.name} ({model.size_hint})",
+            ).grid(row=i + 1, column=0, sticky="w", padx=10, pady=2)
+
+            ctk.CTkLabel(
+                self._models_frame, text=status, text_color=color,
+            ).grid(row=i + 1, column=1, sticky="w", padx=5, pady=2)
+
+            if not model.is_downloaded:
+                ctk.CTkButton(
+                    self._models_frame, text="Descargar", width=80,
+                    command=lambda m=model: self._download(m),
+                ).grid(row=i + 1, column=2, padx=10, pady=2)
+
+        # Cache
+        self.cache_label.configure(
+            text=f"Traducciones en cache: {cache_info['count']}",
+            text_color=("white", "white"),
+        )
+        self._cache_path_label.configure(text=f"Ubicacion: {cache_info['path']}")
 
     def _download(self, model: object) -> None:
         from modtranslator.gui.model_manager import ModelInfo

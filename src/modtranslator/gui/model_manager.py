@@ -43,17 +43,25 @@ def detect_cuda() -> dict[str, object]:
     except ImportError:
         pass
 
-    # Fallback: check nvidia-smi
-    try:
-        proc = subprocess.run(
-            ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
-            capture_output=True, text=True, timeout=5,
-        )
-        if proc.returncode == 0 and proc.stdout.strip():
-            result["available"] = True
-            result["gpu_name"] = proc.stdout.strip().split("\n")[0]
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass
+    # Fallback: check nvidia-smi (try common paths on Windows)
+    nvidia_smi_paths = ["nvidia-smi"]
+    if sys.platform == "win32":
+        nvidia_smi_paths.extend([
+            r"C:\Windows\System32\nvidia-smi.exe",
+            r"C:\Program Files\NVIDIA Corporation\NVSMI\nvidia-smi.exe",
+        ])
+    for nvidia_smi in nvidia_smi_paths:
+        try:
+            proc = subprocess.run(
+                [nvidia_smi, "--query-gpu=name", "--format=csv,noheader"],
+                capture_output=True, text=True, timeout=5,
+            )
+            if proc.returncode == 0 and proc.stdout.strip():
+                result["available"] = True
+                result["gpu_name"] = proc.stdout.strip().split("\n")[0]
+                break
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            continue
 
     return result
 
@@ -90,9 +98,9 @@ def get_model_status() -> list[ModelInfo]:
         ),
         ModelInfo(
             name="NLLB 1.3B (CTranslate2)",
-            description="michaelfeil/ct2fast-nllb-200-distilled-1.3B",
+            description="facebook/nllb-200-distilled-1.3B",
             size_hint="~2.5 GB",
-            is_downloaded=_check_model_exists("michaelfeil/ct2fast-nllb-200-distilled-1.3B"),
+            is_downloaded=_check_model_exists("facebook/nllb-200-distilled-1.3B"),
             required_for=["hybrid"],
         ),
     ]
@@ -152,7 +160,7 @@ def check_backend_ready(backend_name: str) -> tuple[bool, str]:
             import sentencepiece  # noqa: F401
         except ImportError:
             return False, "Faltan paquetes: pip install ctranslate2 sentencepiece transformers"
-        if not _check_model_exists("michaelfeil/ct2fast-nllb-200-distilled-1.3B"):
+        if not _check_model_exists("facebook/nllb-200-distilled-1.3B"):
             return False, "Modelo NLLB no descargado"
         return True, "Listo"
 
@@ -163,7 +171,7 @@ def check_backend_ready(backend_name: str) -> tuple[bool, str]:
         except ImportError:
             return False, "Faltan paquetes: pip install ctranslate2 sentencepiece transformers"
         opus_ok = _check_model_exists("Helsinki-NLP/opus-mt-tc-big-en-es")
-        nllb_ok = _check_model_exists("michaelfeil/ct2fast-nllb-200-distilled-1.3B")
+        nllb_ok = _check_model_exists("facebook/nllb-200-distilled-1.3B")
         if not opus_ok and not nllb_ok:
             return False, "Modelos Opus-MT y NLLB no descargados"
         if not opus_ok:

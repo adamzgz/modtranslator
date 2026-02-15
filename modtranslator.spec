@@ -60,12 +60,8 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
-        # Exclude heavy ML packages from base build (downloaded on demand)
+        # torch is ~2GB and not needed (ctranslate2 has its own CUDA bindings)
         'torch',
-        'ctranslate2',
-        'transformers',
-        'sentencepiece',
-        'huggingface_hub',
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
