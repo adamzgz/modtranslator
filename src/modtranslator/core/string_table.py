@@ -188,9 +188,9 @@ def load_string_tables(
     table_set = StringTableSet()
 
     type_map = {
-        StringTableType.STRINGS: "strings",
-        StringTableType.DLSTRINGS: "dlstrings",
-        StringTableType.ILSTRINGS: "ilstrings",
+        StringTableType.STRINGS: "STRINGS",
+        StringTableType.DLSTRINGS: "DLSTRINGS",
+        StringTableType.ILSTRINGS: "ILSTRINGS",
     }
     attr_map = {
         StringTableType.STRINGS: "strings",
@@ -210,13 +210,16 @@ def load_string_tables(
                 setattr(table_set, attr_name, table)
                 found = True
                 break
-            # Try case-insensitive match
-            filepath_upper = search_dir / filename.upper()
-            if filepath_upper.exists():
-                raw = filepath_upper.read_bytes()
-                table = parse_string_table(raw, tt)
-                setattr(table_set, attr_name, table)
-                found = True
+            # Try case variations (Linux is case-sensitive)
+            for variant in (filename.upper(), filename.lower()):
+                filepath_alt = search_dir / variant
+                if filepath_alt.exists():
+                    raw = filepath_alt.read_bytes()
+                    table = parse_string_table(raw, tt)
+                    setattr(table_set, attr_name, table)
+                    found = True
+                    break
+            if found:
                 break
         if not found:
             logger.warning("String table file not found: %s", filename)

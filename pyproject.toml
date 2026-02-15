@@ -69,6 +69,7 @@ addopts = "--cov=modtranslator --cov-report=term-missing"
 [tool.coverage.run]
 source = ["modtranslator"]
 branch = true
+omit = ["src/modtranslator/gui/*"]
 
 [tool.coverage.report]
 show_missing = true
