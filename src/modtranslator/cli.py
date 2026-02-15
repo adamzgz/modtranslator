@@ -1126,6 +1126,641 @@ def batch(
         console.print(err_table)
 
 
+@app.command(name="batch-pex")
+def batch_pex(
+    directory: Path = typer.Argument(
+        ..., help="Directory containing .pex script files.",
+    ),
+    lang: str = typer.Option(
+        "ES", "--lang", "-l", help="Target language code.",
+    ),
+    backend_name: str = typer.Option(
+        "deepl", "--backend", "-b",
+        help="Backend: deepl, opus-mt, nllb, hybrid, dummy.",
+    ),
+    model: str | None = typer.Option(
+        None, "--model", "-m",
+        help="Model: base/tc-big (Opus-MT), 600M/1.3B (NLLB).",
+    ),
+    device: str | None = typer.Option(
+        None, "--device",
+        help="Device for Opus-MT/NLLB: auto, cpu, cuda.",
+    ),
+    api_key: str | None = typer.Option(
+        None, "--api-key", "-k", envvar="DEEPL_API_KEY",
+    ),
+    output_dir: Path | None = typer.Option(
+        None, "--output-dir", "-O",
+        help="Output directory (keeps original filenames).",
+    ),
+    use_dummy: bool = typer.Option(False, "--dummy"),
+    no_cache: bool = typer.Option(
+        False, "--no-cache", help="Disable translation cache.",
+    ),
+    skip_translated: bool = typer.Option(
+        True, "--skip-translated/--no-skip-translated",
+        help="Skip strings already in target language.",
+    ),
+    glossary: Path | None = typer.Option(
+        None, "--glossary", "-g",
+    ),
+    game: GameChoice = typer.Option(
+        GameChoice.skyrim, "--game",
+        help="Game: fo3, fnv, skyrim, auto.",
+    ),
+) -> None:
+    """Translate all .pex Papyrus script files in a directory."""
+    import time as _time
+
+    from modtranslator.core.pex_parser import load_pex, save_pex
+    from modtranslator.translation.cache import TranslationCache
+
+    if not directory.is_dir():
+        console.print(f"[red]Error:[/red] Not a directory: {directory}")
+        raise typer.Exit(1)
+
+    files = sorted(directory.glob("*.pex"))
+    if not files:
+        console.print(f"[yellow]No .pex files in {directory}[/yellow]")
+        raise typer.Exit()
+
+    if output_dir is not None:
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create backend
+    shared_backend, backend_label = _create_backend(
+        backend_name, api_key=api_key, model=model, device=device, use_dummy=use_dummy,
+    )
+
+    console.print(f"Found [green]{len(files)}[/green] .pex files")
+    _print(f"Backend: [cyan]{backend_label}[/cyan]", verbose_only=True)
+
+    # Load glossary
+    from modtranslator.translation.glossary import Glossary
+
+    gloss = None
+    glossary_terms: set[str] | None = None
+    glossary_source_terms: set[str] | None = None
+    detected_game = Game.SKYRIM if game == GameChoice.skyrim else Game.FALLOUT3
+    gloss_paths = _resolve_glossary_paths(glossary, lang, game, detected_game)
+    if gloss_paths:
+        gloss = Glossary.from_multiple_toml(gloss_paths)
+        glossary_terms = {v.lower() for v in gloss.terms.values()}
+        glossary_source_terms = {
+            k.lower() for k, v in gloss.terms.items() if k.lower() != v.lower()
+        }
+        _print(f"Loaded glossary: [cyan]{len(gloss.terms)}[/cyan] terms")
+
+    # Phase 1: Parse all .pex files and collect translatable strings
+    cache = None if no_cache else TranslationCache()
+    all_entries: list[tuple[Path, dict[int, str]]] = []  # (path, {idx: text})
+    unique_texts: list[str] = []
+    text_to_index: dict[str, int] = {}
+
+    with Progress(
+        SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
+        BarColumn(), MofNCompleteColumn(), TimeElapsedColumn(),
+        console=console, transient=True,
+    ) as progress:
+        task = progress.add_task("Phase 1: Scanning .pex files", total=len(files))
+        for pex_path in files:
+            try:
+                pex = load_pex(pex_path)
+                translatable = pex.get_translatable_strings()
+
+                # Language detection filter
+                if skip_translated and translatable:
+                    from modtranslator.translation.lang_detect import should_translate
+                    translatable = {
+                        idx: text for idx, text in translatable.items()
+                        if should_translate(text, lang, glossary_terms, glossary_source_terms)
+                    }
+
+                if translatable:
+                    all_entries.append((pex_path, translatable))
+                    for text in translatable.values():
+                        if text not in text_to_index:
+                            text_to_index[text] = len(unique_texts)
+                            unique_texts.append(text)
+            except Exception as e:
+                _print(f"[yellow]Warning:[/yellow] Failed to parse {pex_path.name}: {e}",
+                       verbose_only=True)
+            progress.advance(task)
+
+    files_with_text = len(all_entries)
+    console.print(
+        f"Found [green]{len(unique_texts)}[/green] unique translatable strings"
+        f" in [green]{files_with_text}[/green] files"
+    )
+
+    if not unique_texts:
+        console.print("[yellow]No translatable strings found.[/yellow]")
+        raise typer.Exit()
+
+    # Cache check
+    cached: dict[str, str] = {}
+    if cache is not None:
+        cached = cache.get_batch(unique_texts, lang)
+        if cached:
+            _print(f"Cache hits: [green]{len(cached)}[/green]")
+
+    to_translate = [t for t in unique_texts if t not in cached]
+
+    # Protect glossary terms
+    gloss_mappings: list[dict[str, str]] | None = None
+    if gloss and to_translate:
+        to_translate, gloss_mappings = gloss.protect_batch(to_translate)
+
+    # Protect Spanish words
+    es_mappings: list[dict[str, str]] | None = None
+    if to_translate and lang.upper() == "ES":
+        from modtranslator.translation.spanish_protect import protect_spanish_batch
+        to_translate, es_mappings = protect_spanish_batch(to_translate)
+
+    # Phase 2: Translate
+    translated: list[str] = []
+    if to_translate:
+        chunk_size = 500
+        with Progress(
+            SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
+            BarColumn(), MofNCompleteColumn(), TextColumn("•"),
+            TimeElapsedColumn(), TextColumn("ETA"), TimeRemainingColumn(),
+            console=console, transient=True,
+        ) as progress:
+            task = progress.add_task("Phase 2: Translating", total=len(to_translate))
+            _t0 = _time.monotonic()
+            for chunk_start in range(0, len(to_translate), chunk_size):
+                chunk = to_translate[chunk_start:chunk_start + chunk_size]
+                translated.extend(shared_backend.translate_batch(chunk, lang))
+                progress.advance(task, len(chunk))
+            _elapsed = _time.monotonic() - _t0
+
+        if _elapsed > 0:
+            rate = len(translated) / _elapsed
+            _print(
+                f"Translated {len(translated)} strings"
+                f" in {_elapsed:.1f}s ({rate:.0f} strings/s)",
+            )
+
+        # Restore Spanish words
+        if es_mappings is not None:
+            from modtranslator.translation.spanish_protect import restore_spanish_batch
+            translated = restore_spanish_batch(translated, es_mappings)
+
+        # Restore glossary
+        if gloss and gloss_mappings:
+            translated = gloss.restore_batch(translated, gloss_mappings)
+
+    # Build full translation map: original_text → translated_text
+    translations: dict[str, str] = dict(cached)
+    uncached_originals = [t for t in unique_texts if t not in cached]
+    for orig, trans in zip(uncached_originals, translated, strict=True):
+        translations[orig] = trans
+
+    # Cache new translations
+    if cache is not None and translated:
+        cache_entries = [
+            (orig, lang, orig, translations[orig])
+            for orig in uncached_originals
+            if orig in translations
+        ]
+        if cache_entries:
+            cache.put_batch(cache_entries, backend=backend_label)
+        cache.close()
+
+    # Phase 3: Patch and write .pex files
+    success_count = 0
+    error_count = 0
+    errors_list: list[tuple[str, str]] = []
+
+    with Progress(
+        SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
+        BarColumn(), MofNCompleteColumn(), TimeElapsedColumn(),
+        console=console, transient=True,
+    ) as progress:
+        task = progress.add_task("Phase 3: Writing .pex files", total=files_with_text)
+        for pex_path, translatable in all_entries:
+            try:
+                pex = load_pex(pex_path)
+                modified = False
+                for idx, original_text in translatable.items():
+                    if original_text in translations:
+                        pex.string_table[idx] = translations[original_text]
+                        modified = True
+
+                if modified:
+                    out_path = (output_dir / pex_path.name) if output_dir else pex_path
+                    save_pex(pex, out_path)
+                    success_count += 1
+            except Exception as e:
+                error_count += 1
+                errors_list.append((pex_path.name, str(e)))
+            progress.advance(task)
+
+    # Summary
+    summary = Table(title="PEX Batch Summary")
+    summary.add_column("Metric", style="bold")
+    summary.add_column("Count", justify="right")
+    summary.add_row("Translated", f"[green]{success_count}[/green]")
+    summary.add_row("Skipped", f"[yellow]{len(files) - files_with_text}[/yellow]")
+    summary.add_row("Errors", f"[red]{error_count}[/red]")
+    summary.add_row("Total", str(len(files)))
+    console.print(summary)
+
+    if errors_list:
+        err_table = Table(title="Errors")
+        err_table.add_column("File", style="red")
+        err_table.add_column("Error")
+        for fname, err_msg in errors_list:
+            err_table.add_row(fname, err_msg)
+        console.print(err_table)
+
+
+@app.command(name="batch-mcm")
+def batch_mcm(
+    directory: Path = typer.Argument(
+        ..., help="Skyrim Data directory (contains Interface/translations/).",
+    ),
+    lang: str = typer.Option(
+        "ES", "--lang", "-l", help="Target language code.",
+    ),
+    backend_name: str = typer.Option(
+        "deepl", "--backend", "-b",
+        help="Backend: deepl, opus-mt, nllb, hybrid, dummy.",
+    ),
+    model: str | None = typer.Option(
+        None, "--model", "-m",
+    ),
+    device: str | None = typer.Option(
+        None, "--device",
+    ),
+    api_key: str | None = typer.Option(
+        None, "--api-key", "-k", envvar="DEEPL_API_KEY",
+    ),
+    output_dir: Path | None = typer.Option(
+        None, "--output-dir", "-O",
+        help="Output directory (mirrors Interface/translations/ structure).",
+    ),
+    use_dummy: bool = typer.Option(False, "--dummy"),
+    no_cache: bool = typer.Option(
+        False, "--no-cache", help="Disable translation cache.",
+    ),
+    skip_translated: bool = typer.Option(
+        True, "--skip-translated/--no-skip-translated",
+        help="Skip strings already in target language.",
+    ),
+    glossary: Path | None = typer.Option(
+        None, "--glossary", "-g",
+    ),
+    game: GameChoice = typer.Option(
+        GameChoice.skyrim, "--game",
+    ),
+) -> None:
+    """Translate MCM Interface/translations/ files and MCM Recorder JSON."""
+    import json
+    import time as _time
+
+    from modtranslator.translation.cache import TranslationCache
+
+    # Language name mapping for filenames
+    lang_names = {
+        "ES": "spanish", "FR": "french", "DE": "german", "IT": "italian",
+        "PT": "portuguese", "RU": "russian", "PL": "polish", "CS": "czech",
+        "JA": "japanese", "ZH": "chinese",
+    }
+    target_lang_name = lang_names.get(lang.upper(), lang.lower())
+
+    # Locate Interface/translations/ directory
+    translations_dir = directory / "Interface" / "translations"
+    mcm_recorder_dir = directory / "McmRecorder"
+
+    if not translations_dir.is_dir() and not mcm_recorder_dir.is_dir():
+        console.print(
+            f"[red]Error:[/red] No Interface/translations/ or McmRecorder/ in {directory}"
+        )
+        raise typer.Exit(1)
+
+    # Create backend
+    shared_backend, backend_label = _create_backend(
+        backend_name, api_key=api_key, model=model, device=device, use_dummy=use_dummy,
+    )
+    _print(f"Backend: [cyan]{backend_label}[/cyan]", verbose_only=True)
+
+    # Load glossary
+    from modtranslator.translation.glossary import Glossary
+
+    gloss = None
+    glossary_terms: set[str] | None = None
+    glossary_source_terms: set[str] | None = None
+    detected_game = Game.SKYRIM if game == GameChoice.skyrim else Game.FALLOUT3
+    gloss_paths = _resolve_glossary_paths(glossary, lang, game, detected_game)
+    if gloss_paths:
+        gloss = Glossary.from_multiple_toml(gloss_paths)
+        glossary_terms = {v.lower() for v in gloss.terms.values()}
+        glossary_source_terms = {
+            k.lower() for k, v in gloss.terms.items() if k.lower() != v.lower()
+        }
+        _print(f"Loaded glossary: [cyan]{len(gloss.terms)}[/cyan] terms")
+
+    cache = None if no_cache else TranslationCache()
+
+    # ── Phase 1: Collect all translatable strings from MCM files ──
+    # Each entry: (file_path, output_path, lines, translatable_indices, translatable_texts)
+    mcm_files: list[tuple[Path, Path, list[str], list[int], list[str]]] = []
+    # MCM Recorder JSON: (file_path, output_path, data_dict, translatable_keys, translatable_texts)
+    mcm_jsons: list[tuple[Path, Path, dict, list[str], list[str]]] = []
+
+    if translations_dir.is_dir():
+        # Find all _english.txt files (case insensitive via manual filter)
+        import re as _re
+
+        all_txt = sorted(translations_dir.iterdir())
+        eng_files = [f for f in all_txt if _re.search(r'_english\.txt$', f.name, _re.IGNORECASE)]
+
+        for eng_path in eng_files:
+            stem = _re.sub(r'(?i)_english\.txt$', '', eng_path.name)
+
+            # Check if Spanish translation already exists and is genuine
+            target_name_variants = [
+                f"{stem}_{target_lang_name}.txt",
+                f"{stem}_{target_lang_name.upper()}.txt",
+                f"{stem}_{target_lang_name.capitalize()}.txt",
+            ]
+            existing_spa = None
+            for variant in target_name_variants:
+                candidate = translations_dir / variant
+                if candidate.exists():
+                    existing_spa = candidate
+                    break
+
+            # Skip if already genuinely translated (different content from English)
+            if existing_spa is not None:
+                import hashlib
+                eng_hash = hashlib.md5(eng_path.read_bytes()).hexdigest()
+                spa_hash = hashlib.md5(existing_spa.read_bytes()).hexdigest()
+                if eng_hash != spa_hash:
+                    _print(
+                        f"[dim]Skipping {stem} (already translated)[/dim]",
+                        verbose_only=True,
+                    )
+                    continue
+
+            # Determine output path
+            # Match casing of existing spanish file or english file
+            if existing_spa is not None:
+                out_name = existing_spa.name
+            else:
+                # Match casing pattern from English filename
+                if "_ENGLISH." in eng_path.name:
+                    out_name = f"{stem}_{target_lang_name.upper()}.txt"
+                else:
+                    out_name = f"{stem}_{target_lang_name}.txt"
+
+            if output_dir is not None:
+                out_path = output_dir / out_name
+            else:
+                out_path = translations_dir / out_name
+
+            # Parse the English file
+            try:
+                raw = eng_path.read_bytes()
+                # Detect encoding: UTF-16-LE BOM = FF FE
+                if raw[:2] == b'\xff\xfe':
+                    text = raw.decode('utf-16-le')
+                    # Remove BOM character
+                    if text and text[0] == '\ufeff':
+                        text = text[1:]
+                else:
+                    text = raw.decode('utf-8', errors='replace')
+
+                lines = text.splitlines(keepends=True)
+                translatable_indices: list[int] = []
+                translatable_texts: list[str] = []
+
+                for i, line in enumerate(lines):
+                    stripped = line.rstrip('\r\n')
+                    if not stripped or stripped.startswith(';'):
+                        continue
+                    if '\t' in stripped and stripped.startswith('$'):
+                        parts = stripped.split('\t', 1)
+                        if len(parts) == 2:
+                            value = parts[1].strip()
+                            if value and any(c.isalpha() for c in value):
+                                translatable_indices.append(i)
+                                translatable_texts.append(value)
+
+                if translatable_texts:
+                    mcm_files.append(
+                        (eng_path, out_path, lines, translatable_indices, translatable_texts)
+                    )
+                    _print(
+                        f"  {stem}: {len(translatable_texts)} strings",
+                        verbose_only=True,
+                    )
+            except Exception as e:
+                _print(f"[yellow]Warning:[/yellow] Failed to parse {eng_path.name}: {e}")
+
+    # MCM Recorder JSON files
+    if mcm_recorder_dir.is_dir():
+        json_translatable_keys = ["welcome", "complete"]
+        for json_path in sorted(mcm_recorder_dir.glob("*.json")):
+            try:
+                data = json.loads(json_path.read_text(encoding="utf-8"))
+                keys_found: list[str] = []
+                texts_found: list[str] = []
+                for k in json_translatable_keys:
+                    if k in data and isinstance(data[k], str) and data[k].strip():
+                        keys_found.append(k)
+                        texts_found.append(data[k])
+                if texts_found:
+                    out_json = (output_dir / json_path.name) if output_dir else json_path
+                    mcm_jsons.append((json_path, out_json, data, keys_found, texts_found))
+            except Exception as e:
+                _print(f"[yellow]Warning:[/yellow] Failed to parse {json_path.name}: {e}")
+
+    total_files = len(mcm_files) + len(mcm_jsons)
+    if total_files == 0:
+        console.print("[yellow]No MCM files need translation.[/yellow]")
+        raise typer.Exit()
+
+    # Collect all unique texts
+    unique_texts: list[str] = []
+    text_to_index: dict[str, int] = {}
+
+    for _, _, _, _, texts in mcm_files:
+        for t in texts:
+            if t not in text_to_index:
+                text_to_index[t] = len(unique_texts)
+                unique_texts.append(t)
+    for _, _, _, _, texts in mcm_jsons:
+        for t in texts:
+            if t not in text_to_index:
+                text_to_index[t] = len(unique_texts)
+                unique_texts.append(t)
+
+    console.print(
+        f"Found [green]{len(unique_texts)}[/green] unique strings"
+        f" in [green]{total_files}[/green] files"
+    )
+
+    # Language filter
+    if skip_translated:
+        from modtranslator.translation.lang_detect import should_translate
+
+        to_translate_set = {
+            t for t in unique_texts
+            if should_translate(t, lang, glossary_terms, glossary_source_terms)
+        }
+        skipped = len(unique_texts) - len(to_translate_set)
+        if skipped:
+            _print(f"Skipped [yellow]{skipped}[/yellow] strings already in target language")
+        texts_for_translation = [t for t in unique_texts if t in to_translate_set]
+    else:
+        texts_for_translation = list(unique_texts)
+
+    # Cache check
+    cached: dict[str, str] = {}
+    if cache is not None:
+        cached = cache.get_batch(texts_for_translation, lang)
+        if cached:
+            _print(f"Cache hits: [green]{len(cached)}[/green]")
+
+    to_translate = [t for t in texts_for_translation if t not in cached]
+
+    # Protect glossary terms
+    gloss_mappings: list[dict[str, str]] | None = None
+    if gloss and to_translate:
+        to_translate, gloss_mappings = gloss.protect_batch(to_translate)
+
+    # Protect Spanish words
+    es_mappings: list[dict[str, str]] | None = None
+    if to_translate and lang.upper() == "ES":
+        from modtranslator.translation.spanish_protect import protect_spanish_batch
+        to_translate, es_mappings = protect_spanish_batch(to_translate)
+
+    # ── Phase 2: Translate ──
+    translated: list[str] = []
+    if to_translate:
+        chunk_size = 500
+        with Progress(
+            SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
+            BarColumn(), MofNCompleteColumn(), TextColumn("•"),
+            TimeElapsedColumn(), TextColumn("ETA"), TimeRemainingColumn(),
+            console=console, transient=True,
+        ) as progress:
+            task = progress.add_task("Translating", total=len(to_translate))
+            _t0 = _time.monotonic()
+            for chunk_start in range(0, len(to_translate), chunk_size):
+                chunk = to_translate[chunk_start:chunk_start + chunk_size]
+                translated.extend(shared_backend.translate_batch(chunk, lang))
+                progress.advance(task, len(chunk))
+            _elapsed = _time.monotonic() - _t0
+
+        if _elapsed > 0:
+            rate = len(translated) / _elapsed
+            _print(
+                f"Translated {len(translated)} strings"
+                f" in {_elapsed:.1f}s ({rate:.0f} strings/s)",
+            )
+
+        # Restore Spanish words
+        if es_mappings is not None:
+            from modtranslator.translation.spanish_protect import restore_spanish_batch
+            translated = restore_spanish_batch(translated, es_mappings)
+
+        # Restore glossary
+        if gloss and gloss_mappings:
+            translated = gloss.restore_batch(translated, gloss_mappings)
+
+    # Build full translation map
+    translations: dict[str, str] = dict(cached)
+    uncached_originals = [t for t in texts_for_translation if t not in cached]
+    for orig, trans in zip(uncached_originals, translated, strict=True):
+        translations[orig] = trans
+
+    # Cache new translations
+    if cache is not None and translated:
+        cache_entries = [
+            (orig, lang, orig, translations[orig])
+            for orig in uncached_originals
+            if orig in translations
+        ]
+        if cache_entries:
+            cache.put_batch(cache_entries, backend=backend_label)
+        cache.close()
+
+    # ── Phase 3: Write output files ──
+    success_count = 0
+    error_count = 0
+    errors_list: list[tuple[str, str]] = []
+
+    with Progress(
+        SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
+        BarColumn(), MofNCompleteColumn(), TimeElapsedColumn(),
+        console=console, transient=True,
+    ) as progress:
+        task = progress.add_task("Writing files", total=total_files)
+
+        # Write MCM translation files
+        for eng_path, out_path, lines, indices, orig_texts in mcm_files:
+            try:
+                # Build translated lines
+                new_lines = list(lines)
+                for idx, orig_text in zip(indices, orig_texts, strict=True):
+                    if orig_text in translations:
+                        line = new_lines[idx]
+                        stripped = line.rstrip('\r\n')
+                        ending = line[len(stripped):]  # preserve line ending
+                        parts = stripped.split('\t', 1)
+                        new_lines[idx] = f"{parts[0]}\t{translations[orig_text]}{ending}"
+
+                # Write as UTF-16-LE with BOM
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                content = ''.join(new_lines)
+                out_path.write_bytes(b'\xff\xfe' + content.encode('utf-16-le'))
+                success_count += 1
+            except Exception as e:
+                error_count += 1
+                errors_list.append((eng_path.name, str(e)))
+            progress.advance(task)
+
+        # Write MCM Recorder JSON files
+        for json_path, out_json, data, keys, orig_texts in mcm_jsons:
+            try:
+                for key, orig_text in zip(keys, orig_texts, strict=True):
+                    if orig_text in translations:
+                        data[key] = translations[orig_text]
+                out_json.parent.mkdir(parents=True, exist_ok=True)
+                out_json.write_text(
+                    json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
+                success_count += 1
+            except Exception as e:
+                error_count += 1
+                errors_list.append((json_path.name, str(e)))
+            progress.advance(task)
+
+    # Summary
+    summary = Table(title="MCM Batch Summary")
+    summary.add_column("Metric", style="bold")
+    summary.add_column("Count", justify="right")
+    summary.add_row("Translation files", f"[green]{len(mcm_files)}[/green]")
+    summary.add_row("JSON files", f"[green]{len(mcm_jsons)}[/green]")
+    summary.add_row("Unique strings", str(len(unique_texts)))
+    summary.add_row("Translated", f"[green]{success_count}[/green]")
+    summary.add_row("Errors", f"[red]{error_count}[/red]")
+    console.print(summary)
+
+    if errors_list:
+        err_table = Table(title="Errors")
+        err_table.add_column("File", style="red")
+        err_table.add_column("Error")
+        for fname, err_msg in errors_list:
+            err_table.add_row(fname, err_msg)
+        console.print(err_table)
+
+
 @app.command(name="cache-info")
 def cache_info() -> None:
     """Show translation cache statistics."""

@@ -71,14 +71,14 @@ _TRANSLATABLE_MAP: dict[bytes, set[bytes]] = {
         b"ENCH", b"MGEF", b"LSCR", b"QUST", b"TERM",
     },
     b"NAM1": {b"INFO"},  # Dialog response text
-    b"RNAM": {b"INFO", b"TERM"},  # Dialog prompt / terminal menu text
+    b"RNAM": {b"INFO", b"TERM", b"ACTI"},  # Dialog prompt / terminal menu / activator prompt
     b"TNAM": {b"NOTE"},  # Note/holotape text
     b"NNAM": {b"QUST"},  # Quest objective text
     b"ITXT": {b"MESG"},  # Message button text
     b"CNAM": {b"QUST"},  # Quest stage log entry
     # Skyrim-specific subrecords
     b"DNAM": {b"WOOP"},  # Word of Power text
-    b"SHRT": {b"SHOU"},  # Short name of Shout
+    b"SHRT": {b"SHOU", b"NPC_"},  # Short name of Shout / NPC short name
 }
 
 # Subrecord types that should NEVER be translated
