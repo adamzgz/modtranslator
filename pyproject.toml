@@ -29,6 +29,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+gui = [
+    "customtkinter>=5.2.0",
+]
 deepl = [
     "deepl>=1.16.0",
 ]
@@ -51,6 +54,9 @@ dev = [
 
 [project.scripts]
 modtranslator = "modtranslator.cli:app"
+
+[project.gui-scripts]
+modtranslator-gui = "modtranslator.gui.app:run_gui"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/modtranslator"]

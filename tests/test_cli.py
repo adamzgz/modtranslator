@@ -386,7 +386,6 @@ class TestCLIBatchBackendReuse:
 
         out_dir = tmp_path / "out"
 
-        from modtranslator import cli as cli_module
         from modtranslator.backends.dummy import DummyBackend
 
         real_backend = DummyBackend()
@@ -395,7 +394,7 @@ class TestCLIBatchBackendReuse:
         def mock_create(*args, **kwargs):
             return spy_backend, "dummy"
 
-        with patch.object(cli_module, "_create_backend", side_effect=mock_create):
+        with patch("modtranslator.cli.create_backend", side_effect=mock_create):
             result = runner.invoke(app, [
                 "batch", str(src_dir),
                 "--dummy",
@@ -423,7 +422,6 @@ class TestCLIBatchParallel:
 
         out_dir = tmp_path / "out"
 
-        from modtranslator import cli as cli_module
         from modtranslator.backends.dummy import DummyBackend
 
         real_backend = DummyBackend()
@@ -432,7 +430,7 @@ class TestCLIBatchParallel:
         def mock_create(*args, **kwargs):
             return spy_backend, "dummy"
 
-        with patch.object(cli_module, "_create_backend", side_effect=mock_create):
+        with patch("modtranslator.cli.create_backend", side_effect=mock_create):
             result = runner.invoke(app, [
                 "batch", str(src_dir),
                 "--dummy",
@@ -509,7 +507,6 @@ class TestCLIBatchParallel:
 
         out_dir = tmp_path / "out"
 
-        from modtranslator import cli as cli_module
         from modtranslator.backends.dummy import DummyBackend
 
         real_backend = DummyBackend()
@@ -518,7 +515,7 @@ class TestCLIBatchParallel:
         def mock_create(*args, **kwargs):
             return spy_backend, "dummy"
 
-        with patch.object(cli_module, "_create_backend", side_effect=mock_create):
+        with patch("modtranslator.cli.create_backend", side_effect=mock_create):
             result = runner.invoke(app, [
                 "batch", str(src_dir),
                 "--dummy",
