@@ -4,7 +4,7 @@
 
 Traduce archivos ESP/ESM, scripts PEX y archivos MCM de forma completamente offline usando modelos de traducción neuronal. Compatible con Fallout 3, Fallout: New Vegas y Skyrim (SE/AE).
 
-> **Probado con una instalación completa de Fallout 3** — 124 archivos (juego base + 5 DLCs + 50+ mods), 96.456 strings traducidos sin errores. El juego carga y funciona correctamente con los archivos traducidos.
+> **Probado con los 3 juegos soportados.** Fallout 3 (124 archivos, ~97K strings), Fallout: New Vegas (244 archivos, ~142K strings) y Skyrim SE/AE (542 archivos, ~128K strings + 2.302 scripts PEX + MCM) — todos funcionan correctamente con los mods traducidos.
 
 ---
 
@@ -25,20 +25,17 @@ Traduce archivos ESP/ESM, scripts PEX y archivos MCM de forma completamente offl
 
 | Juego | Estado | Tipos de archivo |
 |-------|--------|------------------|
-| **Fallout 3** | Probado — 124 archivos | ESP/ESM |
-| **Fallout: New Vegas** | Soportado — mismo formato que FO3 | ESP/ESM |
-| **Skyrim SE/AE** | Soportado — string tables externas | ESP/ESM, PEX, MCM |
+| **Fallout 3** | Probado — 124 archivos, ~97K strings | ESP/ESM |
+| **Fallout: New Vegas** | Probado — 244 archivos, ~142K strings | ESP/ESM |
+| **Skyrim SE/AE** | Probado — 542 archivos, ~128K strings + 2.302 PEX + MCM | ESP/ESM, PEX, MCM |
 
 ## Resultados
 
-| Métrica | Valor |
-|---------|-------|
-| Archivos traducidos | 124 (Fallout 3 completo) |
-| Strings procesados | 96.456 |
-| Errores de parseo | 0 |
-| Placeholders rotos | 0 |
-| Juego funcional | Sí |
-| Backend usado | Híbrido (tc-big + NLLB), CUDA |
+| Juego | Archivos | Strings | Errores | Juego funcional |
+|-------|----------|---------|---------|-----------------|
+| Fallout 3 | 124 | ~97K | 0 | Sí |
+| Fallout: New Vegas | 244 | ~142K | 0 | Sí |
+| Skyrim SE/AE | 542 + 2.302 PEX + MCM | ~128K | 0 | Sí |
 
 ## GUI
 
@@ -226,7 +223,7 @@ Este proyecto está bajo la licencia MIT.
 
 Translates ESP/ESM files, PEX scripts, and MCM files completely offline using neural machine translation models. Compatible with Fallout 3, Fallout: New Vegas, and Skyrim (SE/AE).
 
-> **Tested on a full Fallout 3 installation** — 124 files (base game + 5 DLCs + 50+ mods), 96,456 strings translated with zero errors. The game loads and plays correctly with translated files.
+> **Tested on all 3 supported games.** Fallout 3 (124 files, ~97K strings), Fallout: New Vegas (244 files, ~142K strings) and Skyrim SE/AE (542 files, ~128K strings + 2,302 PEX scripts + MCM) — all games work correctly with translated mods.
 
 ## Features
 
@@ -245,9 +242,9 @@ Translates ESP/ESM files, PEX scripts, and MCM files completely offline using ne
 
 | Game | Status | File types |
 |------|--------|------------|
-| **Fallout 3** | Fully tested — 124 files | ESP/ESM |
-| **Fallout: New Vegas** | Supported — same format as FO3 | ESP/ESM |
-| **Skyrim SE/AE** | Supported — external string tables | ESP/ESM, PEX, MCM |
+| **Fallout 3** | Tested — 124 files, ~97K strings | ESP/ESM |
+| **Fallout: New Vegas** | Tested — 244 files, ~142K strings | ESP/ESM |
+| **Skyrim SE/AE** | Tested — 542 files, ~128K strings + 2,302 PEX + MCM | ESP/ESM, PEX, MCM |
 
 ## GUI
 
