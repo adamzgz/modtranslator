@@ -1,0 +1,1 @@
+"""ModTranslator GUI package."""

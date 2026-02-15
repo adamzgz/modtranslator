@@ -207,7 +207,7 @@ class NLLBBackend(TranslationBackend):
         self._device = "cpu"
         self._compute_type = "int8"
         self._ensure_model()
-        ct2_dir = str(self._ct2_model_dir())
+        ct2_dir = str(self._get_ct2_dir())
         self._translator = ctranslate2.Translator(
             ct2_dir, device="cpu", compute_type="int8",
             inter_threads=_INTER_THREADS,
@@ -547,7 +547,7 @@ class NLLBBackend(TranslationBackend):
             import ctranslate2
             from transformers import AutoTokenizer
 
-            ct2_dir = self._ct2_model_dir()
+            ct2_dir = self._get_ct2_dir()
 
             self._translator = ctranslate2.Translator(
                 str(ct2_dir),
@@ -578,10 +578,31 @@ class NLLBBackend(TranslationBackend):
         short_name = self._hf_model_name.split("/")[-1]
         return self._models_dir / f"{short_name}-ct2-{self._compute_type}"
 
+    def _find_existing_ct2(self) -> Path | None:
+        """Find an existing CT2 conversion in any quantization format."""
+        short_name = self._hf_model_name.split("/")[-1]
+        for candidate in self._models_dir.glob(f"{short_name}-ct2-*"):
+            if (candidate / "model.bin").exists():
+                return candidate
+        return None
+
+    def _get_ct2_dir(self) -> Path:
+        """Get the actual CT2 model directory (respects overrides)."""
+        override = getattr(self, "_ct2_model_dir_override", None)
+        if override is not None:
+            return override
+        return self._ct2_model_dir()
+
     def _ensure_model(self) -> None:
         ct2_dir = self._ct2_model_dir()
 
         if (ct2_dir / "model.bin").exists():
+            return
+
+        # Check if a conversion exists in a different quantization format
+        existing = self._find_existing_ct2()
+        if existing is not None:
+            self._ct2_model_dir_override = existing
             return
 
         self._convert_model(ct2_dir)

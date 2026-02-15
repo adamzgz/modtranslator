@@ -4,7 +4,15 @@ import io
 from pathlib import Path
 
 from modtranslator.core.parser import parse_plugin
+from modtranslator.core.string_table import (
+    StringTable,
+    StringTableSet,
+    StringTableType,
+    serialize_string_table,
+)
 from modtranslator.core.writer import write_plugin
+from modtranslator.translation.extractor import extract_strings
+from modtranslator.translation.patcher import apply_translations
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"
 
@@ -98,3 +106,75 @@ class TestByteRoundtrip:
         rewritten = buf.getvalue()
 
         assert rewritten == original
+
+
+class TestSkyrimRoundtrip:
+    def test_skyrim_inline_roundtrip(self):
+        """Skyrim inline plugin roundtrips correctly."""
+        filepath = FIXTURES / "skyrim_inline.esp"
+        if not filepath.exists():
+            import pytest
+            pytest.skip("Fixture not generated yet")
+        _roundtrip_file(filepath)
+
+    def test_skyrim_inline_bytes(self):
+        """Skyrim inline plugin is byte-identical after roundtrip."""
+        filepath = FIXTURES / "skyrim_inline.esp"
+        if not filepath.exists():
+            import pytest
+            pytest.skip("Fixture not generated yet")
+        original = filepath.read_bytes()
+        with open(filepath, "rb") as f:
+            plugin = parse_plugin(f)
+        buf = io.BytesIO()
+        write_plugin(plugin, buf)
+        assert buf.getvalue() == original
+
+    def test_localized_extract_patch_verify(self):
+        """End-to-end: localized plugin → extract → translate → patch → verify string tables."""
+        from tests.conftest import (
+            make_skyrim_plugin,
+            make_string_id_subrecord,
+            make_subrecord,
+        )
+
+        sts = StringTableSet()
+        sts.strings = StringTable(StringTableType.STRINGS, {42: "Iron Sword", 43: "Steel Mace"})
+        sts.dlstrings = StringTable(StringTableType.DLSTRINGS, {100: "A fine weapon."})
+        sts.build_merged()
+
+        plugin = make_skyrim_plugin(
+            records=[
+                ("WEAP", 0x100, [
+                    make_subrecord("EDID", "Sword"),
+                    make_string_id_subrecord("FULL", 42),
+                ]),
+                ("WEAP", 0x101, [
+                    make_subrecord("EDID", "Mace"),
+                    make_string_id_subrecord("FULL", 43),
+                    make_string_id_subrecord("DESC", 100),
+                ]),
+            ],
+            localized=True,
+            string_tables=sts,
+        )
+
+        # Extract
+        strings = extract_strings(plugin)
+        assert len(strings) == 3
+
+        # Translate
+        translations = {s.key: f"[ES] {s.original_text}" for s in strings}
+        patched = apply_translations(strings, translations, string_tables=sts)
+        assert patched == 3
+
+        # Verify string tables updated
+        assert sts.strings.entries[42] == "[ES] Iron Sword"
+        assert sts.strings.entries[43] == "[ES] Steel Mace"
+        assert sts.dlstrings.entries[100] == "[ES] A fine weapon."
+
+        # Verify string tables serialize and re-parse correctly
+        raw = serialize_string_table(sts.strings)
+        from modtranslator.core.string_table import parse_string_table
+        reparsed = parse_string_table(raw, StringTableType.STRINGS)
+        assert reparsed.entries[42] == "[ES] Iron Sword"

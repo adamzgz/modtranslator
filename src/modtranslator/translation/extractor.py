@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import struct
 from dataclasses import dataclass
 
 from modtranslator.core.constants import DEFAULT_ENCODING
@@ -28,6 +29,7 @@ class TranslatableString:
     editor_id: str = ""  # EDID of parent record, for context
     sub_index: int = 0  # Occurrence index within parent record (for duplicate sub types)
     source_file: str = ""  # Source filename (stem) to disambiguate formIDs across mods
+    string_id: int | None = None  # StringID for localized plugins (None = inline)
 
     @property
     def key(self) -> str:
@@ -69,25 +71,34 @@ def _looks_like_editor_id(text: str) -> bool:
 def extract_strings(plugin: PluginFile) -> list[TranslatableString]:
     """Walk the plugin tree and extract all translatable strings."""
     results: list[TranslatableString] = []
+    merged = plugin.string_tables.merged if plugin.string_tables is not None else None
 
     # TES4 header may have translatable strings too (FULL for master name)
-    _extract_from_record(plugin.header, results)
+    _extract_from_record(plugin.header, results, merged)
 
     for group in plugin.groups:
-        _extract_from_group(group, results)
+        _extract_from_group(group, results, merged)
 
     return results
 
 
-def _extract_from_group(group: GroupRecord, results: list[TranslatableString]) -> None:
+def _extract_from_group(
+    group: GroupRecord,
+    results: list[TranslatableString],
+    merged: dict[int, str] | None = None,
+) -> None:
     for child in group.children:
         if isinstance(child, GroupRecord):
-            _extract_from_group(child, results)
+            _extract_from_group(child, results, merged)
         else:
-            _extract_from_record(child, results)
+            _extract_from_record(child, results, merged)
 
 
-def _extract_from_record(record: Record, results: list[TranslatableString]) -> None:
+def _extract_from_record(
+    record: Record,
+    results: list[TranslatableString],
+    merged: dict[int, str] | None = None,
+) -> None:
     # Get EDID for context
     editor_id = ""
     for sub in record.subrecords:
@@ -111,7 +122,20 @@ def _extract_from_record(record: Record, results: list[TranslatableString]) -> N
         if sub.size == 0:
             continue
 
-        text = sub.decode_string(DEFAULT_ENCODING)
+        string_id: int | None = None
+
+        # Localized plugin: subrecords of exactly 4 bytes contain a uint32 StringID
+        if merged is not None and sub.size == 4:
+            string_id = struct.unpack_from("<I", sub.data, 0)[0]
+            if string_id == 0:
+                continue  # StringID 0 = no string
+            text = merged.get(string_id)
+            if text is None:
+                continue  # ID not found in string tables
+        else:
+            # Inline: decode from the subrecord (FO3 behavior, or non-localized Skyrim)
+            text = sub.decode_string(DEFAULT_ENCODING)
+
         # Skip strings that are empty or look like binary garbage
         if not text or not text.strip():
             continue
@@ -143,5 +167,6 @@ def _extract_from_record(record: Record, results: list[TranslatableString]) -> N
                 subrecord=sub,
                 editor_id=editor_id,
                 sub_index=idx,
+                string_id=string_id,
             )
         )

@@ -1,4 +1,4 @@
-"""Constants for the TES4 binary format used by Fallout 3 and Fallout NV."""
+"""Constants for the TES4 binary format used by Fallout 3, Fallout NV, and Skyrim."""
 
 from enum import IntEnum, IntFlag
 
@@ -17,12 +17,14 @@ SUBRECORD_HEADER_SIZE = 6
 
 # HEDR version floats to detect game
 HEDR_VERSION_FO3 = 0.94      # Fallout 3 and New Vegas
+HEDR_VERSION_SKYRIM = 1.70   # Skyrim (LE and SE)
 
 
 class Game(IntEnum):
     """Detected game based on HEDR version."""
     UNKNOWN = 0
     FALLOUT3 = 2   # Also covers Fallout NV (same format)
+    SKYRIM = 5     # Skyrim (LE and SE)
 
 
 class RecordFlag(IntFlag):
