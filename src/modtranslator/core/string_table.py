@@ -192,6 +192,12 @@ def load_string_tables(
         StringTableType.DLSTRINGS: "DLSTRINGS",
         StringTableType.ILSTRINGS: "ILSTRINGS",
     }
+    # Also try lowercase extensions (some mods/tests use them)
+    ext_variants = {
+        "STRINGS": ["STRINGS", "strings"],
+        "DLSTRINGS": ["DLSTRINGS", "dlstrings"],
+        "ILSTRINGS": ["ILSTRINGS", "ilstrings"],
+    }
     attr_map = {
         StringTableType.STRINGS: "strings",
         StringTableType.DLSTRINGS: "dlstrings",
@@ -200,21 +206,13 @@ def load_string_tables(
 
     for tt, attr_name in attr_map.items():
         ext = type_map[tt]
-        filename = f"{stem}_{language}.{ext}"
+        variants = ext_variants[ext]
         found = False
         for search_dir in search_dirs:
-            filepath = search_dir / filename
-            if filepath.exists():
-                raw = filepath.read_bytes()
-                table = parse_string_table(raw, tt)
-                setattr(table_set, attr_name, table)
-                found = True
-                break
-            # Try case variations (Linux is case-sensitive)
-            for variant in (filename.upper(), filename.lower()):
-                filepath_alt = search_dir / variant
-                if filepath_alt.exists():
-                    raw = filepath_alt.read_bytes()
+            for ext_v in variants:
+                filepath = search_dir / f"{stem}_{language}.{ext_v}"
+                if filepath.exists():
+                    raw = filepath.read_bytes()
                     table = parse_string_table(raw, tt)
                     setattr(table_set, attr_name, table)
                     found = True
@@ -222,7 +220,7 @@ def load_string_tables(
             if found:
                 break
         if not found:
-            logger.warning("String table file not found: %s", filename)
+            logger.warning("String table file not found: %s_%s.%s", stem, language, ext)
 
     table_set.build_merged()
     return table_set
