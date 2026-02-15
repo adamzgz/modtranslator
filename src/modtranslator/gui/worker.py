@@ -7,10 +7,11 @@ back to the GUI main thread via a queue.
 from __future__ import annotations
 
 import traceback
+from collections.abc import Callable
 from dataclasses import dataclass
 from queue import Queue
 from threading import Event, Thread
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass
