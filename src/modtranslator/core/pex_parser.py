@@ -1,8 +1,9 @@
 """Parser for compiled Papyrus script files (.pex).
 
-Parses the PEX binary format (big-endian) used by Skyrim SE to extract
-and modify string literals. Only string literals that look like real
-player-visible sentences/messages are candidates for translation.
+Parses the PEX binary format used by Skyrim SE (big-endian) and Fallout 4
+(little-endian) to extract and modify string literals. Only string literals
+that look like real player-visible sentences/messages are candidates for
+translation.
 
 Format reference: https://en.uesp.net/wiki/Skyrim_Mod:Compiled_Script_File_Format
 """
@@ -45,6 +46,25 @@ class PexFile:
     literal_indices: set[int] = field(default_factory=set)
     # Set of string table indices used as identifiers (type 0x01)
     ident_indices: set[int] = field(default_factory=set)
+    # Endianness: ">" for big-endian (Skyrim), "<" for little-endian (FO4)
+    endian: str = ">"
+
+    @property
+    def game_id(self) -> int:
+        return self.header.game_id
+
+    @property
+    def strings(self) -> dict[int, str]:
+        return dict(enumerate(self.string_table))
+
+    @property
+    def string_types(self) -> dict[int, int]:
+        result: dict[int, int] = {}
+        for idx in self.literal_indices:
+            result[idx] = 2
+        for idx in self.ident_indices:
+            result[idx] = 1
+        return result
 
     def get_translatable_strings(self) -> dict[int, str]:
         """Return string table indices -> text for player-visible string literals.
@@ -103,7 +123,7 @@ def _is_translatable_literal(text: str) -> bool:
     # File paths / model references
     if "/" in text or "\\" in text:
         return False
-    if text.endswith((".nif", ".dds", ".wav", ".psc", ".pex", ".esp", ".esm")):
+    if text.endswith((".nif", ".dds", ".wav", ".psc", ".pex", ".esp", ".esm", ".esl", ".ba2")):
         return False
 
     # Skeleton/bone node names: "NPC R Hand", "NPC L Foot", "NPC Pelvis [Pelv]"
@@ -196,13 +216,31 @@ def _is_translatable_literal(text: str) -> bool:
     return not (re.match(r"^[A-Za-z][A-Za-z0-9_.]*$", stripped) and " " not in stripped)
 
 
-def _read_wstring(data: bytes, pos: int) -> tuple[str, int]:
-    """Read a big-endian length-prefixed string. Returns (string, new_pos)."""
-    length = struct.unpack_from(">H", data, pos)[0]
+def _read_wstring(data: bytes, pos: int, endian: str = ">") -> tuple[str, int]:
+    """Read a length-prefixed string. Returns (string, new_pos)."""
+    length = struct.unpack_from(f"{endian}H", data, pos)[0]
     pos += 2
     text = data[pos:pos + length].decode("utf-8", errors="replace")
     pos += length
     return text, pos
+
+
+def _detect_endian(data: bytes) -> str:
+    """Detect endianness from the magic number.
+
+    Skyrim PEX: big-endian (magic bytes FA 57 C0 DE)
+    Fallout 4 PEX: little-endian (magic bytes DE C0 57 FA)
+    """
+    magic_be = struct.unpack_from(">I", data, 0)[0]
+    if magic_be == PEX_MAGIC:
+        return ">"
+    magic_le = struct.unpack_from("<I", data, 0)[0]
+    if magic_le == PEX_MAGIC:
+        return "<"
+    raise ValueError(
+        f"Not a PEX file: magic bytes {data[:4].hex()} "
+        f"(neither BE 0x{magic_be:08x} nor LE 0x{magic_le:08x} match {PEX_MAGIC:#010x})"
+    )
 
 
 def parse_pex(data: bytes) -> PexFile:
@@ -211,14 +249,12 @@ def parse_pex(data: bytes) -> PexFile:
     Extracts the header, string table, and scans the post-table bytecode
     to identify which string table entries are used as string literals
     (type 0x02) vs identifiers (type 0x01) in Variable Data entries.
-    """
-    pos = 0
 
-    # Magic number
-    magic = struct.unpack_from(">I", data, pos)[0]
-    pos += 4
-    if magic != PEX_MAGIC:
-        raise ValueError(f"Not a PEX file: magic {magic:#010x} != {PEX_MAGIC:#010x}")
+    Automatically detects endianness (big-endian for Skyrim, little-endian
+    for Fallout 4) from the magic number.
+    """
+    endian = _detect_endian(data)
+    pos = 4  # skip magic (already validated)
 
     # Version
     major = data[pos]
@@ -226,18 +262,18 @@ def parse_pex(data: bytes) -> PexFile:
     minor = data[pos]
     pos += 1
 
-    # Game ID
-    game_id = struct.unpack_from(">H", data, pos)[0]
+    # Game ID: 1=Skyrim, 2=Fallout 4
+    game_id = struct.unpack_from(f"{endian}H", data, pos)[0]
     pos += 2
 
     # Compilation time
-    comp_time = struct.unpack_from(">Q", data, pos)[0]
+    comp_time = struct.unpack_from(f"{endian}Q", data, pos)[0]
     pos += 8
 
     # Source filename, username, machine name
-    source_name, pos = _read_wstring(data, pos)
-    username, pos = _read_wstring(data, pos)
-    machine_name, pos = _read_wstring(data, pos)
+    source_name, pos = _read_wstring(data, pos, endian)
+    username, pos = _read_wstring(data, pos, endian)
+    machine_name, pos = _read_wstring(data, pos, endian)
 
     header = PexHeader(
         major_version=major,
@@ -250,12 +286,12 @@ def parse_pex(data: bytes) -> PexFile:
     )
 
     # String table
-    str_count = struct.unpack_from(">H", data, pos)[0]
+    str_count = struct.unpack_from(f"{endian}H", data, pos)[0]
     pos += 2
 
     string_table: list[str] = []
     for _ in range(str_count):
-        s, pos = _read_wstring(data, pos)
+        s, pos = _read_wstring(data, pos, endian)
         string_table.append(s)
 
     table_end = pos
@@ -263,14 +299,14 @@ def parse_pex(data: bytes) -> PexFile:
 
     # Scan post-table data for Variable Data type markers
     # Type 0x01 = identifier, Type 0x02 = string literal
-    # Both followed by uint16 big-endian index into string table
+    # Both followed by uint16 index into string table (same endianness)
     literal_indices: set[int] = set()
     ident_indices: set[int] = set()
 
     for p in range(len(post_table_data) - 2):
         type_byte = post_table_data[p]
         if type_byte in (0x01, 0x02):
-            idx = struct.unpack_from(">H", post_table_data, p + 1)[0]
+            idx = struct.unpack_from(f"{endian}H", post_table_data, p + 1)[0]
             if idx < str_count:
                 if type_byte == 0x02:
                     literal_indices.add(idx)
@@ -283,6 +319,7 @@ def parse_pex(data: bytes) -> PexFile:
         post_table_data=post_table_data,
         literal_indices=literal_indices,
         ident_indices=ident_indices,
+        endian=endian,
     )
 
 
@@ -293,31 +330,32 @@ def serialize_pex(pex: PexFile) -> bytes:
     (debug info + objects) is copied verbatim since it uses index-based
     references that remain valid when string contents change.
     """
+    e = pex.endian
     parts: list[bytes] = []
 
     # Magic
-    parts.append(struct.pack(">I", PEX_MAGIC))
+    parts.append(struct.pack(f"{e}I", PEX_MAGIC))
 
     # Version
     parts.append(struct.pack(">BB", pex.header.major_version, pex.header.minor_version))
 
     # Game ID
-    parts.append(struct.pack(">H", pex.header.game_id))
+    parts.append(struct.pack(f"{e}H", pex.header.game_id))
 
     # Compilation time
-    parts.append(struct.pack(">Q", pex.header.compilation_time))
+    parts.append(struct.pack(f"{e}Q", pex.header.compilation_time))
 
     # Source, user, machine
     for s in (pex.header.source_name, pex.header.username, pex.header.machine_name):
         encoded = s.encode("utf-8")
-        parts.append(struct.pack(">H", len(encoded)))
+        parts.append(struct.pack(f"{e}H", len(encoded)))
         parts.append(encoded)
 
     # String table
-    parts.append(struct.pack(">H", len(pex.string_table)))
+    parts.append(struct.pack(f"{e}H", len(pex.string_table)))
     for s in pex.string_table:
         encoded = s.encode("utf-8")
-        parts.append(struct.pack(">H", len(encoded)))
+        parts.append(struct.pack(f"{e}H", len(encoded)))
         parts.append(encoded)
 
     # Everything else verbatim

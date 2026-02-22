@@ -137,6 +137,41 @@ def make_skyrim_plugin(
     return plugin
 
 
+def make_fo4_header(localized: bool = False) -> Record:
+    """Create a minimal Fallout 4 TES4 header record (HEDR version 1.0)."""
+    hedr_data = struct.pack("<f", 1.0) + struct.pack("<I", 0) + struct.pack("<I", 0)
+    flags = RecordFlag.LOCALIZED if localized else 0
+    return Record(
+        type=b"TES4",
+        flags=flags,
+        form_id=0,
+        vcs1=0,
+        vcs2=0,
+        subrecords=[
+            Subrecord(type=b"HEDR", data=bytearray(hedr_data)),
+        ],
+    )
+
+
+def make_fo4_plugin(
+    records: list[tuple[str, int, list[Subrecord]]] | None = None,
+    localized: bool = False,
+    string_tables: StringTableSet | None = None,
+) -> PluginFile:
+    """Build a minimal valid Fallout 4 PluginFile."""
+    header = make_fo4_header(localized)
+    plugin = PluginFile(header=header, groups=[], game=Game.FALLOUT4, string_tables=string_tables)
+
+    if records:
+        children = []
+        for rec_type, form_id, subs in records:
+            children.append(make_record(rec_type, form_id, subs))
+        group = make_group(records[0][0][:4], children)
+        plugin.groups.append(group)
+
+    return plugin
+
+
 @pytest.fixture
 def simple_plugin() -> PluginFile:
     """A minimal plugin with a WEAP record containing EDID and FULL."""

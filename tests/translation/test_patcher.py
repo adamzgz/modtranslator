@@ -127,3 +127,75 @@ class TestSkyrimPatcher:
 
         assert patched == 1
         assert sts.dlstrings.entries[10] == "Un arma fina."
+
+
+class TestFo4Patcher:
+    def test_patch_fo4_localized_updates_string_table(self):
+        """Patching a FO4 localized string updates the string table."""
+        from tests.conftest import make_fo4_plugin
+        sts = StringTableSet()
+        sts.strings = StringTable(StringTableType.STRINGS, {55: "10mm Pistol"})
+        sts.build_merged()
+
+        plugin = make_fo4_plugin(
+            records=[("WEAP", 0x100, [
+                make_string_id_subrecord("FULL", 55),
+            ])],
+            localized=True,
+            string_tables=sts,
+        )
+
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+
+        translations = {strings[0].key: "Pistola 10mm"}
+        patched = apply_translations(strings, translations, string_tables=sts)
+
+        assert patched == 1
+        assert sts.strings.entries[55] == "Pistola 10mm"
+        # Subrecord still holds the 4-byte StringID
+        assert strings[0].subrecord.size == 4
+
+    def test_patch_fo4_inline_mutates_subrecord(self):
+        """Non-localized FO4 plugin patches subrecords directly."""
+        from tests.conftest import make_fo4_plugin
+        plugin = make_fo4_plugin(
+            records=[("OMOD", 0x100, [
+                make_subrecord("FULL", "Rifled Barrel"),
+            ])],
+            localized=False,
+        )
+
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+
+        translations = {strings[0].key: "Canon Estriado"}
+        patched = apply_translations(strings, translations)
+
+        assert patched == 1
+        text_in_data = strings[0].subrecord.data[:-1].decode("cp1252")
+        assert text_in_data == "Canon Estriado"
+
+    def test_patch_fo4_dlstrings(self):
+        """FO4 DESC (long description) stored in DLSTRINGS is patched correctly."""
+        from tests.conftest import make_fo4_plugin
+        sts = StringTableSet()
+        sts.dlstrings = StringTable(StringTableType.DLSTRINGS, {20: "A powerful pistol."})
+        sts.build_merged()
+
+        plugin = make_fo4_plugin(
+            records=[("WEAP", 0x100, [
+                make_string_id_subrecord("DESC", 20),
+            ])],
+            localized=True,
+            string_tables=sts,
+        )
+
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+
+        translations = {strings[0].key: "Una potente pistola."}
+        patched = apply_translations(strings, translations, string_tables=sts)
+
+        assert patched == 1
+        assert sts.dlstrings.entries[20] == "Una potente pistola."

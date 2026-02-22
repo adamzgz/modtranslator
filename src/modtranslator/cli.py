@@ -33,7 +33,7 @@ from modtranslator.pipeline import (
 
 app = typer.Typer(
     name="modtranslator",
-    help="Automatic translator for Bethesda ESP/ESM mod files.",
+    help="Automatic translator for Bethesda ESP/ESM mod files (FO3, FNV, FO4, Skyrim).",
     add_completion=False,
 )
 console = Console()
@@ -142,7 +142,7 @@ def translate(
     ),
     game: GameChoice = typer.Option(
         GameChoice.auto, "--game",
-        help="Game: fo3, fnv, skyrim, auto.",
+        help="Game: fo3, fnv, fo4, skyrim, auto.",
     ),
 ) -> None:
     """Translate an ESP/ESM file."""
@@ -494,7 +494,7 @@ def batch(
     ),
     game: GameChoice = typer.Option(
         GameChoice.auto, "--game",
-        help="Game: fo3, fnv, skyrim, auto.",
+        help="Game: fo3, fnv, fo4, skyrim, auto.",
     ),
 ) -> None:
     """Translate all matching files in a directory."""
@@ -503,7 +503,11 @@ def batch(
         raise typer.Exit(1)
 
     if pattern == "*.esp":
-        files = sorted(list(directory.glob("*.esp")) + list(directory.glob("*.esm")))
+        files = sorted(
+            list(directory.glob("*.esp"))
+            + list(directory.glob("*.esm"))
+            + list(directory.glob("*.esl"))
+        )
     else:
         files = sorted(directory.glob(pattern))
 
@@ -583,7 +587,7 @@ def batch_pex_cmd(
     ),
     game: GameChoice = typer.Option(
         GameChoice.skyrim, "--game",
-        help="Game: fo3, fnv, skyrim, auto.",
+        help="Game: fo3, fnv, fo4, skyrim, auto.",
     ),
 ) -> None:
     """Translate all .pex Papyrus script files in a directory."""
@@ -631,7 +635,7 @@ def batch_pex_cmd(
 @app.command(name="batch-mcm")
 def batch_mcm_cmd(
     directory: Path = typer.Argument(
-        ..., help="Skyrim Data directory (contains Interface/translations/).",
+        ..., help="Game Data directory (contains Interface/translations/).",
     ),
     lang: str = typer.Option(
         "ES", "--lang", "-l", help="Target language code.",

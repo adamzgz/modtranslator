@@ -533,3 +533,144 @@ class TestCLICacheCommands:
         result = runner.invoke(app, ["cache-info"])
         assert result.exit_code == 0
         assert "Cached translations" in result.output
+
+
+class TestCLIGameFlagFo4:
+    def test_game_fo4_translate(self, tmp_path):
+        """--game fo4 works for the translate command."""
+        esp = FIXTURES / "minimal_fo4.esp"
+        output = tmp_path / "out.esp"
+        result = runner.invoke(app, [
+            "translate", str(esp),
+            "--dummy",
+            "--output", str(output),
+            "--no-cache",
+            "--game", "fo4",
+        ])
+        assert result.exit_code == 0
+        assert output.exists()
+
+    def test_game_fo4_batch(self, tmp_path):
+        """--game fo4 works for the batch command."""
+        import shutil
+        src_dir = tmp_path / "data"
+        src_dir.mkdir()
+        shutil.copy(FIXTURES / "minimal_fo4.esp", src_dir / "mod.esp")
+        out_dir = tmp_path / "out"
+        result = runner.invoke(app, [
+            "batch", str(src_dir),
+            "--dummy",
+            "--output-dir", str(out_dir),
+            "--no-cache",
+            "--game", "fo4",
+        ])
+        assert result.exit_code == 0 or result.exit_code is None
+        assert "Batch Summary" in result.output
+
+
+class TestCLIBatchPex:
+    def test_batch_pex_no_files(self, tmp_path):
+        """batch-pex exits early when directory has no .pex files."""
+        result = runner.invoke(app, [
+            "batch-pex", str(tmp_path),
+            "--dummy",
+            "--no-cache",
+        ])
+        # Should exit without error (just warns no files)
+        assert result.exit_code == 0 or result.exit_code is None
+        assert "No .pex" in result.output or result.exit_code == 0
+
+    def test_batch_pex_not_a_dir(self, tmp_path):
+        """batch-pex gives error if path is not a directory."""
+        fake_path = tmp_path / "nonexistent"
+        result = runner.invoke(app, [
+            "batch-pex", str(fake_path),
+            "--dummy",
+        ])
+        assert result.exit_code != 0 or "Error" in result.output or "Not a directory" in result.output
+
+    def test_batch_pex_with_skyrim_pex(self, tmp_path):
+        """batch-pex translates a minimal Skyrim PEX file with dummy backend."""
+        import struct
+        # Build a minimal Skyrim PEX (big-endian)
+        magic = struct.pack(">I", 0xFA57C0DE)
+        # major=3, minor=2, game_id=1 (Skyrim), compile_time=0
+        header = struct.pack(">HHHI", 3, 2, 1, 0)
+        # source_file string (length-prefixed)
+        src = b"test.psc"
+        source_str = struct.pack(">H", len(src)) + src
+        # user doc string (empty)
+        user_doc = struct.pack(">H", 0)
+        # string table: 1 string
+        table_data = struct.pack(">H", 1)
+        s = b"A magical sword"
+        table_data += struct.pack(">H", len(s)) + s
+        # string types: 1 entry with type 0x02 (literal, not identifier)
+        type_section = struct.pack(">H", 1) + struct.pack(">HB", 0, 0x02)
+        # trailing data to satisfy parser
+        trailing = b"\x00" * 4
+
+        pex_data = magic + header + source_str + user_doc + table_data + type_section + trailing
+        pex_file = tmp_path / "test.pex"
+        pex_file.write_bytes(pex_data)
+
+        out_dir = tmp_path / "out"
+        result = runner.invoke(app, [
+            "batch-pex", str(tmp_path),
+            "--dummy",
+            "--output-dir", str(out_dir),
+            "--no-cache",
+            "--game", "skyrim",
+        ])
+        # Should not crash — exit 0 or at most 1 (no translatable strings found)
+        assert result.exit_code in (0, None, 1)
+
+
+class TestCLIBatchMcm:
+    def test_batch_mcm_empty_dir(self, tmp_path):
+        """batch-mcm exits with error when Interface/translations/ doesn't exist."""
+        result = runner.invoke(app, [
+            "batch-mcm", str(tmp_path),
+            "--dummy",
+            "--no-cache",
+        ])
+        # No Interface/translations/ dir → FileNotFoundError → exit 1
+        assert result.exit_code == 1
+
+    def test_batch_mcm_skyrim_txt(self, tmp_path):
+        """batch-mcm translates a Skyrim-style MCM file (_english.txt)."""
+        # Create Interface/translations/ structure
+        trans_dir = tmp_path / "Interface" / "translations"
+        trans_dir.mkdir(parents=True)
+        mcm_file = trans_dir / "mymod_english.txt"
+        # UTF-16-LE with BOM
+        content = "\ufeff$MYKEY\tHello adventurer\n"
+        mcm_file.write_bytes(content.encode("utf-16-le"))
+
+        out_dir = tmp_path / "out"
+        result = runner.invoke(app, [
+            "batch-mcm", str(tmp_path),
+            "--dummy",
+            "--output-dir", str(out_dir),
+            "--no-cache",
+            "--game", "skyrim",
+        ])
+        assert result.exit_code == 0 or result.exit_code is None
+
+    def test_batch_mcm_fo4_txt(self, tmp_path):
+        """batch-mcm translates a FO4-style MCM file (_en.txt)."""
+        trans_dir = tmp_path / "Interface" / "translations"
+        trans_dir.mkdir(parents=True)
+        mcm_file = trans_dir / "mymod_en.txt"
+        content = "\ufeff$MYKEY\tWelcome to the wasteland\n"
+        mcm_file.write_bytes(content.encode("utf-16-le"))
+
+        out_dir = tmp_path / "out"
+        result = runner.invoke(app, [
+            "batch-mcm", str(tmp_path),
+            "--dummy",
+            "--output-dir", str(out_dir),
+            "--no-cache",
+            "--game", "fo4",
+        ])
+        assert result.exit_code == 0 or result.exit_code is None

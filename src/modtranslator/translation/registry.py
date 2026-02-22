@@ -51,6 +51,11 @@ _FULL_ALLOWED_RECORDS: set[bytes] = {
     b"TERM",  # Terminal — crosshair prompt, terminal header
     b"WEAP",  # Weapon — Pip-Boy inventory
     b"WRLD",  # Worldspace — Pip-Boy world map header
+    # Fallout 4-specific record types
+    b"OMOD",  # Object Modification — weapon/armor mod name in workbench
+    b"CMPO",  # Component — junk breakdown component name
+    b"INNR",  # Instance Naming Rules — generated item names
+    b"DMGT",  # Damage Type — damage type display name
     # Skyrim-specific record types
     b"FLOR",  # Flora — "Harvest X" crosshair prompt
     b"SCRL",  # Scroll — inventory

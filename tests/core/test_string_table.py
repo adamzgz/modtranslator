@@ -9,6 +9,7 @@ from modtranslator.core.string_table import (
     StringTable,
     StringTableSet,
     StringTableType,
+    _language_variants,
     load_string_tables,
     parse_string_table,
     save_string_tables,
@@ -222,3 +223,78 @@ class TestLoadSaveStringTables:
         assert reloaded.strings.entries[1] == "Espada"
         assert reloaded.dlstrings.entries[10] == "Una espada fina."
         assert reloaded.ilstrings.entries[100] == "Información"
+
+
+class TestLanguageVariants:
+    """Test _language_variants for Skyrim and FO4 naming conventions."""
+
+    def test_english_full(self):
+        variants = _language_variants("English")
+        assert "English" in variants
+        assert "english" in variants
+        assert "en" in variants
+        assert "En" in variants
+
+    def test_spanish_full(self):
+        variants = _language_variants("Spanish")
+        assert "Spanish" in variants
+        assert "spanish" in variants
+        assert "es" in variants
+
+    def test_short_code_en(self):
+        variants = _language_variants("en")
+        assert "en" in variants
+        assert "English" in variants
+        assert "english" in variants
+
+    def test_short_code_es(self):
+        variants = _language_variants("es")
+        assert "es" in variants
+        assert "Spanish" in variants
+
+
+class TestFo4ShortCodeLoading:
+    """Test loading string tables with FO4 short language codes (_En, _es)."""
+
+    def test_load_short_code_en(self, tmp_path: Path):
+        """Load string tables using FO4 _En naming convention."""
+        plugin_path = tmp_path / "MyMod.esp"
+        plugin_path.write_bytes(b"")
+
+        strings_dir = tmp_path / "strings"
+        strings_dir.mkdir()
+
+        raw = _build_strings_binary([(1, "Power Armor")])
+        (strings_dir / "MyMod_En.STRINGS").write_bytes(raw)
+
+        ts = load_string_tables(plugin_path)
+        assert ts.strings.entries[1] == "Power Armor"
+        # On case-insensitive FS (Windows), "en" matches before "En"
+        assert ts.found_language.lower() == "en"
+
+    def test_save_short_code_output(self, tmp_path: Path):
+        """When source used short codes, output should use short codes too."""
+        sts = StringTableSet()
+        sts.strings = StringTable(StringTableType.STRINGS, {1: "Armadura"})
+        sts.found_language = "En"  # Source was FO4 short code
+
+        plugin_path = tmp_path / "MyMod.esp"
+        plugin_path.write_bytes(b"")
+
+        written = save_string_tables(sts, plugin_path, language="Spanish")
+        assert len(written) == 1
+        # Should use "es" not "Spanish" because source used short codes
+        assert written[0].name == "MyMod_es.STRINGS"
+
+    def test_save_full_name_when_source_full(self, tmp_path: Path):
+        """When source used full names, output should use full names too."""
+        sts = StringTableSet()
+        sts.strings = StringTable(StringTableType.STRINGS, {1: "Espada"})
+        sts.found_language = "English"  # Source was Skyrim full name
+
+        plugin_path = tmp_path / "MyMod.esp"
+        plugin_path.write_bytes(b"")
+
+        written = save_string_tables(sts, plugin_path, language="Spanish")
+        assert len(written) == 1
+        assert written[0].name == "MyMod_Spanish.STRINGS"

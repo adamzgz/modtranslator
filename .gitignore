@@ -56,3 +56,21 @@ text_to_keys_mapping.json
 translation_strings.json
 unique_strings.json
 TRANSLATION_LOG.md
+
+# Local planning docs and analysis scripts
+*_PLAN.md
+analyze_*.py
+analyze_volume.py
+
+# Build artifacts
+*.zip
+
+# GUI debug artifacts
+*.png
+gui_error*.log
+
+# Playwright MCP
+.playwright-mcp/
+
+# Misc
+nul
