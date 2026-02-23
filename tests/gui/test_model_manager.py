@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+import types
 from unittest.mock import patch
 
 from modtranslator.gui.model_manager import (
@@ -11,6 +13,13 @@ from modtranslator.gui.model_manager import (
     get_missing_model_ids,
     get_model_status,
 )
+
+
+def _ensure_fake_ct2() -> None:
+    """Ensure ctranslate2 and sentencepiece are importable (stub if missing)."""
+    for mod_name in ("ctranslate2", "sentencepiece"):
+        if mod_name not in sys.modules:
+            sys.modules[mod_name] = types.ModuleType(mod_name)
 
 # ---------------------------------------------------------------------------
 # _opus_model_id
@@ -130,12 +139,14 @@ class TestCheckBackendReady:
 
     @patch("modtranslator.gui.model_manager._check_model_exists", return_value=True)
     def test_hybrid_ready_with_correct_lang(self, mock_exists: object) -> None:
+        _ensure_fake_ct2()
         ready, msg = check_backend_ready("hybrid", lang="DE")
         assert ready is True
         assert msg == "Ready"
 
     @patch("modtranslator.gui.model_manager._check_model_exists", return_value=False)
     def test_hybrid_not_ready_when_models_missing(self, mock_exists: object) -> None:
+        _ensure_fake_ct2()
         ready, msg = check_backend_ready("hybrid", lang="IT")
         assert ready is False
         assert "not downloaded" in msg.lower()
@@ -143,6 +154,7 @@ class TestCheckBackendReady:
     @patch("modtranslator.gui.model_manager._check_model_exists", return_value=False)
     def test_opus_no_model_for_unsupported_lang(self, mock_exists: object) -> None:
         """Opus-MT for an unsupported language should fail gracefully."""
+        _ensure_fake_ct2()
         ready, msg = check_backend_ready("opus-mt", lang="JA")
         assert ready is False
         assert "JA" in msg
