@@ -1,0 +1,372 @@
+# Glossary base Skyrim → German
+# Official Bethesda German localization terms.
+# Only includes terms that MT models translate incorrectly or inconsistently.
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# RACES
+# ═══════════════════════════════════════════════════════════════
+"Altmer" = "Altmer"
+"High Elf" = "Hochelfe"
+"Bosmer" = "Bosmer"
+"Wood Elf" = "Waldelfe"
+"Dunmer" = "Dunmer"
+"Dark Elf" = "Dunkelelfe"
+"Orsimer" = "Orsimer"
+"Breton" = "Bretone"
+"Imperial" = "Imperialer"
+"Nord" = "Nordmann"
+"Redguard" = "Rothwächter"
+"Argonian" = "Argonianer"
+"Khajiit" = "Khajiit"
+
+# ═══════════════════════════════════════════════════════════════
+# CITIES & HOLDS
+# ═══════════════════════════════════════════════════════════════
+"Whiterun" = "Weißlauf"
+"Solitude" = "Einsamkeit"
+"Windhelm" = "Windhelm"
+"Riften" = "Riften"
+"Markarth" = "Markarth"
+"Dawnstar" = "Morgenstern"
+"Winterhold" = "Winterfeste"
+"Morthal" = "Morthal"
+"Falkreath" = "Falkenring"
+"High Hrothgar" = "Hochhrothgar"
+"Throat of the World" = "Kehle der Welt"
+"Riverwood" = "Flusswald"
+"Helgen" = "Helgen"
+"Dragonsbridge" = "Drachenbrücke"
+
+# ═══════════════════════════════════════════════════════════════
+# FACTIONS & GUILDS
+# ═══════════════════════════════════════════════════════════════
+"Companions" = "Gefährten"
+"Thieves Guild" = "Diebesgilde"
+"Dark Brotherhood" = "Dunkle Bruderschaft"
+"College of Winterhold" = "Winterfeste-Kolleg"
+"Stormcloaks" = "Sturmmantel"
+"Blades" = "Klingen"
+"Greybeards" = "Graubärte"
+"Thalmor" = "Thalmor"
+"Forsworn" = "Ausgestoßene"
+"Silver Hand" = "Silberhand"
+"Volkihar" = "Volkihar"
+"Dawnguard" = "Morgenwacht"
+"Penitus Oculatus" = "Penitus Oculatus"
+"Bards College" = "Bardenkolleg"
+"Nightingales" = "Nachtigallen"
+
+# ═══════════════════════════════════════════════════════════════
+# DRAGON SHOUTS
+# ═══════════════════════════════════════════════════════════════
+"Unrelenting Force" = "Unnachgiebige Kraft"
+"Fus Ro Dah" = "Fus Ro Dah"
+"Whirlwind Sprint" = "Wirbelwindsprint"
+"Fire Breath" = "Feueratem"
+"Frost Breath" = "Frostatem"
+"Ice Form" = "Eisform"
+"Storm Call" = "Sturmruf"
+"Clear Skies" = "Freier Himmel"
+"Dragonrend" = "Drachenbann"
+"Marked for Death" = "Todesmal"
+"Slow Time" = "Zeitverlangsamung"
+"Become Ethereal" = "Ätherisch werden"
+"Aura Whisper" = "Auraflüstern"
+"Throw Voice" = "Stimme werfen"
+"Dismay" = "Entsetzen"
+"Animal Allegiance" = "Tierische Treue"
+"Elemental Fury" = "Elementarwut"
+"Call Dragon" = "Drachenruf"
+"Call of Valor" = "Ruf der Tapferkeit"
+"Disarm" = "Entwaffnen"
+"Drain Vitality" = "Vitalitätsentzug"
+"Cyclone" = "Zyklon"
+
+# ═══════════════════════════════════════════════════════════════
+# CREATURES
+# ═══════════════════════════════════════════════════════════════
+"Draugr" = "Draugr"
+"Falmer" = "Falmer"
+"Chaurus" = "Chaurus"
+"Spriggan" = "Spriggan"
+"Hagraven" = "Hexenkrähe"
+"Wisp" = "Irrlicht"
+"Wispmother" = "Irrlichtmutter"
+"Mudcrab" = "Schlammkrebs"
+"Skeever" = "Skeever"
+"Sabre Cat" = "Säbelkatze"
+"Troll" = "Troll"
+"Frost Troll" = "Eistroll"
+"Giant" = "Riese"
+"Mammoth" = "Mammut"
+"Horker" = "Horker"
+"Frostbite Spider" = "Frostbeißspinne"
+"Dragon" = "Drache"
+"Dragon Priest" = "Drachenpriester"
+"Dwarven Centurion" = "Zwergenzenturio"
+"Dwarven Sphere" = "Zwergensphäre"
+"Dwarven Spider" = "Zwergenspinne"
+"Gargoyle" = "Gargoyle"
+"Death Hound" = "Todeshund"
+"Riekling" = "Riekling"
+"Lurker" = "Lauerer"
+"Seeker" = "Sucher"
+"Werebear" = "Werebär"
+"Werewolf" = "Werwolf"
+"Ice Wraith" = "Eisgeist"
+"Frost Atronach" = "Eis-Atronach"
+"Storm Atronach" = "Sturm-Atronach"
+"Flame Atronach" = "Flammen-Atronach"
+"Dremora" = "Dremora"
+"Vampire" = "Vampir"
+"Vampire Lord" = "Vampirlord"
+"Ancient Dragon" = "Uralter Drache"
+"Elder Dragon" = "Älterer Drache"
+"Blood Dragon" = "Blutdrache"
+"Frost Dragon" = "Eisdrache"
+"Skeleton" = "Skelett"
+
+# ═══════════════════════════════════════════════════════════════
+# GAME TERMS
+# ═══════════════════════════════════════════════════════════════
+"Dragonborn" = "Drachenblut"
+"Dovahkiin" = "Dovahkiin"
+"Shout" = "Schrei"
+"Word of Power" = "Machtswort"
+"Word Wall" = "Machtwand"
+"Dragon Soul" = "Drachenseele"
+"Thu'um" = "Thu'um"
+"Daedric" = "Daedra-"
+"Daedra" = "Daedra"
+"Aedra" = "Aedra"
+"Dwemer" = "Dwemer"
+"Jarl" = "Jarl"
+"Thane" = "Gefolgsmann"
+"Housecarl" = "Hausknappe"
+"Dragonstone" = "Drachenstein"
+"Dragon Claw" = "Drachen-Klaue"
+"Black Book" = "Schwarzes Buch"
+"Black Books" = "Schwarze Bücher"
+
+# ═══════════════════════════════════════════════════════════════
+# DAEDRIC PRINCES
+# ═══════════════════════════════════════════════════════════════
+"Azura" = "Azura"
+"Boethiah" = "Boethiah"
+"Clavicus Vile" = "Clavicus Vile"
+"Hermaeus Mora" = "Hermaeus Mora"
+"Hircine" = "Hircine"
+"Malacath" = "Malacath"
+"Mehrunes Dagon" = "Mehrunes Dagon"
+"Mephala" = "Mephala"
+"Meridia" = "Meridia"
+"Molag Bal" = "Molag Bal"
+"Namira" = "Namira"
+"Nocturnal" = "Nocturnal"
+"Peryite" = "Peryite"
+"Sanguine" = "Sanguine"
+"Sheogorath" = "Sheogorath"
+"Vaermina" = "Vaermina"
+
+# ═══════════════════════════════════════════════════════════════
+# DAEDRIC ARTIFACTS
+# ═══════════════════════════════════════════════════════════════
+"Azura's Star" = "Azuras Stern"
+"Dawnbreaker" = "Dämmerungsbrecherin"
+"Mehrunes' Razor" = "Mehrunes Rasiermesser"
+"Skeleton Key" = "Skelettschlüssel"
+"Wabbajack" = "Wabbajack"
+"Volendrung" = "Volendrung"
+"Mace of Molag Bal" = "Keule des Molag Bal"
+"Ebony Blade" = "Ebenholzklinge"
+"Spellbreaker" = "Zauberbrecherin"
+"Savior's Hide" = "Retter-Fell"
+"Oghma Infinium" = "Oghma Infinium"
+
+# ═══════════════════════════════════════════════════════════════
+# CONSUMABLES & ITEMS
+# ═══════════════════════════════════════════════════════════════
+"Skooma" = "Skooma"
+"Moon Sugar" = "Mondzucker"
+"Sweetroll" = "Honigkuchen"
+"Mead" = "Met"
+"Soul Gem" = "Seelenstein"
+"Black Soul Gem" = "Schwarzer Seelenstein"
+"Grand Soul Gem" = "Großer Seelenstein"
+"Elder Scroll" = "Ältere Schriftrolle"
+"Lockpick" = "Dietrich"
+"Dragon Bone" = "Drachenknochen"
+"Dragon Scale" = "Drachenschuppe"
+
+# ═══════════════════════════════════════════════════════════════
+# SKILLS
+# ═══════════════════════════════════════════════════════════════
+"One-Handed" = "Einhand"
+"Two-Handed" = "Zweihand"
+"Archery" = "Bogenschießen"
+"Block" = "Blockieren"
+"Heavy Armor" = "Schwere Rüstung"
+"Light Armor" = "Leichte Rüstung"
+"Smithing" = "Schmiedekunst"
+"Enchanting" = "Verzauberung"
+"Alchemy" = "Alchemie"
+"Speech" = "Beredsamkeit"
+"Pickpocket" = "Taschendiebstahl"
+"Lockpicking" = "Schlösserknacken"
+"Sneak" = "Schleichen"
+"Conjuration" = "Beschwörung"
+"Destruction" = "Zerstörung"
+"Illusion" = "Illusion"
+"Restoration" = "Wiederherstellung"
+"Alteration" = "Verwandlung"
+
+# ═══════════════════════════════════════════════════════════════
+# EQUIPMENT MATERIALS
+# ═══════════════════════════════════════════════════════════════
+"Iron" = "Eisen"
+"Steel" = "Stahl"
+"Dwarven" = "Zwerg-"
+"Elven" = "Elfen-"
+"Orcish" = "Ork-"
+"Glass" = "Glas"
+"Ebony" = "Ebenholz"
+"Nordic" = "Nordisch"
+
+# ═══════════════════════════════════════════════════════════════
+# KEY LOCATIONS
+# ═══════════════════════════════════════════════════════════════
+"Skyrim" = "Skyrim"
+"Sovngarde" = "Sovngarde"
+"Solstheim" = "Solstheim"
+"Blackreach" = "Schwarzreach"
+"Apocrypha" = "Apocrypha"
+
+# ═══════════════════════════════════════════════════════════════
+# GAME MECHANICS
+# ═══════════════════════════════════════════════════════════════
+"Magicka" = "Magicka"
+"Stamina" = "Ausdauer"
+"Health" = "Gesundheit"
+"Cooldown" = "Abklingzeit"
+"Vanilla" = "Basisspiel"
+"Standing Stone" = "Stehender Stein"
+"Guardian Stone" = "Wächterstein"
+
+# ═══════════════════════════════════════════════════════════════
+# CHARACTERS
+# ═══════════════════════════════════════════════════════════════
+"Alduin" = "Alduin"
+"Paarthurnax" = "Paarthurnax"
+"Ulfric Stormcloak" = "Ulfric Sturmmantel"
+"Jarl Balgruuf" = "Jarl Balgruuf"
+"Lydia" = "Lydia"
+"Serana" = "Serana"
+"Harkon" = "Harkon"
+"Miraak" = "Miraak"
+"Odahviing" = "Odahviing"
+"Durnehviir" = "Durnehviir"
+"Delphine" = "Delphine"
+"Esbern" = "Esbern"
+"Brynjolf" = "Brynjolf"
+"Mercer Frey" = "Mercer Frey"
+"Maven Black-Briar" = "Maven Schwarzdorn"
+"Astrid" = "Astrid"
+"Cicero" = "Cicero"
+"Mjoll the Lioness" = "Mjoll die Löwin"
+"Aela the Huntress" = "Aela die Jägerin"
+"Farkas" = "Farkas"
+"Vilkas" = "Vilkas"
+"Kodlak Whitemane" = "Kodlak Weißmähne"
+"J'zargo" = "J'zargo"
+"Onmund" = "Onmund"
+"Brelyna Maryon" = "Brelyna Maryon"
+"Ancano" = "Ancano"
+"Mirabelle Ervine" = "Mirabelle Ervine"
+"Arch-Mage" = "Erz-Magier"
+"Harbinger" = "Vorbote"
+
+# ═══════════════════════════════════════════════════════════════
+# UNIQUE WEAPONS
+# ═══════════════════════════════════════════════════════════════
+"Nightingale Blade" = "Nachtigallenklinge"
+"Nightingale Bow" = "Nachtigallenbogen"
+"Chillrend" = "Frostbrecher"
+"Dragonbane" = "Drachentöter"
+"The Pale Blade" = "Die Bleiche Klinge"
+"Meridia's Beacon" = "Meridias Leuchtfeuer"
+"Auriel's Bow" = "Auriels Bogen"
+"Auriel's Shield" = "Auriels Schild"
+"Harkon's Sword" = "Harkons Schwert"
+"Grimsever" = "Grauspalter"
+"Bloodthorn" = "Blutdorn"
+"Blade of Woe" = "Klinge des Leids"
+"Windshear" = "Windscherung"
+"Ghostblade" = "Geisterklinge"
+
+# ═══════════════════════════════════════════════════════════════
+# SPELLS
+# ═══════════════════════════════════════════════════════════════
+"Flames" = "Flammen"
+"Frostbite" = "Frostbiss"
+"Sparks" = "Funken"
+"Healing" = "Heilung"
+"Candlelight" = "Kerzenlicht"
+"Magelight" = "Zauberlicht"
+"Soul Trap" = "Seelenfalle"
+"Fireball" = "Feuerball"
+"Fire Storm" = "Feuersturm"
+"Lightning Bolt" = "Blitzschlag"
+"Chain Lightning" = "Kettenblitz"
+"Thunderbolt" = "Donnerkeil"
+"Ice Spike" = "Eisspeer"
+"Ice Storm" = "Eissturm"
+"Blizzard" = "Blizzard"
+"Conjure Familiar" = "Famulus beschwören"
+"Raise Zombie" = "Zombie erwecken"
+"Reanimate Corpse" = "Leiche wiederbeleben"
+"Conjure Flame Atronach" = "Flammen-Atronach beschwören"
+"Conjure Frost Atronach" = "Eis-Atronach beschwören"
+"Conjure Storm Atronach" = "Sturm-Atronach beschwören"
+"Conjure Dremora Lord" = "Dremora-Lord beschwören"
+"Fury" = "Raserei"
+"Fear" = "Furcht"
+"Calm" = "Beruhigung"
+"Muffle" = "Dämpfen"
+"Invisibility" = "Unsichtbarkeit"
+"Detect Life" = "Leben entdecken"
+"Fast Healing" = "Schnelle Heilung"
+"Close Wounds" = "Wunden schließen"
+"Healing Hands" = "Heilende Hände"
+"Turn Lesser Undead" = "Geringere Untote vertreiben"
+"Stoneflesh" = "Steinhaut"
+"Oakflesh" = "Eichenhaut"
+"Ironflesh" = "Eisenhaut"
+"Ebonyflesh" = "Ebenholzhaut"
+"Dragonhide" = "Drachenhaut"
+"Telekinesis" = "Telekinese"
+"Transmute" = "Transmutieren"
+"Waterbreathing" = "Wasseratmung"
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-PROTECTION: German terms that should not be re-translated
+# ═══════════════════════════════════════════════════════════════
+"Drachenblut" = "Drachenblut"
+"Werwolf" = "Werwolf"
+"Graubärte" = "Graubärte"
+"Ausgestoßene" = "Ausgestoßene"
+"Dunkle Bruderschaft" = "Dunkle Bruderschaft"
+"Diebesgilde" = "Diebesgilde"
+"Sturmmantel" = "Sturmmantel"
+"Nachtigallen" = "Nachtigallen"
+"Irrlicht" = "Irrlicht"
+"Hexenkrähe" = "Hexenkrähe"
+"Seelenstein" = "Seelenstein"
+"Dietrich" = "Dietrich"
+"Skelettschlüssel" = "Skelettschlüssel"
+
+"Nachtigallenklinge" = "Nachtigallenklinge"
+"Drachentöter" = "Drachentöter"
+"Klinge des Leids" = "Klinge des Leids"
+"Seelenfalle" = "Seelenfalle"

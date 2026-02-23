@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "modtranslator"
-version = "0.1.0"
-description = "Automatic translator for Bethesda ESP/ESM mod files (Fallout 3, Fallout: New Vegas)"
+version = "0.2.0"
+description = "Offline translator for Bethesda mod files (ESP/ESM/PEX/MCM) — Fallout 3, FNV, Skyrim, Fallout 4"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [{ name = "modtranslator contributors" }]
-keywords = ["fallout", "bethesda", "esp", "esm", "translation", "modding"]
+keywords = ["fallout", "skyrim", "bethesda", "esp", "esm", "pex", "mcm", "translation", "modding"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -26,6 +26,7 @@ classifiers = [
 dependencies = [
     "typer>=0.9.0",
     "rich>=13.0.0",
+    "tomli>=2.0.0; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]

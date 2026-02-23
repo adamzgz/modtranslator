@@ -1,0 +1,207 @@
+# Glossary Fallout 4 → Polish
+# Official Bethesda Polish localization terms.
+# FO4-specific terms not in the base glossary.
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# CORE FO4 MECHANICS
+# ═══════════════════════════════════════════════════════════════
+"Settlement" = "Osada"
+"Synth" = "Syntyk"
+"Institute" = "Instytut"
+"Railroad" = "Podziemna Kolej"
+"Minutemen" = "Minutemani"
+"Sole Survivor" = "Jedyny Ocalaly"
+"Courser" = "Goncze"
+"Gen 1" = "Gen. 1"
+"Gen 2" = "Gen. 2"
+"Gen 3" = "Gen. 3"
+"Synth Relay Chip" = "Chip Relai Syntykow"
+"Recall Code" = "Kod Przywolania"
+"Biometric Scanner" = "Skaner Biometryczny"
+"Memory Den" = "Den Wspomnien"
+"Memory" = "Wspomnienie"
+"Robobrain" = "Robomozg"
+
+# ═══════════════════════════════════════════════════════════════
+# LOCATIONS
+# ═══════════════════════════════════════════════════════════════
+"Commonwealth" = "Wspolnota"
+"Diamond City" = "Diamentowe Miasto"
+"Goodneighbor" = "Dobry Sasiad"
+"The Institute" = "Instytut"
+"Glowing Sea" = "Swiecace Morze"
+"Sanctuary Hills" = "Wzgorza Schronienia"
+"Red Rocket" = "Czerwona Rakieta"
+"Concord" = "Concord"
+"Lexington" = "Lexington"
+"Jamaica Plain" = "Jamaica Plain"
+"Quincy" = "Quincy"
+"Vault 81" = "Krypta 81"
+"Vault 95" = "Krypta 95"
+"Vault 111" = "Krypta 111"
+"Vault 114" = "Krypta 114"
+"Mass Fusion" = "Mass Fusion"
+"CIT Ruins" = "Ruiny CIT"
+"Fort Strong" = "Fort Strong"
+"Bunker Hill" = "Wzgorze Bunkra"
+"The Castle" = "Zamek"
+"University Point" = "Punkt Uniwersytecki"
+"Far Harbor" = "Daleki Port"
+"Nuka-World" = "Nuka-Swiat"
+
+# ═══════════════════════════════════════════════════════════════
+# FACTIONS
+# ═══════════════════════════════════════════════════════════════
+"Diamond City Security" = "Straze Diamentowego Miasta"
+"Gunners" = "Strzelcy"
+"Raiders" = "Raiderzy"
+"Nuka-World Raiders" = "Raiderzy z Nuka-Swiata"
+"Operators" = "Operatorzy"
+"Pack" = "Watacha"
+"Disciples" = "Uczniowie"
+
+# ═══════════════════════════════════════════════════════════════
+# CHARACTERS
+# ═══════════════════════════════════════════════════════════════
+"Nate" = "Nate"
+"Nora" = "Nora"
+"Codsworth" = "Codsworth"
+"Dogmeat" = "Psiak"
+"Preston Garvey" = "Preston Garvey"
+"Piper Wright" = "Piper Wright"
+"Nick Valentine" = "Nick Valentine"
+"Hancock" = "Hancock"
+"Cait" = "Cait"
+"Deacon" = "Diakon"
+"MacCready" = "MacCready"
+"Danse" = "Danse"
+"Strong" = "Silny"
+"Curie" = "Curie"
+"X6-88" = "X6-88"
+"Father" = "Ojciec"
+"Shaun" = "Shaun"
+"Desdemona" = "Desdemona"
+"Maxson" = "Maxson"
+"Elder Maxson" = "Starszy Maxson"
+"Kellogg" = "Kellogg"
+"Conrad Kellogg" = "Conrad Kellogg"
+"Mayor McDonough" = "Burmistrz McDonough"
+"Valentine" = "Valentine"
+"DiMA" = "DiMA"
+
+# ═══════════════════════════════════════════════════════════════
+# FO4 CREATURES
+# ═══════════════════════════════════════════════════════════════
+"Stingwing" = "Zadlokrzydly"
+"Bloodbug" = "Krwiak"
+"Gorilla" = "Goryl"
+"Assaultron" = "Szturmotron"
+"Mr. Handy" = "Pan Recny"
+"Mr. Gutsy" = "Pan Odwazny"
+"Mirelurk Queen" = "Krolowa Moczarek"
+"Fog Crawler" = "Skradacz z Mgly"
+"Angler" = "Weczkarz"
+
+# ═══════════════════════════════════════════════════════════════
+# POWER ARMOR MODELS
+# ═══════════════════════════════════════════════════════════════
+"T-45 Power Armor" = "Zbroja Wspomagana T-45"
+"T-51 Power Armor" = "Zbroja Wspomagana T-51"
+"T-60 Power Armor" = "Zbroja Wspomagana T-60"
+"X-01 Power Armor" = "Zbroja Wspomagana X-01"
+"Raider Power Armor" = "Zbroja Wspomagana Raidera"
+"Fusion Core" = "Rdzen Fuzji"
+"Power Armor Frame" = "Szkielet Zbroi Wspomaganej"
+
+# ═══════════════════════════════════════════════════════════════
+# FO4 WEAPONS
+# ═══════════════════════════════════════════════════════════════
+"Deliverer" = "Dostarczyciel"
+"Kremvh's Tooth" = "Zab Kremvha"
+"Le Fusil Terribles" = "Le Fusil Terribles"
+"Kellogg's Pistol" = "Pistolet Kelloga"
+"Righteous Authority" = "Prawy Autorytet"
+"The Last Minute" = "Ostatnia Minuta"
+"Ashmaker" = "Popiolownik"
+"General Chao's Revenge" = "Zemsta Generala Chao"
+"Reba II" = "Reba II"
+"Spray n' Pray" = "Strzelaj i Modl Sie"
+"Junk Jet" = "Dzib"
+"Railway Rifle" = "Kolejowy Karabin"
+"Broadsider" = "Bocznica"
+"Cryolator" = "Kriokarbinator"
+"Lorenzo's Artifact" = "Artefakt Lorenza"
+
+# ═══════════════════════════════════════════════════════════════
+# SETTLEMENT CONSTRUCTION
+# ═══════════════════════════════════════════════════════════════
+"Workshop" = "Warsztat"
+"Supply Line" = "Linia Zaopatrzenia"
+"Provisioner" = "Dostawca"
+"Defense" = "Obrona"
+"Food" = "Zywnosc"
+"Water" = "Woda"
+"Happiness" = "Szczescie"
+"Settlers" = "Osadnicy"
+"Recruitment Radio Beacon" = "Radiolatarnia Werbunkowa"
+"Guard Post" = "Posterunek"
+"Brahmin Feed Trough" = "Koryto dla Brahminow"
+
+# ═══════════════════════════════════════════════════════════════
+# FO4 PERKS
+# ═══════════════════════════════════════════════════════════════
+"SPECIAL" = "S.P.E.C.I.A.L."
+"Local Leader" = "Lokalny Przywodca"
+"Cap Collector" = "Zbieracz Kapsel"
+"Gun Nut" = "Maniak Broni"
+"Hacker" = "Haker"
+"Science!" = "Nauka!"
+"Chemist" = "Chemik"
+"Medic" = "Sanitariusz"
+"Armorer" = "Zbrojmistrz"
+"Blacksmith" = "Kowal"
+"Scrapper" = "Zlomiarz"
+"Rifleman" = "Strzelec"
+"Commando" = "Komandos"
+"Gunslinger" = "Rewolwerowiec"
+"Sniper" = "Snajper"
+"Heavy Gunner" = "Ciezkozbrojny"
+"Demolition Expert" = "Ekspert Saperski"
+"Big Leagues" = "Wielka Liga"
+"Iron Fist" = "Zelazna Piesc"
+"Lone Wanderer" = "Samotny Wedrowiec"
+"Animal Friend" = "Przyjaciel Zwierzat"
+"Wasteland Whisperer" = "Szeptem do Pustkowi"
+"Inspirational" = "Inspirujacy"
+"Nuclear Physicist" = "Fizyk Jadrowy"
+"Aquaboy" = "Chlopak Wody"
+"Night Person" = "Nocny Marek"
+"Mister Sandman" = "Piaskowy Dziadek"
+"Ninja" = "Ninja"
+"Blitz" = "Blitz"
+"Moving Target" = "Ruchomy Cel"
+
+# ═══════════════════════════════════════════════════════════════
+# DLC
+# ═══════════════════════════════════════════════════════════════
+"Automatron" = "Automatron"
+"Wasteland Workshop" = "Warsztat Pustkowi"
+"Contraptions Workshop" = "Warsztat Mechanizmow"
+"Vault-Tec Workshop" = "Warsztat Vault-Tec"
+"Nuka-Cola Quantum" = "Nuka-Cola Quantum"
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-PROTECTION: Polish terms that should not be re-translated
+# ═══════════════════════════════════════════════════════════════
+"Osada" = "Osada"
+"Syntyk" = "Syntyk"
+"Instytut" = "Instytut"
+"Minutemani" = "Minutemani"
+"Jedyny Ocalaly" = "Jedyny Ocalaly"
+"Diamentowe Miasto" = "Diamentowe Miasto"
+"Wspolnota" = "Wspolnota"
+"Podziemna Kolej" = "Podziemna Kolej"
+"Goncze" = "Goncze"
+"Rdzen Fuzji" = "Rdzen Fuzji"

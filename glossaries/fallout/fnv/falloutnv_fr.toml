@@ -1,0 +1,209 @@
+# Glossary Fallout New Vegas (Mojave Wasteland) → French
+# Official Bethesda French localization terms.
+# Only includes terms that MT models translate incorrectly or inconsistently.
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# LOCALISATIONS
+# ═══════════════════════════════════════════════════════════════
+"Mojave Wasteland" = "Terres Dévastées du Mojave"
+"New Vegas" = "New Vegas"
+"The Strip" = "Le Strip"
+"Freeside" = "Freeside"
+"Goodsprings" = "Goodsprings"
+"Primm" = "Primm"
+"Novac" = "Novac"
+"Hoover Dam" = "Barrage Hoover"
+"Lucky 38" = "Lucky 38"
+"Camp McCarran" = "Camp McCarran"
+"Nellis Air Force Base" = "Base Aérienne de Nellis"
+"Jacobstown" = "Jacobstown"
+"Nipton" = "Nipton"
+"Hidden Valley" = "Vallée Cachée"
+"Helios One" = "Hélios I"
+"Black Mountain" = "Montagne Noire"
+"The Fort" = "Le Fort"
+"Mojave Outpost" = "Avant-Poste du Mojave"
+"Westside" = "Westside"
+"The Thorn" = "L’Épine"
+"Gun Runners" = "Marchands d’Armes"
+"Silver Rush" = "Ruée de l’Argent"
+"Vault 34" = "Abri 34"
+"Vault 22" = "Abri 22"
+"Vault 3" = "Abri 3"
+"Vault 11" = "Abri 11"
+"Vault 19" = "Abri 19"
+"Vault 21" = "Abri 21"
+"Boulder City" = "Boulder City"
+"Bitter Springs" = "Sources Amères"
+"Quarry Junction" = "Jonction de Carrière"
+"REPCONN Test Site" = "Site de Test REPCONN"
+"Cottonwood Cove" = "Crique Cottonwood"
+
+# ═══════════════════════════════════════════════════════════════
+# Casinos
+# ═══════════════════════════════════════════════════════════════
+"The Tops" = "The Tops"
+"Gomorrah" = "Gomorrhe"
+"Ultra-Luxe" = "Ultra-Luxe"
+
+# ═══════════════════════════════════════════════════════════════
+# DLCs
+# ═══════════════════════════════════════════════════════════════
+"Sierra Madre" = "Sierra Madre"
+"Big MT" = "Grand Vide"
+"Big Mountain" = "Grande Montagne"
+"Zion Canyon" = "Canyon de Zion"
+"The Divide" = "La Division"
+"Dead Money" = "Dead Money"
+"Honest Hearts" = "Honest Hearts"
+"Old World Blues" = "Old World Blues"
+"Lonesome Road" = "Route Solitaire"
+"The Sink" = "L’Évier"
+
+# ═══════════════════════════════════════════════════════════════
+# FACTIONS
+# ═══════════════════════════════════════════════════════════════
+"New California Republic" = "Nouvelle République de Californie"
+"NCR" = "NRC"
+"Caesar’s Legion" = "Légion de César"
+"Boomers" = "Boomers"
+"Great Khans" = "Grands Khans"
+"Powder Gangers" = "Bande de la Poudre"
+"Kings" = "Les Rois"
+"Followers of the Apocalypse" = "Disciples de l’Apocalypse"
+"White Glove Society" = "Société des Gants Blancs"
+"Omertas" = "Omertas"
+"Chairmen" = "Présidents"
+"Fiends" = "Démons"
+"Bright Brotherhood" = "Confrérie des Illuminés"
+"Van Graffs" = "Van Graff"
+"Crimson Caravan" = "Caravane Cramoisie"
+"Mojave Express" = "Express du Mojave"
+"Vipers" = "Vipères"
+"Jackals" = "Chacals"
+
+# ═══════════════════════════════════════════════════════════════
+# PERSONNAGES ET COMPAGNONS
+# ═══════════════════════════════════════════════════════════════
+"Courier" = "Courrier"
+"Mr. House" = "M. House"
+"Caesar" = "César"
+"Benny" = "Benny"
+"Yes Man" = "Monsieur Ouioui"
+"Legate Lanius" = "Légat Lanius"
+"Chief Hanlon" = "Chef Hanlon"
+"Colonel Moore" = "Colonel Moore"
+"The King" = "Le Roi"
+"Mr. New Vegas" = "M. New Vegas"
+"Doc Mitchell" = "Docteur Mitchell"
+"General Oliver" = "Général Oliver"
+
+# ═══════════════════════════════════════════════════════════════
+# Compagnons
+# ═══════════════════════════════════════════════════════════════
+"Boone" = "Boone"
+"Veronica" = "Veronica"
+"Arcade Gannon" = "Arcade Gannon"
+"Cass" = "Cass"
+"Raul" = "Raul"
+"Lily" = "Lily"
+"Rex" = "Rex"
+"ED-E" = "ED-E"
+
+# ═══════════════════════════════════════════════════════════════
+# Personnages DLC
+# ═══════════════════════════════════════════════════════════════
+"Dean Domino" = "Dean Domino"
+"Father Elijah" = "Père Elijah"
+"Joshua Graham" = "Joshua Graham"
+"Dog" = "Chien"
+"God" = "Dieu"
+
+# ═══════════════════════════════════════════════════════════════
+# CREATURES SPECIFIQUES FNV
+# ═══════════════════════════════════════════════════════════════
+"Nightstalker" = "Chasseur Nocturne"
+"Night Stalker" = "Chasseur Nocturne"
+"Bighorner" = "Grande Corne"
+"Cazador" = "Cazador"
+"Cazadores" = "Cazadores"
+"Gecko" = "Gecko"
+"Golden Gecko" = "Gecko Doré"
+"Giant Gecko" = "Gecko Géant"
+"Fire Gecko" = "Gecko de Feu"
+"Lakelurk" = "Tapi du Lac"
+"Securitron" = "Sécuritron"
+"Giant Mantis" = "Mante Géante"
+"Coyote" = "Coyote"
+"Ghost People" = "Peuple Fantôme"
+"Tunneler" = "Creuseur"
+"Marked Men" = "Hommes Marqués"
+"Lobotomite" = "Lobotomite"
+"Think Tank" = "Groupe de Réflexion"
+
+# ═══════════════════════════════════════════════════════════════
+# OBJETS ET ARMES
+# ═══════════════════════════════════════════════════════════════
+"Sunset Sarsaparilla" = "Sunset Sarsaparilla"
+"Platinum Chip" = "Jeton de Platine"
+"Auto-Doc" = "Auto-Doc"
+"Anti-Materiel Rifle" = "Fusil Anti-Matériel"
+"Trail Carbine" = "Carabine de Piste"
+"Cowboy Repeater" = "Répétiteur Cowboy"
+"Varmint Rifle" = "Fusil à Vermine"
+"Service Rifle" = "Fusil de Service"
+"Hunting Revolver" = "Revolver de Chasse"
+"This Machine" = "Cette Machine"
+"Mysterious Magnum" = "Magnum Mystérieux"
+"Survivalist’s Rifle" = "Fusil du Survivaliste"
+
+# ═══════════════════════════════════════════════════════════════
+# REPUTATION (FNV)
+# ═══════════════════════════════════════════════════════════════
+"Liked" = "Apprécié"
+"Loved" = "Adoré"
+"Hated" = "Détesté"
+"Vilified" = "Vilipené"
+"Infamy" = "Infamie"
+"Fame" = "Renommée"
+"Reputation" = "Réputation"
+"Accepted" = "Accepté"
+"Idolized" = "Idolâtré"
+
+# ═══════════════════════════════════════════════════════════════
+# MODE SURVIE (Hardcore Mode)
+# ═══════════════════════════════════════════════════════════════
+"Hardcore Mode" = "Mode Extrême"
+"Dehydration" = "Déshydratation"
+"Starvation" = "Famine"
+"Sleep Deprivation" = "Privation de Sommeil"
+"Limb Damage" = "Dommages aux Membres"
+
+# ═══════════════════════════════════════════════════════════════
+# PERKS (FNV)
+# ═══════════════════════════════════════════════════════════════
+"Jury Rigging" = "Bricolage de Fortune"
+"Cowboy" = "Cowboy"
+"Better Criticals" = "Coups Critiques Améliorés"
+"More Criticals" = "Plus de Coups Critiques"
+"Tribal Wisdom" = "Sagesse Tribale"
+"Grunt" = "Fantassin"
+"Shotgun Surgeon" = "Chirurgien au Fusil"
+"Pyromaniac" = "Pyromane"
+"Rad Resistance" = "Résistance aux Radiations"
+"Cannibal" = "Cannibale"
+"Finesse" = "Finesse"
+"Fast Metabolism" = "Métabolisme Rapide"
+"Mysterious Stranger" = "L’Inconnu Mystérieux"
+"Bloody Mess" = "Carnage"
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-PROTECTION FNV
+# ═══════════════════════════════════════════════════════════════
+"Grande Corne" = "Grande Corne"
+"Chasseur Nocturne" = "Chasseur Nocturne"
+"Tapi du Lac" = "Tapi du Lac"
+"Creuseur" = "Creuseur"
+"Courrier" = "Courrier"

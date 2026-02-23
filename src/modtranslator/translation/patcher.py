@@ -44,8 +44,8 @@ def apply_translations(
             for table in [string_tables.strings, string_tables.dlstrings, string_tables.ilstrings]:
                 if ts.string_id in table.entries:
                     table.set(ts.string_id, translated)
+                    patched += 1
                     break
-            patched += 1
         else:
             # Inline: mutate the subrecord's bytearray
             ts.subrecord.encode_string(translated, encoding)

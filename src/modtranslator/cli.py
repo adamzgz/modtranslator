@@ -283,11 +283,11 @@ def _translate_file(
     if gloss and texts:
         texts, gloss_mappings = gloss.protect_batch(texts)
 
-    es_mappings: list[dict[str, str]] | None = None
-    if texts and lang.upper() == "ES":
-        from modtranslator.translation.spanish_protect import protect_spanish_batch
+    lang_mappings: list[dict[str, str]] | None = None
+    if texts:
+        from modtranslator.translation.target_protect import protect_target_batch
 
-        texts, es_mappings = protect_spanish_batch(texts)
+        texts, lang_mappings = protect_target_batch(texts, lang)
 
     _plugin_freed = False
     to_translate_keys = [s.key for s in to_translate]
@@ -341,10 +341,10 @@ def _translate_file(
                 f" {_elapsed:.1f}s ({rate:.0f} strings/s)",
             )
 
-        if es_mappings is not None:
-            from modtranslator.translation.spanish_protect import restore_spanish_batch
+        if lang_mappings is not None:
+            from modtranslator.translation.target_protect import restore_target_batch
 
-            translated = restore_spanish_batch(translated, es_mappings)
+            translated = restore_target_batch(translated, lang_mappings)
 
         if gloss:
             translated = gloss.restore_batch(translated, gloss_mappings)
@@ -377,7 +377,9 @@ def _translate_file(
         rpt.output_file = str(output)
 
         with console.status("Writing output file..."):
-            save_plugin(plugin, output)
+            from modtranslator.core.string_table import ISO_TO_FULL_LANGUAGE
+            out_lang = ISO_TO_FULL_LANGUAGE.get(lang.upper(), "Spanish")
+            save_plugin(plugin, output, output_language=out_lang)
 
         _print(f"Saved: [cyan]{output}[/cyan]")
     else:

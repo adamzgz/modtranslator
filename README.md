@@ -2,9 +2,9 @@
 
 **Traductor automático offline de mods para juegos Bethesda.**
 
-Traduce archivos ESP/ESM, scripts PEX y archivos MCM de forma completamente offline usando modelos de traducción neuronal. Compatible con Fallout 3, Fallout: New Vegas y Skyrim (SE/AE).
+Traduce archivos ESP/ESM, scripts PEX y archivos MCM de forma completamente offline usando modelos de traducción neuronal. Compatible con Fallout 3, Fallout: New Vegas, Fallout 4 y Skyrim (SE/AE). Soporta 7 idiomas de destino: español, francés, alemán, italiano, portugués, ruso y polaco.
 
-> **Probado con los 3 juegos soportados.** Fallout 3 (124 archivos, ~97K strings), Fallout: New Vegas (244 archivos, ~142K strings) y Skyrim SE/AE (542 archivos, ~128K strings + 2.302 scripts PEX + MCM) — todos funcionan correctamente con los mods traducidos.
+> **Probado con los 4 juegos soportados.** Fallout 3 (124 archivos, ~97K strings), Fallout: New Vegas (244 archivos, ~142K strings), Skyrim SE/AE (542 archivos, ~128K strings + 2.302 scripts PEX + MCM) y Fallout 4 (726 archivos + 465 PEX + 60 MCM, ~323K strings) — todos funcionan correctamente con los mods traducidos.
 
 ## Por qué
 
@@ -21,8 +21,8 @@ Yo quería jugar con mods sin tener la mitad de los textos en español y la otra
 | **Backend** | SQLite (cache), TOML (glosarios), DeepL API |
 | **GUI** | CustomTkinter, threading |
 | **CLI** | Typer |
-| **Build** | PyInstaller, Hatchling |
-| **Testing** | pytest (~84% cobertura), ruff, mypy strict |
+| **Build** | PyInstaller (exe Windows), Hatchling |
+| **Testing** | pytest (~79% cobertura, 906 tests), ruff, mypy strict |
 | **GPU** | NVIDIA CUDA (opcional) |
 
 ## Resultados
@@ -32,6 +32,7 @@ Yo quería jugar con mods sin tener la mitad de los textos en español y la otra
 | Fallout 3 | 124 ESP/ESM | ~97K | 0 | Sí |
 | Fallout: New Vegas | 244 ESP/ESM | ~142K | 0 | Sí |
 | Skyrim SE/AE | 542 ESP/ESM + 2.302 PEX + MCM | ~128K | 0 | Sí |
+| Fallout 4 | 726 ESP/ESM/ESL + 465 PEX + 60 MCM | ~323K | 0 | Sí |
 
 ## Características
 
@@ -41,9 +42,12 @@ Yo quería jugar con mods sin tener la mitad de los textos en español y la otra
 - **GUI incluida** — interfaz gráfica con CustomTkinter, sin necesidad de terminal
 - **CLI completa** — para usuarios avanzados y automatización
 - **3 tipos de archivo** — ESP/ESM (plugins), PEX (scripts de Papyrus), MCM (menús de configuración)
-- **5 backends de traducción** — desde modelos offline hasta APIs cloud
+- **7 backends de traducción** — modelos offline (CTranslate2 y HuggingFace) y API cloud
+- **7 idiomas de destino** — ES, FR, DE, IT, PT, RU, PL
+- **Descarga automática de modelos** — los backends HuggingFace descargan el modelo al primer uso
+- **GUI multilingüe** — la interfaz se adapta al idioma de destino seleccionado
 - **Cache de traducciones** — no retraduce strings ya procesados
-- **Glosarios por juego** — protege terminología oficial (Refugio, Estimulante, Sanguinario...)
+- **Glosarios por juego e idioma** — protege terminología oficial en los 7 idiomas (Refugio, Estimulante, Sanguinario...)
 
 ## GUI
 
@@ -112,13 +116,18 @@ modtranslator batch-mcm "C:\Games\Skyrim\Data" --backend opus-mt
 
 ## Backends de Traducción
 
-| Backend | Velocidad (GPU) | Coste | Calidad EN→ES | Offline |
-|---------|-----------------|-------|---------------|---------|
+| Backend | Velocidad (GPU) | Coste | Calidad | Offline |
+|---------|-----------------|-------|---------|---------|
 | **Híbrido (tc-big+NLLB)** | ~33 str/s | Gratis | Mejor combinada | Sí |
 | **Opus-MT tc-big** | 241–468 str/s | Gratis | Muy buena | Sí |
 | Opus-MT base | 188–291 str/s | Gratis | Buena | Sí |
 | NLLB 1.3B | 32–71 str/s | Gratis | Excelente (texto largo) | Sí |
+| HF Híbrido (hf-hybrid) | variable | Gratis | Mejor combinada | Sí |
+| HF Opus-MT (hf-opus-mt) | variable | Gratis | Muy buena | Sí |
+| HF NLLB (hf-nllb) | variable | Gratis | Excelente (texto largo) | Sí |
 | DeepL | Online | API key | Muy buena | No |
+
+Los backends **CTranslate2** (`hybrid`, `opus-mt`, `nllb`) son más rápidos y recomendados con GPU NVIDIA. Los backends **HuggingFace** (`hf-hybrid`, `hf-opus-mt`, `hf-nllb`) descargan el modelo automáticamente al primer uso y son más compatibles con hardware variado.
 
 El backend **híbrido** enruta strings cortos (1–3 palabras) a Opus-MT tc-big y strings largos (4+ palabras) a NLLB 1.3B — combinando la velocidad de tc-big con la fluidez de NLLB en oraciones complejas.
 
@@ -137,7 +146,7 @@ Archivo ESP/ESM (binario, codificación Windows-1252)
     │                  FULL (37 tipos), DESC, NAM1, RNAM, TNAM, NNAM, ITXT, CNAM
     ▼
 3. DETECTAR IDIOMA ── Heurística de 4 capas para saltar strings ya traducidos
-    │                  glosario → langid → diccionario español → diccionario inglés
+    │                  glosario → langid → diccionario idioma destino → diccionario inglés
     ▼
 4. PROTEGER ───────── Términos del glosario → placeholders Gx0, Gx1
     │                  Palabras españolas en strings mixtos → placeholders Cx0, Cx1
@@ -179,13 +188,18 @@ Plugin ESP/ESM + String tables ({Plugin}_English.STRINGS/.DLSTRINGS/.ILSTRINGS)
 
 Las string tables usan UTF-8 (no cp1252). `.STRINGS` almacena texto null-terminated; `.DLSTRINGS` e `.ILSTRINGS` usan formato length-prefixed (`[length:u32 incl null] + texto + null`).
 
+### Fallout 4 (strings inline + string tables externas)
+
+Fallout 4 combina ambos sistemas: los ESP no localizados funcionan igual que FO3/FNV (strings inline, cp1252). Los ESM localizados (flag `0x80`) usan el mismo sistema de string tables que Skyrim, pero con códigos de idioma cortos: `_En`/`_es` en lugar de `_English`/`_Spanish`. El parser prueba ambas convenciones automáticamente.
+
 ### Scripts PEX (Papyrus compilado)
 
 ```
-Archivo .pex (big-endian, magic 0xFA57C0DE)
+Archivo .pex (magic 0xFA57C0DE — big-endian en Skyrim, little-endian en Fallout 4)
     │
     ▼
-1. PARSEAR ────────── Leer string table: [count:u16] + [len:u16 + chars]×N
+1. PARSEAR ────────── Detectar endianness por magic bytes; leer string table
+    │                  Formato: [count:u16] + [len:u16 + chars]×N
     │                  Cada string tiene un tipo: 0x01 (identificador) o 0x02 (literal)
     ▼
 2. FILTRAR ────────── Solo traducir strings con tipo puro 0x02 (literales de texto)
@@ -235,11 +249,11 @@ Para archivos de más de 150 MB (como Fallout3.esm con ~280 MB), se usa una estr
 - **Serialización bottom-up**: el writer recalcula todos los tamaños desde el árbol de records, así los strings traducidos de diferente longitud siempre producen archivos válidos
 - **Placeholders compactos**: `Gx{i}` tokeniza como 3 tokens SentencePiece (vs 6+ con formatos más largos), logrando 100% de supervivencia a través de los pipelines de traducción neuronal
 - **Cadena de encoding**: cp1252 → UTF-8 → latin-1 fallback para bytes edge-case (0x90, 0x8D, 0x9D)
-- **String tables de Skyrim**: las 3 tablas (.STRINGS, .DLSTRINGS, .ILSTRINGS) se fusionan en un solo diccionario por StringID único — lookup O(1) durante el parcheo
+- **String tables de Skyrim/FO4**: las 3 tablas (.STRINGS, .DLSTRINGS, .ILSTRINGS) se fusionan en un solo diccionario por StringID único — lookup O(1) durante el parcheo. Parser prueba automáticamente códigos de idioma largos (`_English`) y cortos (`_En`).
 
 ## Glosarios por Juego
 
-Glosarios TOML que protegen la terminología oficial de Bethesda:
+35 glosarios TOML que protegen la terminología oficial de Bethesda en los 7 idiomas soportados (`{lang}` = `es`, `fr`, `de`, `it`, `pt`, `ru`, `pl`):
 
 ```toml
 [terms]
@@ -249,12 +263,14 @@ Glosarios TOML que protegen la terminología oficial de Bethesda:
 "Deathclaw" = "Sanguinario"
 ```
 
-| Glosario | Alcance | Ejemplos |
-|----------|---------|----------|
-| `fallout_base_es.toml` | Compartido FO3/FNV | Stats SPECIAL, consumibles, facciones, armas |
-| `fallout3_es.toml` | Capital Wasteland | Megaton, Three Dog, Talon Company |
-| `falloutnv_es.toml` | Mojave Wasteland | NCR→RNC, Mr. House→Sr. House, Yes Man→Servibot |
-| `skyrim_es.toml` | Skyrim | Dovahkiin, Whiterun→Carrera Blanca, Stormcloaks→Capas de la Tormenta |
+| Glosario | Alcance |
+|----------|---------|
+| `fallout_base_{lang}.toml` | Compartido FO3/FNV — stats SPECIAL, consumibles, facciones, armas |
+| `fallout3_{lang}.toml` | Capital Wasteland — Megaton, Three Dog, Talon Company |
+| `falloutnv_{lang}.toml` | Mojave Wasteland — NCR, Mr. House, Yes Man |
+| `fallout4_{lang}.toml` | Commonwealth — Institute, Brotherhood, Minutemen |
+| `skyrim_base_{lang}.toml` | Compartido Skyrim — razas, magia, Guilds |
+| `skyrim_{lang}.toml` | Skyrim — Dovahkiin, ciudades, facciones |
 
 ## Arquitectura
 
@@ -273,13 +289,16 @@ src/modtranslator/
 │   ├── opus_mt.py            Helsinki-NLP + CTranslate2 (base + tc-big)
 │   ├── nllb.py               Meta NLLB-200 + CTranslate2 (600M/1.3B)
 │   ├── hybrid.py             tc-big (corto) + NLLB (largo)
+│   ├── hf_opus_mt.py         HuggingFace Transformers Opus-MT
+│   ├── hf_nllb.py            HuggingFace NLLB-200
+│   ├── hf_hybrid.py          HF Opus-MT (corto) + HF NLLB (largo); descarga automática
 │   ├── deepl.py              API de DeepL
 │   └── dummy.py              Backend de test: prefija [XX]
 ├── translation/            Extracción, filtrado y parcheo de strings
 │   ├── extractor.py          árbol → list[TranslatableString]
 │   ├── registry.py           (record_type, sub_type) → ¿traducible?
 │   ├── glossary.py           Glosarios TOML + sistema de placeholders Gx{i}
-│   ├── spanish_protect.py    Protección de palabras españolas con placeholders Cx{i}
+│   ├── target_protect.py     Protección de palabras del idioma destino con placeholders Cx{i}
 │   ├── lang_detect.py        Heurística de detección de idioma (4 capas)
 │   ├── patcher.py            Aplicar traducciones a bytearrays de subrecords
 │   └── cache.py              Cache SQLite de traducciones (~/.modtranslator/)
@@ -287,10 +306,11 @@ src/modtranslator/
 │   ├── app.py                Ventana principal, backup selectivo, traducción in-place
 │   ├── worker.py             Worker en background thread
 │   └── model_manager.py      Detección GPU y gestión de modelos
-└── data/                   Diccionario español (~2.100 palabras)
+└── data/                   Diccionarios por idioma (ES, FR, DE, IT, PT, RU, PL)
 
-glossaries/                 Archivos TOML de terminología por juego
-tests/                      378 tests, ~84% cobertura
+glossaries/                 Archivos TOML de terminología por juego e idioma (35 archivos)
+reporting/                  TranslationReport con estadísticas; salida JSON/Markdown/CSV
+tests/                      906 tests, ~79% cobertura
 ```
 
 ### Formato Binario TES4
@@ -303,11 +323,11 @@ El parser maneja el formato de plugins TES4 usado por los motores Gamebryo/Creat
 - **Strings (FO3/FNV)**: null-terminated, codificación Windows-1252 (inline en subrecords)
 - **Strings (Skyrim)**: flag `LOCALIZED` (`0x80`) en cabecera → strings almacenados en tablas externas UTF-8, subrecords contienen StringIDs (uint32) en vez de texto
 - **Records comprimidos**: flag `0x00040000`, payload = `decompressed_size(4) + zlib`
-- **Detección de juego**: float de versión en subrecord HEDR (0.94 = FO3/FNV, 1.70 = Skyrim)
+- **Detección de juego**: float de versión en subrecord HEDR (0.94 = FO3/FNV, 1.0/0.95 = Fallout 4, 1.70 = Skyrim)
 
 ## Tests
 
-378 tests cubriendo el pipeline completo:
+906 tests cubriendo el pipeline completo:
 
 ```bash
 pytest              # con cobertura
@@ -320,6 +340,7 @@ mypy src/           # type check
 - **Todos los backends**: dependencias mockeadas, selección de dispositivo, variantes de modelo
 - **Robustez del parser**: archivos vacíos, cabeceras truncadas, zlib corrupto, subrecords de longitud cero
 - **Integración CLI**: Typer CliRunner, pipeline batch, modos verbose/quiet, aislamiento de errores
+- **Pipeline y reporting**: formatters JSON/Markdown/CSV, estadísticas de traducción
 - **Stress tests**: archivos de 500 records a través del pipeline completo
 
 ## Requisitos
@@ -338,9 +359,9 @@ Este proyecto está bajo la licencia MIT.
 
 **Automatic offline translator for Bethesda game mods.**
 
-Translates ESP/ESM files, PEX scripts, and MCM files completely offline using neural machine translation models. Compatible with Fallout 3, Fallout: New Vegas, and Skyrim (SE/AE).
+Translates ESP/ESM files, PEX scripts, and MCM files completely offline using neural machine translation models. Compatible with Fallout 3, Fallout: New Vegas, Fallout 4, and Skyrim (SE/AE). Supports 7 target languages: Spanish, French, German, Italian, Portuguese, Russian, and Polish.
 
-> **Tested on all 3 supported games.** Fallout 3 (124 files, ~97K strings), Fallout: New Vegas (244 files, ~142K strings) and Skyrim SE/AE (542 files, ~128K strings + 2,302 PEX scripts + MCM) — all games work correctly with translated mods.
+> **Tested on all 4 supported games.** Fallout 3 (124 files, ~97K strings), Fallout: New Vegas (244 files, ~142K strings), Skyrim SE/AE (542 files, ~128K strings + 2,302 PEX scripts + MCM) and Fallout 4 (726 files + 465 PEX + 60 MCM, ~323K strings) — all games work correctly with translated mods.
 
 ## Why
 
@@ -357,8 +378,8 @@ I wanted to play modded games without half the text in Spanish and the other hal
 | **Backend** | SQLite (cache), TOML (glossaries), DeepL API |
 | **GUI** | CustomTkinter, threading |
 | **CLI** | Typer |
-| **Build** | PyInstaller, Hatchling |
-| **Testing** | pytest (~84% coverage), ruff, mypy strict |
+| **Build** | PyInstaller (Windows exe), Hatchling |
+| **Testing** | pytest (~79% coverage, 906 tests), ruff, mypy strict |
 | **GPU** | NVIDIA CUDA (optional) |
 
 ## Results
@@ -368,6 +389,7 @@ I wanted to play modded games without half the text in Spanish and the other hal
 | Fallout 3 | 124 ESP/ESM | ~97K | 0 | Yes |
 | Fallout: New Vegas | 244 ESP/ESM | ~142K | 0 | Yes |
 | Skyrim SE/AE | 542 ESP/ESM + 2,302 PEX + MCM | ~128K | 0 | Yes |
+| Fallout 4 | 726 ESP/ESM/ESL + 465 PEX + 60 MCM | ~323K | 0 | Yes |
 
 ## Features
 
@@ -377,9 +399,12 @@ I wanted to play modded games without half the text in Spanish and the other hal
 - **GUI included** — graphical interface with CustomTkinter, no terminal needed
 - **Full CLI** — for advanced users and automation
 - **3 file types** — ESP/ESM (plugins), PEX (Papyrus scripts), MCM (configuration menus)
-- **5 translation backends** — from offline models to cloud APIs
+- **7 translation backends** — offline models (CTranslate2 and HuggingFace) and cloud APIs
+- **7 target languages** — ES, FR, DE, IT, PT, RU, PL
+- **Automatic model download** — HuggingFace backends download the model on first use
+- **Multilingual GUI** — interface language follows the selected target language
 - **Translation cache** — skips previously translated strings
-- **Per-game glossaries** — protects official terminology
+- **Per-game, per-language glossaries** — protects official terminology across all 7 languages
 
 ## GUI
 
@@ -448,13 +473,18 @@ modtranslator batch-mcm "C:\Games\Skyrim\Data" --backend opus-mt
 
 ## Translation Backends
 
-| Backend | Speed (GPU) | Cost | Quality EN→ES | Offline |
-|---------|-------------|------|---------------|---------|
+| Backend | Speed (GPU) | Cost | Quality | Offline |
+|---------|-------------|------|---------|---------|
 | **Hybrid (tc-big+NLLB)** | ~33 str/s | Free | Best combined | Yes |
 | **Opus-MT tc-big** | 241–468 str/s | Free | Very good | Yes |
 | Opus-MT base | 188–291 str/s | Free | Good | Yes |
 | NLLB 1.3B | 32–71 str/s | Free | Excellent (long text) | Yes |
+| HF Hybrid (hf-hybrid) | variable | Free | Best combined | Yes |
+| HF Opus-MT (hf-opus-mt) | variable | Free | Very good | Yes |
+| HF NLLB (hf-nllb) | variable | Free | Excellent (long text) | Yes |
 | DeepL | Online | API key | Very good | No |
+
+**CTranslate2** backends (`hybrid`, `opus-mt`, `nllb`) are faster and recommended with NVIDIA GPUs. **HuggingFace** backends (`hf-hybrid`, `hf-opus-mt`, `hf-nllb`) auto-download the model on first use and are more broadly compatible.
 
 The **hybrid** backend routes short strings (1–3 words) to Opus-MT tc-big and longer strings (4+ words) to NLLB 1.3B — combining tc-big's speed with NLLB's fluency on complex sentences.
 
@@ -473,7 +503,7 @@ ESP/ESM file (binary, Windows-1252 encoded)
     │                 FULL (37 record types), DESC, NAM1, RNAM, TNAM, NNAM, ITXT, CNAM
     ▼
 3. DETECT LANGUAGE ─ 4-layer heuristic skips already-translated strings
-    │                 glossary → langid → spanish dict → english dict
+    │                 glossary → langid → target language dict → english dict
     ▼
 4. PROTECT ───────── Glossary terms → Gx0, Gx1 placeholders
     │                 Spanish words in mixed strings → Cx0, Cx1 placeholders
@@ -515,13 +545,18 @@ ESP/ESM plugin + String tables ({Plugin}_English.STRINGS/.DLSTRINGS/.ILSTRINGS)
 
 String tables use UTF-8 (not cp1252). `.STRINGS` stores null-terminated text; `.DLSTRINGS` and `.ILSTRINGS` use length-prefixed format (`[length:u32 incl null] + text + null`).
 
+### Fallout 4 (inline strings + external string tables)
+
+Fallout 4 combines both systems: non-localized ESPs work exactly like FO3/FNV (inline strings, cp1252). Localized ESMs (flag `0x80`) use the same string table system as Skyrim, but with short language codes: `_En`/`_es` instead of `_English`/`_Spanish`. The parser tries both naming conventions automatically.
+
 ### PEX Scripts (compiled Papyrus)
 
 ```
-.pex file (big-endian, magic 0xFA57C0DE)
+.pex file (magic 0xFA57C0DE — big-endian in Skyrim, little-endian in Fallout 4)
     │
     ▼
-1. PARSE ─────────── Read string table: [count:u16] + [len:u16 + chars]×N
+1. PARSE ─────────── Detect endianness from magic bytes; read string table
+    │                 Format: [count:u16] + [len:u16 + chars]×N
     │                 Each string has a type: 0x01 (identifier) or 0x02 (literal)
     ▼
 2. FILTER ────────── Only translate strings with pure 0x02 type (text literals)
@@ -571,11 +606,11 @@ For files over 150 MB (like Fallout3.esm at ~280 MB), the pipeline uses a double
 - **Bottom-up serialization**: the writer recalculates all sizes from the record tree, so translated strings of different length always produce valid files
 - **Compact placeholders**: `Gx{i}` tokenizes as 3 SentencePiece tokens (vs 6+ for longer formats), achieving 100% survival through neural MT pipelines
 - **Encoding chain**: cp1252 → UTF-8 → latin-1 fallback for edge-case bytes (0x90, 0x8D, 0x9D)
-- **Skyrim string tables**: all 3 tables (.STRINGS, .DLSTRINGS, .ILSTRINGS) are merged into a single dictionary by unique StringID — O(1) lookup during patching
+- **Skyrim/FO4 string tables**: all 3 tables (.STRINGS, .DLSTRINGS, .ILSTRINGS) are merged into a single dictionary by unique StringID — O(1) lookup during patching. Parser tries both long (`_English`) and short (`_En`) language code conventions automatically.
 
 ## Per-Game Glossaries
 
-TOML glossaries protect official Bethesda terminology from machine translation:
+35 TOML glossaries protect official Bethesda terminology from machine translation across all 7 supported languages (`{lang}` = `es`, `fr`, `de`, `it`, `pt`, `ru`, `pl`):
 
 ```toml
 [terms]
@@ -585,12 +620,14 @@ TOML glossaries protect official Bethesda terminology from machine translation:
 "Deathclaw" = "Sanguinario"
 ```
 
-| Glossary | Scope | Examples |
-|----------|-------|----------|
-| `fallout_base_es.toml` | Shared FO3/FNV | SPECIAL stats, consumables, factions, weapons |
-| `fallout3_es.toml` | Capital Wasteland | Megaton, Three Dog, Talon Company |
-| `falloutnv_es.toml` | Mojave Wasteland | NCR→RNC, Mr. House→Sr. House, Yes Man→Servibot |
-| `skyrim_es.toml` | Skyrim | Dovahkiin, Whiterun→Carrera Blanca, Stormcloaks→Capas de la Tormenta |
+| Glossary | Scope |
+|----------|-------|
+| `fallout_base_{lang}.toml` | Shared FO3/FNV — SPECIAL stats, consumables, factions, weapons |
+| `fallout3_{lang}.toml` | Capital Wasteland — Megaton, Three Dog, Talon Company |
+| `falloutnv_{lang}.toml` | Mojave Wasteland — NCR, Mr. House, Yes Man |
+| `fallout4_{lang}.toml` | Commonwealth — Institute, Brotherhood, Minutemen |
+| `skyrim_base_{lang}.toml` | Shared Skyrim — races, magic, Guilds |
+| `skyrim_{lang}.toml` | Skyrim — Dovahkiin, cities, factions |
 
 ## Architecture
 
@@ -609,13 +646,16 @@ src/modtranslator/
 │   ├── opus_mt.py            Helsinki-NLP + CTranslate2 (base + tc-big)
 │   ├── nllb.py               Meta NLLB-200 + CTranslate2 (600M/1.3B)
 │   ├── hybrid.py             tc-big (short) + NLLB (long) routing
+│   ├── hf_opus_mt.py         HuggingFace Transformers Opus-MT
+│   ├── hf_nllb.py            HuggingFace NLLB-200
+│   ├── hf_hybrid.py          HF Opus-MT (short) + HF NLLB (long); auto-download
 │   ├── deepl.py              DeepL API
 │   └── dummy.py              Test backend: prefixes [XX]
 ├── translation/            String extraction, filtering, and patching
 │   ├── extractor.py          Record tree → list[TranslatableString]
 │   ├── registry.py           (record_type, sub_type) → translatable?
 │   ├── glossary.py           TOML glossaries + Gx{i} placeholder system
-│   ├── spanish_protect.py    Spanish word protection with Cx{i} placeholders
+│   ├── target_protect.py     Target language word protection with Cx{i} placeholders
 │   ├── lang_detect.py        4-layer language detection heuristic
 │   ├── patcher.py            Apply translations to subrecord bytearrays
 │   └── cache.py              SQLite translation cache (~/.modtranslator/)
@@ -623,10 +663,11 @@ src/modtranslator/
 │   ├── app.py                Main window, selective backup, in-place translation
 │   ├── worker.py             Background thread worker
 │   └── model_manager.py      GPU detection and model management
-└── data/                   Spanish dictionary (~2,100 words)
+└── data/                   Per-language word dictionaries (ES, FR, DE, IT, PT, RU, PL)
 
-glossaries/                 Per-game TOML terminology files
-tests/                      378 tests, ~84% coverage
+glossaries/                 Per-game, per-language TOML terminology files (35 files)
+reporting/                  TranslationReport with stats; JSON/Markdown/CSV output
+tests/                      906 tests, ~79% coverage
 ```
 
 ### TES4 Binary Format
@@ -639,11 +680,11 @@ The parser handles the TES4 plugin format used by Gamebryo/Creation Engine games
 - **Strings (FO3/FNV)**: null-terminated, Windows-1252 encoding (inline in subrecords)
 - **Strings (Skyrim)**: `LOCALIZED` flag (`0x80`) in header → strings stored in external UTF-8 tables, subrecords contain StringIDs (uint32) instead of text
 - **Compressed records**: flag `0x00040000`, payload = `decompressed_size(4) + zlib`
-- **Game detection**: HEDR subrecord version float (0.94 = FO3/FNV, 1.70 = Skyrim)
+- **Game detection**: HEDR subrecord version float (0.94 = FO3/FNV, 1.0/0.95 = Fallout 4, 1.70 = Skyrim)
 
 ## Tests
 
-378 tests covering the full pipeline:
+906 tests covering the full pipeline:
 
 ```bash
 pytest              # with coverage
@@ -656,6 +697,7 @@ mypy src/           # type check
 - **All backends**: mocked dependencies, device selection, model variants
 - **Parser robustness**: empty files, truncated headers, corrupt zlib, zero-length subrecords
 - **CLI integration**: Typer CliRunner, batch pipeline, verbose/quiet modes, error isolation
+- **Pipeline and reporting**: JSON/Markdown/CSV formatters, translation statistics
 - **Stress tests**: 500-record files through full parse → extract → translate → roundtrip
 
 ## Requirements

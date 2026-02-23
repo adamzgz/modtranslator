@@ -1,0 +1,137 @@
+# Fallout 3 → Portuguese (Brazilian)
+# Game-specific locations, characters, factions, and items.
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# LOCAIS
+# ═══════════════════════════════════════════════════════════════
+"Capital Wasteland" = "Ermo da Capital"
+"Megaton" = "Megaton"
+"Rivet City" = "Rivet City"
+"Tenpenny Tower" = "Torre Tenpenny"
+"The Citadel" = "A Cidadela"
+"Underworld" = "Submundo"
+"Galaxy News Radio" = "Rádio Notícias Galáxia"
+"GNR" = "GNR"
+"Little Lamplight" = "Pequena Lamparina"
+"Paradise Falls" = "Paradise Falls"
+"Springvale" = "Springvale"
+"Raven Rock" = "Raven Rock"
+"Jefferson Memorial" = "Memorial Jefferson"
+"Museum of History" = "Museu de História"
+"National Mall" = "National Mall"
+"Vault 101" = "Abrigo 101"
+"Vault 87" = "Abrigo 87"
+"Vault 112" = "Abrigo 112"
+"Vault 108" = "Abrigo 108"
+"Vault 106" = "Abrigo 106"
+"Vault 92" = "Abrigo 92"
+"Minefield" = "Campo Minado"
+"Fort Constantine" = "Forte Constantine"
+"Fort Bannister" = "Forte Bannister"
+"National Archives" = "Arquivos Nacionais"
+"Old Olney" = "Velha Olney"
+"Dunwich Building" = "Edifício Dunwich"
+"Nuka-Cola Plant" = "Fábrica Nuka-Cola"
+"Andale" = "Andale"
+"Oasis" = "Oásis"
+"Deathclaw Sanctuary" = "Santuário da Garra da Morte"
+
+# ═══════════════════════════════════════════════════════════════
+# DLCS
+# ═══════════════════════════════════════════════════════════════
+"The Pitt" = "The Pitt"
+"Point Lookout" = "Point Lookout"
+"Mothership Zeta" = "Nave-Mãe Zeta"
+"Operation: Anchorage" = "Operação: Anchorage"
+"Broken Steel" = "Broken Steel"
+"Adams Air Force Base" = "Base Aérea Adams"
+
+# ═══════════════════════════════════════════════════════════════
+# FACÇÕES
+# ═══════════════════════════════════════════════════════════════
+"Talon Company" = "Companhia Talão"
+"Outcasts" = "Renegados"
+"Brotherhood Outcasts" = "Renegados da Irmandade"
+"Regulators" = "Reguladores"
+"Tunnel Snakes" = "Serpentes do Túnel"
+"Lyons' Pride" = "Orgulho de Lyons"
+"Super Mutants" = "Super-Mutantes"
+"Slavers" = "Escravistas"
+"Swampfolk" = "Povo do Pântano"
+"Reilly's Rangers" = "Rangers de Reilly"
+"The Family" = "A Família"
+"Republic of Dave" = "República de Dave"
+"Temple of the Union" = "Templo da União"
+
+# ═══════════════════════════════════════════════════════════════
+# PERSONAGENS
+# ═══════════════════════════════════════════════════════════════
+"Three Dog" = "Three Dog"
+"Dad" = "Papai"
+"Dogmeat" = "Dogmeat"
+"President Eden" = "Presidente Eden"
+"Colonel Autumn" = "Coronel Autumn"
+"Moira Brown" = "Moira Brown"
+"Amata" = "Amata"
+"Fawkes" = "Fawkes"
+"Charon" = "Caronte"
+"Star Paladin Cross" = "Paladino Estelar Cross"
+"Butch DeLoria" = "Butch DeLoria"
+"Jericho" = "Jericó"
+"Elder Lyons" = "Ancião Lyons"
+"Sarah Lyons" = "Sarah Lyons"
+"Lone Wanderer" = "Andarilho Solitário"
+"Harold" = "Harold"
+
+# ═══════════════════════════════════════════════════════════════
+# ITENS ÚNCOS
+# ═══════════════════════════════════════════════════════════════
+"Nuka-Cola Quantum" = "Nuka-Cola Quântum"
+"Alien Blaster" = "Blaster Alienígena"
+"Lincoln's Repeater" = "Repetidor de Lincoln"
+"Rock-It Launcher" = "Lançaentulho"
+"Railway Rifle" = "Fuzil Ferroviário"
+"Dart Gun" = "Pistola de Dardos"
+"Deathclaw Gauntlet" = "Manopla da Garra da Morte"
+"Wasteland Survival Guide" = "Guia de Sobrevivência do Ermo"
+
+# ═══════════════════════════════════════════════════════════════
+# VANTAGENS (Perks)
+# ═══════════════════════════════════════════════════════════════
+"Bloody Mess" = "Banho de Sangue"
+"Pyromaniac" = "Piromaniíaco"
+"Explorer" = "Explorador"
+"Strong Back" = "Costas Fortes"
+"Pack Rat" = "Acumulador"
+"Grim Reaper's Sprint" = "Corrida do Ceifador"
+"Finesse" = "Finesse"
+"Fast Metabolism" = "Metabolismo Rápido"
+"Nerd Rage!" = "Fúria Nerd!"
+"Mysterious Stranger" = "O Desconhecido Misterioso"
+"Rad Resistance" = "Resistência à Radiação"
+"Robotics Expert" = "Especialista em Robótica"
+"Cannibal" = "Canibal"
+"Concentrated Fire" = "Fogo Concentrado"
+"Paralyzing Palm" = "Palma Paralisante"
+
+# ═══════════════════════════════════════════════════════════════
+# MISSÕES PRINCIPAIS
+# ═══════════════════════════════════════════════════════════════
+"The Waters of Life" = "As Águas da Vida"
+"Take it Back!" = "Recupere!"
+"The Power of the Atom" = "O Poder do Átomo"
+"Following in His Footsteps" = "Seguindo Seus Passos"
+"Project Purity" = "Projeto Pureza"
+"Aqua Pura" = "Aqua Pura"
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-PROTEÇÃO
+# ═══════════════════════════════════════════════════════════════
+"Andarilho Solitário" = "Andarilho Solitário"
+"Reguladores" = "Reguladores"
+"Escravistas" = "Escravistas"
+"Serpentes do Túnel" = "Serpentes do Túnel"
+"Renegados" = "Renegados"
+"Companhia Talão" = "Companhia Talão"

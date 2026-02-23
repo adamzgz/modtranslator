@@ -46,6 +46,27 @@ _LANG_CODES = {
 _DEFAULT_MODELS_DIR = Path.home() / ".modtranslator" / "models"
 
 
+def _delete_hf_cache(hf_model_name: str) -> None:
+    """Delete the HuggingFace hub cache for a model after CT2 conversion.
+
+    The cache is only needed during conversion; once the CT2 model exists
+    it is never used again. Frees several GB per model.
+    Respects HF_HOME / HUGGINGFACE_HUB_CACHE env overrides.
+    """
+    import os
+
+    hf_home = Path(
+        os.environ.get(
+            "HUGGINGFACE_HUB_CACHE",
+            os.environ.get("HF_HOME", str(Path.home() / ".cache" / "huggingface")),
+        )
+    )
+    hub_dir = hf_home if hf_home.name == "hub" else hf_home / "hub"
+    cache_dir = hub_dir / ("models--" + hf_model_name.replace("/", "--"))
+    if cache_dir.exists():
+        shutil.rmtree(cache_dir)
+
+
 class OpusMTBackend(TranslationBackend):
     """Offline translation backend using Helsinki-NLP Opus-MT models via CTranslate2."""
 
@@ -498,3 +519,5 @@ class OpusMTBackend(TranslationBackend):
             raise RuntimeError(
                 f"Failed to convert model {model_name}: {e}"
             ) from e
+
+        _delete_hf_cache(model_name)

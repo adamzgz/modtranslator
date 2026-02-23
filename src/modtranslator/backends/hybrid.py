@@ -1,7 +1,12 @@
-"""Hybrid translation backend: tc-big for short strings, NLLB for long strings.
+"""Hybrid translation backend: Opus-MT for short strings, NLLB for long strings.
 
-Combines Opus-MT tc-big (fast, reliable on short texts) with NLLB 1.3B
+Combines Opus-MT (fast, reliable on short texts) with NLLB 1.3B
 (better quality on longer sentences) to get the best of both models.
+
+For each language pair, the Opus-MT backend is selected automatically:
+  1. Try opus-mt-tc-big-{src}-{tgt} (best quality)
+  2. Fall back to opus-mt-{src}-{tgt} (base, smaller but reliable)
+  3. If neither exists, use NLLB for all strings (NLLB-only mode)
 
 Analysis on 9,708 strings (4 ESMs) showed:
 - NLLB produces better translations on 80.4% of long strings (4+ words)
@@ -13,7 +18,7 @@ from __future__ import annotations
 
 from modtranslator.backends.base import TranslationBackend
 
-# Strings with fewer words than this go to tc-big; the rest go to NLLB.
+# Strings with fewer words than this go to Opus-MT; the rest go to NLLB.
 # Threshold of 4 was determined by analysis: <=3 words is where NLLB
 # hallucinates ("Scar" -> "es una cicatriz.") and duplicates ("Sofá Sofá").
 DEFAULT_WORD_THRESHOLD = 4
@@ -24,7 +29,11 @@ _NLLB_CHUNK_SIZE = 500
 
 
 class HybridBackend(TranslationBackend):
-    """Hybrid backend: Opus-MT tc-big for short strings, NLLB 1.3B for long strings."""
+    """Hybrid backend: Opus-MT for short strings, NLLB 1.3B for long strings.
+
+    The Opus-MT variant (tc-big or base) is selected automatically on the
+    first translate_batch call based on model availability for the language pair.
+    """
 
     def __init__(
         self,
@@ -33,11 +42,39 @@ class HybridBackend(TranslationBackend):
         nllb_model_size: str = "1.3B",
     ) -> None:
         from modtranslator.backends.nllb import NLLBBackend
-        from modtranslator.backends.opus_mt import OpusMTBackend
 
         self._word_threshold = word_threshold
-        self._tc_big = OpusMTBackend(device=device, model_variant="tc-big")
+        self._device = device
         self._nllb = NLLBBackend(device=device, model_size=nllb_model_size)
+
+        # Opus-MT backend, resolved lazily on first translate_batch call.
+        # None means NLLB-only mode (no Opus-MT available for the language pair).
+        self._opus: object | None = None
+        self._opus_initialized: bool = False  # True once _init_opus has run
+
+    def _init_opus(self, target_lang: str, source_lang: str | None) -> None:
+        """Detect best available Opus-MT variant for the language pair.
+
+        Tries tc-big first (better quality), then base (smaller but no hallucinations).
+        If neither is available, self._opus stays None and NLLB handles all strings.
+        """
+        from modtranslator.backends.opus_mt import _LANG_CODES, OpusMTBackend
+
+        self._opus_initialized = True
+        src_key = (source_lang or "EN").upper()
+        src = _LANG_CODES.get(src_key, src_key.lower())
+        tgt_key = target_lang.upper()
+        tgt = _LANG_CODES.get(tgt_key, tgt_key.lower())
+
+        for variant in ("tc-big", "base"):
+            try:
+                backend = OpusMTBackend(device=self._device, model_variant=variant)
+                backend._ensure_model(src, tgt)
+                self._opus = backend
+                return
+            except Exception:
+                continue
+        # No Opus-MT available → NLLB-only (self._opus stays None)
 
     def translate_batch(
         self,
@@ -48,7 +85,18 @@ class HybridBackend(TranslationBackend):
         if not texts:
             return []
 
-        # Split texts by word count into short (tc-big) and long (NLLB) groups
+        if not self._opus_initialized:
+            self._init_opus(target_lang, source_lang)
+
+        if self._opus is None:
+            # NLLB-only mode: send all strings to NLLB in chunks
+            results: list[str] = []
+            for start in range(0, len(texts), _NLLB_CHUNK_SIZE):
+                chunk = texts[start : start + _NLLB_CHUNK_SIZE]
+                results.extend(self._nllb.translate_batch(chunk, target_lang, source_lang))
+            return results
+
+        # Split texts by word count into short (Opus-MT) and long (NLLB) groups
         short_indices: list[int] = []
         short_texts: list[str] = []
         long_indices: list[int] = []
@@ -67,7 +115,7 @@ class HybridBackend(TranslationBackend):
         long_results: list[str] = []
 
         if short_texts:
-            short_results = self._tc_big.translate_batch(
+            short_results = self._opus.translate_batch(  # type: ignore[union-attr]
                 short_texts, target_lang, source_lang
             )
         if long_texts:

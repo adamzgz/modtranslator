@@ -1,0 +1,128 @@
+# Glossary Fallout New Vegas → Polish
+# Official Bethesda/Obsidian Polish localization terms.
+# FNV-specific terms not in the base glossary.
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# LOCATIONS
+# ═══════════════════════════════════════════════════════════════
+"Mojave Wasteland" = "Pustkowie Mojave"
+"New Vegas" = "Nowy Vegas"
+"Freeside" = "Freeside"
+"The Strip" = "Strip"
+"Goodsprings" = "Dobre Zrodla"
+"Primm" = "Primm"
+"Boulder City" = "Boulder City"
+"Novac" = "Novac"
+"Camp McCarran" = "Oboz McCarran"
+"Hoover Dam" = "Tama Hoovera"
+"Camp Forlorn Hope" = "Oboz Straconych Nadziei"
+"Nelson" = "Nelson"
+"Cottonwood Cove" = "Zatoka Bawelny"
+"Jacobstown" = "Jacobstown"
+"Black Mountain" = "Czarna Gora"
+"HELIOS One" = "HELIOS Jeden"
+"Nellis Air Force Base" = "Baza Lotnicza Nellis"
+"Hidden Valley" = "Ukryta Dolina"
+"Vault 34" = "Krypta 34"
+"Vault 11" = "Krypta 11"
+"Vault 19" = "Krypta 19"
+"Vault 22" = "Krypta 22"
+"Dead Wind Cavern" = "Jaskinia Martwego Wiatru"
+"The Thorn" = "Ciernis"
+
+# ═══════════════════════════════════════════════════════════════
+# FACTIONS
+# ═══════════════════════════════════════════════════════════════
+"New California Republic" = "Nowa Republika Kalifornii"
+"NCR" = "NRK"
+"Caesar's Legion" = "Legion Cezara"
+"House" = "Dom"
+"Mr. House" = "Pan Dom"
+"Yes Man" = "Potakiwacz"
+"Powder Gangers" = "Prochowcy"
+"Boomers" = "Bumy"
+"Great Khans" = "Wielcy Khanowie"
+"Fiends" = "Demony"
+"Kings" = "Krolowie"
+"Followers of the Apocalypse" = "Wyznawcy Apokalipsy"
+"White Glove Society" = "Towarzystwo Bialej Rekawiczki"
+"Chairmen" = "Przewodniczacy"
+"Omertas" = "Omerta"
+
+# ═══════════════════════════════════════════════════════════════
+# CHARACTERS
+# ═══════════════════════════════════════════════════════════════
+"Courier" = "Kurier"
+"Victor" = "Wiktor"
+"Doc Mitchell" = "Doktor Mitchell"
+"Sunny Smiles" = "Sloneczny Usmiech"
+"ED-E" = "ED-E"
+"Boone" = "Boone"
+"Veronica" = "Weronika"
+"Raul" = "Raul"
+"Rex" = "Rex"
+"Lily" = "Lilia"
+"Arcade Gannon" = "Arcade Gannon"
+"Cass" = "Cass"
+"Caesar" = "Cezar"
+"Legate Lanius" = "Legat Lanius"
+"General Lee Oliver" = "General Lee Oliver"
+"Chief Hanlon" = "Szef Hanlon"
+"Vulpes Inculta" = "Vulpes Inculta"
+"Benny" = "Benny"
+"The King" = "Krol"
+
+# ═══════════════════════════════════════════════════════════════
+# FNV CREATURES
+# ═══════════════════════════════════════════════════════════════
+"Nightstalker" = "Nocny Sztalker"
+"Bighorner" = "Wielkorog"
+"Cazador" = "Cazador"
+"Deathclaw Mother" = "Matka Smiercioszpon"
+"Spore Plant" = "Roslina Zarodnikowa"
+"Spore Carrier" = "Nosiciel Zarodnikow"
+"Centaur" = "Centaur"
+"Feral Ghoul Reaver" = "Dziki Ghul-Najecdzca"
+
+# ═══════════════════════════════════════════════════════════════
+# GAME MECHANICS
+# ═══════════════════════════════════════════════════════════════
+"Hardcore Mode" = "Tryb Przezycia"
+"Reputation" = "Reputacja"
+"Infamy" = "Nieslawa"
+"Idolized" = "Idolizowany"
+"Vilified" = "Zohydzony"
+"Accepted" = "Akceptowany"
+"Liked" = "Lubiany"
+"Hated" = "Znienawidzony"
+"Neutral" = "Neutralny"
+
+# ═══════════════════════════════════════════════════════════════
+# FNV UNIQUE WEAPONS
+# ═══════════════════════════════════════════════════════════════
+"Mysterious Magnum" = "Tajemniczy Magnum"
+"Lucky" = "Szczesliwiec"
+"That Gun" = "Ten Rewolwer"
+"All-American" = "Wszechamerykanski"
+"Gobi Campaign Scout Rifle" = "Karabin Wywiadowczy Gobi"
+"La Longue Carabine" = "La Longue Carabine"
+"Ratslayer" = "Szczurobia"
+"Survivalist's Rifle" = "Karabin Przetrwania"
+"Dinner Bell" = "Dzwonek Obiadowy"
+"Riot Shotgun" = "Strzelba Zamieszek"
+
+# ═══════════════════════════════════════════════════════════════
+# FNV PERKS
+# ═══════════════════════════════════════════════════════════════
+"Cowboy" = "Kowboj"
+"Grunt" = "Grunt"
+"Commando" = "Komandos"
+"Gunslinger" = "Rewolwerowiec"
+"Sneaky Pete" = "Cichy Piotrek"
+"Spray and Pray" = "Strzelaj i Modl sie"
+"Travel Light" = "Podrozuj na Lekko"
+"Light Step" = "Lekki Krok"
+"Run 'n Gun" = "Strzelaj w Biegu"
+"Hit the Deck" = "Padnij"

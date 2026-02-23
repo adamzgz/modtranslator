@@ -242,6 +242,21 @@ def load_string_tables(
     return table_set
 
 
+# Mapping from ISO 639-1 codes to canonical full language names.
+# Used to convert CLI/GUI lang codes (ES, FR) to string table names (Spanish, French).
+ISO_TO_FULL_LANGUAGE: dict[str, str] = {
+    "EN": "English",
+    "ES": "Spanish",
+    "FR": "French",
+    "DE": "German",
+    "IT": "Italian",
+    "PT": "Portuguese",
+    "RU": "Russian",
+    "PL": "Polish",
+    "JA": "Japanese",
+    "ZH": "Chinese",
+}
+
 # Mapping from canonical language name to abbreviation variants.
 # Skyrim uses full names (English, Spanish), FO4 uses short codes (En, es).
 _LANG_FULL_TO_SHORT: dict[str, str] = {

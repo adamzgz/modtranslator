@@ -18,32 +18,61 @@ class ModelInfo:
     required_for: list[str]  # backend names that need this model
 
 
+# Opus-MT model availability per target language.
+# tc-big has better quality; base is smaller fallback.
+_OPUS_VARIANTS: dict[str, list[str]] = {
+    "ES": ["tc-big", "base"],
+    "FR": ["tc-big", "base"],
+    "IT": ["tc-big", "base"],
+    "PT": ["tc-big", "base"],
+    "DE": ["base"],
+    "RU": ["base"],
+    "PL": ["base"],
+}
+
+
+def _opus_model_id(lang: str) -> str | None:
+    """Return the best available Opus-MT HuggingFace model ID for a target language.
+
+    Prefers tc-big over base. Returns None if no Opus-MT model exists for the language.
+    """
+    tgt = lang.lower()
+    variants = _OPUS_VARIANTS.get(lang.upper(), [])
+    for variant in variants:
+        if variant == "tc-big":
+            model_id = f"Helsinki-NLP/opus-mt-tc-big-en-{tgt}"
+        else:
+            model_id = f"Helsinki-NLP/opus-mt-en-{tgt}"
+        if _check_model_exists(model_id):
+            return model_id
+    # None downloaded yet → return the best one to download
+    if variants:
+        v = variants[0]
+        if v == "tc-big":
+            return f"Helsinki-NLP/opus-mt-tc-big-en-{tgt}"
+        return f"Helsinki-NLP/opus-mt-en-{tgt}"
+    return None
+
+
+def _opus_display_name(model_id: str) -> str:
+    """Human-readable name from a HuggingFace Opus-MT model ID."""
+    short = model_id.split("/")[-1]  # opus-mt-tc-big-en-es
+    return short.replace("Helsinki-NLP/", "").replace("opus-mt-", "Opus-MT ")
+
+
 def detect_cuda() -> dict[str, object]:
     """Detect CUDA availability.
 
     Returns dict with keys:
         available: bool
         gpu_name: str or None
-        torch_available: bool
     """
     result: dict[str, object] = {
         "available": False,
         "gpu_name": None,
-        "torch_available": False,
     }
 
-    # Try torch first
-    try:
-        import torch
-        result["torch_available"] = True
-        if torch.cuda.is_available():
-            result["available"] = True
-            result["gpu_name"] = torch.cuda.get_device_name(0)
-            return result
-    except ImportError:
-        pass
-
-    # Fallback: check nvidia-smi (try common paths on Windows)
+    # Check nvidia-smi (try common paths on Windows)
     nvidia_smi_paths = ["nvidia-smi"]
     if sys.platform == "win32":
         nvidia_smi_paths.extend([
@@ -66,44 +95,39 @@ def detect_cuda() -> dict[str, object]:
     return result
 
 
-def _get_models_dir() -> Path:
-    """Get the HuggingFace cache directory where models are stored."""
-    cache_dir = Path.home() / ".cache" / "huggingface" / "hub"
-    return cache_dir
-
-
 def _check_model_exists(model_id: str) -> bool:
-    """Check if a HuggingFace model is already cached locally."""
-    cache_dir = _get_models_dir()
-    # HF cache uses models--org--name format
-    safe_name = "models--" + model_id.replace("/", "--")
-    model_dir = cache_dir / safe_name
-    if model_dir.is_dir():
-        # Check for snapshots directory (indicates completed download)
-        snapshots = model_dir / "snapshots"
-        if snapshots.is_dir() and any(snapshots.iterdir()):
+    """Check if a model is available as CT2 (ready to use)."""
+    short_name = model_id.split("/")[-1]
+
+    ct2_dir = Path.home() / ".modtranslator" / "models"
+    for candidate in ct2_dir.glob(f"{short_name}-ct2-*"):
+        if (candidate / "model.bin").exists():
             return True
+
     return False
 
 
-def get_model_status() -> list[ModelInfo]:
-    """Return status of all downloadable models."""
-    models = [
-        ModelInfo(
-            name="Opus-MT en-es (tc-big)",
-            description="Helsinki-NLP/opus-mt-tc-big-en-es",
+def get_model_status(lang: str = "ES") -> list[ModelInfo]:
+    """Return status of all downloadable models for the given target language."""
+    models: list[ModelInfo] = []
+
+    opus_id = _opus_model_id(lang)
+    if opus_id is not None:
+        models.append(ModelInfo(
+            name=_opus_display_name(opus_id),
+            description=opus_id,
             size_hint="~300 MB",
-            is_downloaded=_check_model_exists("Helsinki-NLP/opus-mt-tc-big-en-es"),
+            is_downloaded=_check_model_exists(opus_id),
             required_for=["opus-mt", "hybrid"],
-        ),
-        ModelInfo(
-            name="NLLB 1.3B (CTranslate2)",
-            description="facebook/nllb-200-distilled-1.3B",
-            size_hint="~2.5 GB",
-            is_downloaded=_check_model_exists("facebook/nllb-200-distilled-1.3B"),
-            required_for=["hybrid"],
-        ),
-    ]
+        ))
+
+    models.append(ModelInfo(
+        name="NLLB 1.3B (CTranslate2)",
+        description="facebook/nllb-200-distilled-1.3B",
+        size_hint="~2.5 GB",
+        is_downloaded=_check_model_exists("facebook/nllb-200-distilled-1.3B"),
+        required_for=["hybrid"],
+    ))
     return models
 
 
@@ -116,68 +140,88 @@ def download_model(model_description: str, on_progress: object = None) -> bool:
         from huggingface_hub import snapshot_download
         snapshot_download(model_description)
         return True
-    except ImportError:
-        # Try with transformers
-        try:
-            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-            AutoTokenizer.from_pretrained(model_description)
-            AutoModelForSeq2SeqLM.from_pretrained(model_description)
-            return True
-        except Exception:
-            return False
     except Exception:
         return False
 
 
-def check_backend_ready(backend_name: str) -> tuple[bool, str]:
+def check_backend_ready(backend_name: str, lang: str = "ES") -> tuple[bool, str]:
     """Check if a backend has all required dependencies and models.
 
     Returns (ready, message).
     """
     if backend_name == "dummy":
-        return True, "Listo"
+        return True, "Ready"
 
     if backend_name == "deepl":
         try:
             import deepl  # noqa: F401
-            return True, "Paquete deepl instalado"
+            return True, "deepl package installed"
         except ImportError:
-            return False, "Falta paquete: pip install deepl"
+            return False, "Missing package: pip install deepl"
 
     if backend_name == "opus-mt":
         try:
             import ctranslate2  # noqa: F401
             import sentencepiece  # noqa: F401
         except ImportError:
-            return False, "Faltan paquetes: pip install ctranslate2 sentencepiece transformers"
-        if not _check_model_exists("Helsinki-NLP/opus-mt-tc-big-en-es"):
-            return False, "Modelo Opus-MT no descargado"
-        return True, "Listo"
+            return False, "Missing packages: pip install ctranslate2 sentencepiece transformers"
+        opus_id = _opus_model_id(lang)
+        if opus_id is None:
+            return False, f"No Opus-MT model available for {lang}"
+        if not _check_model_exists(opus_id):
+            return False, "Opus-MT model not downloaded"
+        return True, "Ready"
 
     if backend_name == "nllb":
         try:
             import ctranslate2  # noqa: F401
             import sentencepiece  # noqa: F401
         except ImportError:
-            return False, "Faltan paquetes: pip install ctranslate2 sentencepiece transformers"
+            return False, "Missing packages: pip install ctranslate2 sentencepiece transformers"
         if not _check_model_exists("facebook/nllb-200-distilled-1.3B"):
-            return False, "Modelo NLLB no descargado"
-        return True, "Listo"
+            return False, "NLLB model not downloaded"
+        return True, "Ready"
 
     if backend_name == "hybrid":
         try:
             import ctranslate2  # noqa: F401
             import sentencepiece  # noqa: F401
         except ImportError:
-            return False, "Faltan paquetes: pip install ctranslate2 sentencepiece transformers"
-        opus_ok = _check_model_exists("Helsinki-NLP/opus-mt-tc-big-en-es")
+            return False, "Missing packages: pip install ctranslate2 sentencepiece transformers"
+        opus_id = _opus_model_id(lang)
+        opus_ok = opus_id is not None and _check_model_exists(opus_id)
         nllb_ok = _check_model_exists("facebook/nllb-200-distilled-1.3B")
         if not opus_ok and not nllb_ok:
-            return False, "Modelos Opus-MT y NLLB no descargados"
+            return False, "Opus-MT and NLLB models not downloaded"
         if not opus_ok:
-            return False, "Modelo Opus-MT no descargado"
+            return False, "Opus-MT model not downloaded"
         if not nllb_ok:
-            return False, "Modelo NLLB no descargado"
-        return True, "Listo"
+            return False, "NLLB model not downloaded"
+        return True, "Ready"
 
-    return False, f"Backend desconocido: {backend_name}"
+    return False, f"Unknown backend: {backend_name}"
+
+
+def get_missing_model_ids(backend_name: str, lang: str = "ES") -> list[tuple[str, str]]:
+    """Return (display_name, hf_model_id) for models needed by backend that are not downloaded.
+
+    Returns an empty list if the backend needs no models or all models are present.
+    """
+    nllb = ("NLLB 1.3B", "facebook/nllb-200-distilled-1.3B")
+
+    opus_id = _opus_model_id(lang)
+    opus_entry = (_opus_display_name(opus_id), opus_id) if opus_id else None
+
+    missing: list[tuple[str, str]] = []
+    if backend_name == "opus-mt":
+        if opus_entry and not _check_model_exists(opus_entry[1]):
+            missing.append(opus_entry)
+    elif backend_name == "nllb":
+        if not _check_model_exists(nllb[1]):
+            missing.append(nllb)
+    elif backend_name == "hybrid":
+        if opus_entry and not _check_model_exists(opus_entry[1]):
+            missing.append(opus_entry)
+        if not _check_model_exists(nllb[1]):
+            missing.append(nllb)
+    return missing

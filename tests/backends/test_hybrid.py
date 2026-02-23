@@ -1,8 +1,8 @@
-"""Tests for the hybrid (tc-big + NLLB) translation backend."""
+"""Tests for the hybrid (Opus-MT + NLLB) translation backend."""
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -15,7 +15,11 @@ _PATCH_NLLB = "modtranslator.backends.nllb.NLLBBackend"
 
 @pytest.fixture
 def mock_hybrid():
-    """Create a HybridBackend with mocked sub-backends."""
+    """Create a HybridBackend with mocked sub-backends.
+
+    Opus-MT is initialized lazily on first translate_batch call.
+    mock_tc_big = OpusMTBackend.return_value (the instance _init_opus creates).
+    """
     with (
         patch(_PATCH_OPUS) as mock_opus_cls,
         patch(_PATCH_NLLB) as mock_nllb_cls,
@@ -31,10 +35,13 @@ def mock_hybrid():
 
 
 class TestHybridInit:
-    def test_creates_tc_big_and_nllb(self, mock_hybrid):
+    def test_creates_nllb_immediately_opus_is_lazy(self, mock_hybrid):
+        """NLLB is created in __init__; Opus-MT is lazy (created on first translate_batch)."""
         _backend, _tc, _nllb, mock_opus_cls, mock_nllb_cls = mock_hybrid
-        mock_opus_cls.assert_called_once_with(device="cpu", model_variant="tc-big")
+        # NLLB created eagerly
         mock_nllb_cls.assert_called_once_with(device="cpu", model_size="1.3B")
+        # Opus NOT created yet (lazy)
+        mock_opus_cls.assert_not_called()
 
     def test_custom_nllb_model_size(self):
         with patch(_PATCH_OPUS), patch(_PATCH_NLLB) as mock_nllb_cls:
@@ -175,6 +182,98 @@ class TestHybridTranslateBatch:
 
         mock_nllb.translate_batch.assert_called_once()
         assert result == "Estas buscando al Mecanista?"
+
+
+class TestHybridFallback:
+    """Tests for the tc-big → base → NLLB-only fallback chain."""
+
+    def test_falls_back_to_base_when_no_tc_big(self):
+        """When tc-big is not available, _init_opus uses base Opus-MT."""
+        with (
+            patch(_PATCH_OPUS) as mock_opus_cls,
+            patch(_PATCH_NLLB) as mock_nllb_cls,
+        ):
+            tc_big_inst = MagicMock()
+            tc_big_inst._ensure_model.side_effect = RuntimeError("model not found")
+            base_inst = MagicMock()
+            base_inst._ensure_model.return_value = None
+            base_inst.translate_batch.return_value = ["Hallo"]
+
+            mock_opus_cls.side_effect = [tc_big_inst, base_inst]
+            mock_nllb_cls.return_value = MagicMock()
+
+            backend = HybridBackend(device="cpu")
+            result = backend.translate_batch(["Hello"], "DE")
+
+            assert backend._opus is base_inst
+            assert result == ["Hallo"]
+            # tc-big was tried first, then base
+            assert mock_opus_cls.call_args_list == [
+                call(device="cpu", model_variant="tc-big"),
+                call(device="cpu", model_variant="base"),
+            ]
+
+    def test_falls_back_to_nllb_only_when_no_opus(self):
+        """When no Opus-MT is available, all strings go to NLLB."""
+        with (
+            patch(_PATCH_OPUS) as mock_opus_cls,
+            patch(_PATCH_NLLB) as mock_nllb_cls,
+        ):
+            failing_inst = MagicMock()
+            failing_inst._ensure_model.side_effect = RuntimeError("no model")
+            mock_opus_cls.return_value = failing_inst
+
+            mock_nllb = MagicMock()
+            mock_nllb.translate_batch.return_value = ["Привет"]
+            mock_nllb_cls.return_value = mock_nllb
+
+            backend = HybridBackend(device="cpu")
+            result = backend.translate_batch(["Hello"], "RU")
+
+            assert backend._opus is None
+            mock_nllb.translate_batch.assert_called_once()
+            assert result == ["Привет"]
+
+    def test_nllb_only_routes_all_strings_regardless_of_length(self):
+        """In NLLB-only mode, short AND long strings go to NLLB."""
+        with (
+            patch(_PATCH_OPUS) as mock_opus_cls,
+            patch(_PATCH_NLLB) as mock_nllb_cls,
+        ):
+            failing_inst = MagicMock()
+            failing_inst._ensure_model.side_effect = RuntimeError("no model")
+            mock_opus_cls.return_value = failing_inst
+
+            mock_nllb = MagicMock()
+            mock_nllb.translate_batch.return_value = ["A", "B", "C"]
+            mock_nllb_cls.return_value = mock_nllb
+
+            backend = HybridBackend(device="cpu")
+            texts = ["Short", "Short two", "A much longer string that exceeds threshold"]
+            result = backend.translate_batch(texts, "RU")
+
+            # All texts go to NLLB in one chunk
+            mock_nllb.translate_batch.assert_called_once_with(texts, "RU", None)
+            assert result == ["A", "B", "C"]
+
+    def test_opus_init_only_happens_once(self):
+        """_init_opus is called only on the first non-empty translate_batch."""
+        with (
+            patch(_PATCH_OPUS) as mock_opus_cls,
+            patch(_PATCH_NLLB) as mock_nllb_cls,
+        ):
+            mock_opus_inst = MagicMock()
+            mock_opus_inst._ensure_model.return_value = None
+            mock_opus_inst.translate_batch.return_value = ["X"]
+            mock_opus_cls.return_value = mock_opus_inst
+            mock_nllb_cls.return_value = MagicMock()
+
+            backend = HybridBackend(device="cpu")
+            backend.translate_batch(["Hi"], "FR")
+            backend.translate_batch(["Bye"], "FR")
+
+            # OpusMTBackend() called exactly twice (tc-big attempt, which succeeds)
+            assert mock_opus_cls.call_count == 1
 
 
 class TestHybridCLI:

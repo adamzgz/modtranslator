@@ -1,0 +1,240 @@
+# Glossary base Fallout 3 / Fallout New Vegas / Fallout 4 → Polish
+# Official Bethesda Polish localization terms.
+# Only includes terms that MT models translate incorrectly or inconsistently.
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# CONSUMABLES & CHEMS
+# ═══════════════════════════════════════════════════════════════
+"Stimpak" = "Stymulator"
+"Super Stimpak" = "Super-stymulator"
+"Nuka-Cola" = "Nuka-Cola"
+"Rad-X" = "Rad-X"
+"RadAway" = "RadAway"
+"Mentats" = "Mentaty"
+"Buffout" = "Buffout"
+"Jet" = "Jet"
+"Psycho" = "Psycho"
+"Med-X" = "Med-X"
+"Stealth Boy" = "Stealth Boy"
+"Bobby Pin" = "Spinka do wlosow"
+"Holotape" = "Holodysk"
+"Blood Pack" = "Paczka krwi"
+"Purified Water" = "Oczyszczona woda"
+"Dirty Water" = "Brudna woda"
+"Mutfruit" = "Mutowoc"
+"Sweetroll" = "Slodka bulka"
+
+# ═══════════════════════════════════════════════════════════════
+# MARCAS DE ALIMENTOS
+# ═══════════════════════════════════════════════════════════════
+"Sugar Bombs" = "Cukrowe Bomby"
+"Fancy Lads Snack Cakes" = "Ciastka Elegancikow"
+"Dandy Boy Apples" = "Jablka Dandy Boy"
+"InstaMash" = "InstaPure"
+"Cram" = "Konserwa"
+"Brahmin Steak" = "Stek z Brahminow"
+"Squirrel Stew" = "Gulasz z Wiewiorki"
+"Pork n' Beans" = "Wieprzowina z Fasolka"
+"Gum Drops" = "Zelatynki"
+
+# ═══════════════════════════════════════════════════════════════
+# MUNICIONES
+# ═══════════════════════════════════════════════════════════════
+"Microfusion Cell" = "Komora Mikrosyntezy"
+"Electron Charge Pack" = "Ladunek Elektronowy"
+
+# ═══════════════════════════════════════════════════════════════
+# ARMADURAS
+# ═══════════════════════════════════════════════════════════════
+"Power Helmet" = "Helm Zbroi Wspomaganej"
+"Raider Armor" = "Zbroja Raidera"
+"Combat Armor" = "Zbroja Bojowa"
+"Leather Armor" = "Skorzana Zbroja"
+"Metal Armor" = "Metalowa Zbroja"
+"Recon Armor" = "Zbroja Rozpoznawcza"
+"Tesla Armor" = "Zbroja Tesli"
+
+# ═══════════════════════════════════════════════════════════════
+# PERKS
+# ═══════════════════════════════════════════════════════════════
+"Bloody Mess" = "Krwawa Masakra"
+"Pyromaniac" = "Piromaniak"
+"Explorer" = "Odkrywca"
+"Strong Back" = "Silne Plecy"
+"Pack Rat" = "Zbieracz"
+"Mysterious Stranger" = "Tajemniczy Nieznajomy"
+"Rad Resistance" = "Odpornosc na Promieniowanie"
+"Robotics Expert" = "Ekspert Robotyki"
+"Cannibal" = "Kanibal"
+"Fast Metabolism" = "Szybki Metabolizm"
+"Finesse" = "Finezja"
+"Paralyzing Palm" = "Paralizujaca Dlon"
+"Grim Reaper's Sprint" = "Bieg Kostuchy"
+"Nerd Rage!" = "Napad Nerdowski!"
+"Concentrated Fire" = "Skoncentrowany Ogien"
+
+# ═══════════════════════════════════════════════════════════════
+# MECHANICS
+# ═══════════════════════════════════════════════════════════════
+"V.A.T.S." = "V.A.T.S."
+"S.P.E.C.I.A.L." = "S.P.E.C.I.A.L."
+"Pip-Boy" = "Pip-Boy"
+"Perk" = "Zdolnosc"
+"Bobblehead" = "Kiwnaca glowa"
+"Bottlecap" = "Kapsle"
+"Karma" = "Karma"
+"Lockpick" = "Wytrych"
+"Pre-War" = "Przedwojenny"
+"Overseer" = "Nadzorca"
+"Vault Dweller" = "Mieszkaniec Krypty"
+"Great War" = "Wielka Wojna"
+"G.E.C.K." = "G.E.C.K."
+"FEV" = "WEW"
+"Workbench" = "Warsztat"
+
+# ═══════════════════════════════════════════════════════════════
+# S.P.E.C.I.A.L. STATS
+# ═══════════════════════════════════════════════════════════════
+"Strength" = "Sila"
+"Perception" = "Percepcja"
+"Endurance" = "Wytrzymalosc"
+"Charisma" = "Charyzma"
+"Intelligence" = "Inteligencja"
+"Agility" = "Zwinnosc"
+"Luck" = "Szczescie"
+
+# ═══════════════════════════════════════════════════════════════
+# SKILLS
+# ═══════════════════════════════════════════════════════════════
+"Barter" = "Handel"
+"Repair" = "Naprawa"
+"Medicine" = "Medycyna"
+"Science" = "Nauka"
+"Explosives" = "Materialy wybuchowe"
+"Sneak" = "Skradanie"
+"Speech" = "Perswazja"
+"Guns" = "Bron palna"
+"Melee Weapons" = "Bron biala"
+"Energy Weapons" = "Bron energetyczna"
+"Unarmed" = "Walka wrecz"
+"Big Guns" = "Ciezka bron"
+"Small Guns" = "Lekka bron palna"
+"Outdoorsman" = "Przetrwanie"
+
+# ═══════════════════════════════════════════════════════════════
+# COMBAT STATS
+# ═══════════════════════════════════════════════════════════════
+"Damage Threshold" = "Prog obrazen"
+"Damage Resistance" = "Odpornosc na obrazenia"
+"Action Points" = "Punkty akcji"
+"Hit Points" = "Punkty zdrowia"
+"Critical Hit" = "Trafienie krytyczne"
+
+# ═══════════════════════════════════════════════════════════════
+# STATUS EFFECTS
+# ═══════════════════════════════════════════════════════════════
+"Crippled" = "Okaleczony"
+"Addiction" = "Uzaleznienie"
+"Irradiated" = "Napromieniowany"
+"Overdose" = "Przedawkowanie"
+
+# ═══════════════════════════════════════════════════════════════
+# WORLD & CONCEPTS
+# ═══════════════════════════════════════════════════════════════
+"Wasteland" = "Pustkowia"
+"Vault" = "Krypta"
+"Vault-Tec" = "Vault-Tec"
+"Power Armor" = "Zbroja wspomagana"
+"Caravan" = "Karawana"
+"Wastelander" = "Mieszkaniec Pustkowi"
+"Scavenger" = "Szabrownik"
+
+# ═══════════════════════════════════════════════════════════════
+# CREATURES
+# ═══════════════════════════════════════════════════════════════
+"Super Mutant" = "Supermutant"
+"Super Mutant Behemoth" = "Behemoth-supermutant"
+"Super Mutant Master" = "Supermutant-mistrz"
+"Super Mutant Brute" = "Supermutant-brutal"
+"Nightkin" = "Dziecko nocy"
+"Feral Ghoul" = "Dziki ghul"
+"Glowing One" = "Swiecacy"
+"Ghoul" = "Ghul"
+"Deathclaw" = "Smiercioszpon"
+"Radroach" = "Rad-karaluch"
+"Radscorpion" = "Rad-skorpion"
+"Bloatfly" = "Wydeta mucha"
+"Mole Rat" = "Kret-szczur"
+"Brahmin" = "Brahmin"
+"Yao Guai" = "Yao Guai"
+"Mirelurk King" = "Krol moczarek"
+"Mirelurk Hunter" = "Lowca moczarek"
+"Mirelurk" = "Moczarek"
+"Fire Ant" = "Ognista mrowka"
+"Giant Ant" = "Olbrzymia mrowka"
+"Raider" = "Raider"
+
+# ═══════════════════════════════════════════════════════════════
+# ROBOTS
+# ═══════════════════════════════════════════════════════════════
+"Protectron" = "Protektron"
+"Sentry Bot" = "Robot strazy"
+"Eyebot" = "Eyebot"
+"Robobrain" = "Robomozg"
+"Liberty Prime" = "Liberty Prime"
+
+# ═══════════════════════════════════════════════════════════════
+# FACTIONS
+# ═══════════════════════════════════════════════════════════════
+"Brotherhood of Steel" = "Bractwo Stali"
+"Enclave" = "Enklawa"
+
+# ═══════════════════════════════════════════════════════════════
+# WEAPONS
+# ═══════════════════════════════════════════════════════════════
+"Fat Man" = "Grubas"
+"Minigun" = "Minigun"
+"Missile Launcher" = "Wyrzutnia rakiet"
+"Flamer" = "Miotacz ognia"
+"Gatling Laser" = "Laser Gatling"
+"Gauss Rifle" = "Karabin Gaussa"
+"Super Sledge" = "Super-mlot"
+"Power Fist" = "Wspomagana piesc"
+"Laser Rifle" = "Karabin laserowy"
+"Laser Pistol" = "Pistolet laserowy"
+"Plasma Rifle" = "Karabin plazmowy"
+"Plasma Pistol" = "Pistolet plazmowy"
+"Frag Grenade" = "Granat odlamkowy"
+"Mini Nuke" = "Mini-bomba jadrowa"
+
+# ═══════════════════════════════════════════════════════════════
+# BROTHERHOOD RANKS
+# ═══════════════════════════════════════════════════════════════
+"Elder" = "Starszy"
+"Paladin" = "Paladin"
+"Sentinel" = "Wartownik"
+"Scribe" = "Skryba"
+"Knight" = "Rycerz"
+"Initiate" = "Nowicjusz"
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-PROTECTION: Polish terms that should not be re-translated
+# ═══════════════════════════════════════════════════════════════
+"Pustkowia" = "Pustkowia"
+"Ghul" = "Ghul"
+"Krypta" = "Krypta"
+"Supermutant" = "Supermutant"
+"Smiercioszpon" = "Smiercioszpon"
+"Bractwo Stali" = "Bractwo Stali"
+"Zbroja wspomagana" = "Zbroja wspomagana"
+"Dziecko nocy" = "Dziecko nocy"
+"Miotacz ognia" = "Miotacz ognia"
+"Wyrzutnia rakiet" = "Wyrzutnia rakiet"
+"Wspomagana piesc" = "Wspomagana piesc"
+"Moczarek" = "Moczarek"
+"Protektron" = "Protektron"
+"Cukrowe Bomby" = "Cukrowe Bomby"
+"Zbroja Bojowa" = "Zbroja Bojowa"
+"Krwawa Masakra" = "Krwawa Masakra"

@@ -1,0 +1,138 @@
+# Glossary Fallout 3 (Capital Wasteland) → French
+# Official Bethesda French localization terms.
+# Only includes terms that MT models translate incorrectly or inconsistently.
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# LOCALISATIONS
+# ═══════════════════════════════════════════════════════════════
+"Capital Wasteland" = "Terres Dévastées de la Capitale"
+"Megaton" = "Mégaton"
+"Rivet City" = "Rivet City"
+"Tenpenny Tower" = "Tour Tenpenny"
+"The Citadel" = "La Citadelle"
+"Underworld" = "Le Monde Souterrain"
+"Galaxy News Radio" = "Radio Galaxie News"
+"GNR" = "GNR"
+"Little Lamplight" = "Petite Lampée"
+"Paradise Falls" = "Paradise Falls"
+"Springvale" = "Springvale"
+"Raven Rock" = "Raven Rock"
+"Jefferson Memorial" = "Mémorial Jefferson"
+"Museum of History" = "Musée de l’Histoire"
+"National Mall" = "National Mall"
+"Vault 101" = "Abri 101"
+"Vault 87" = "Abri 87"
+"Vault 112" = "Abri 112"
+"Vault 108" = "Abri 108"
+"Vault 106" = "Abri 106"
+"Vault 92" = "Abri 92"
+"Minefield" = "Champ de Mines"
+"Fort Constantine" = "Fort Constantine"
+"Fort Bannister" = "Fort Bannister"
+"National Archives" = "Archives Nationales"
+"Old Olney" = "Vieux Olney"
+"Dunwich Building" = "Bâtiment Dunwich"
+"Nuka-Cola Plant" = "Usine Nuka-Cola"
+"Andale" = "Andale"
+"Oasis" = "Oasis"
+"Deathclaw Sanctuary" = "Sanctuaire des Griffes de la Mort"
+
+# ═══════════════════════════════════════════════════════════════
+# DLCs
+# ═══════════════════════════════════════════════════════════════
+"The Pitt" = "The Pitt"
+"Point Lookout" = "Point Lookout"
+"Mothership Zeta" = "Vaisseau Mère Zeta"
+"Operation: Anchorage" = "Opération : Anchorage"
+"Broken Steel" = "Broken Steel"
+"Adams Air Force Base" = "Base Aérienne Adams"
+
+# ═══════════════════════════════════════════════════════════════
+# FACTIONS
+# ═══════════════════════════════════════════════════════════════
+"Talon Company" = "Compagnie Talon"
+"Outcasts" = "Renégats"
+"Brotherhood Outcasts" = "Renégats de la Confrérie"
+"Regulators" = "Régulateurs"
+"Tunnel Snakes" = "Serpents des Tunnels"
+"Lyons’ Pride" = "Fierté de Lyons"
+"Super Mutants" = "Super-Mutants"
+"Slavers" = "Esclavagistes"
+"Swampfolk" = "Gens des Marais"
+"Reilly’s Rangers" = "Rangers de Reilly"
+"The Family" = "La Famille"
+"Republic of Dave" = "République de Dave"
+"Temple of the Union" = "Temple de l’Union"
+
+# ═══════════════════════════════════════════════════════════════
+# PERSONNAGES
+# ═══════════════════════════════════════════════════════════════
+"Three Dog" = "Three Dog"
+"Dad" = "Papa"
+"Dogmeat" = "Cabot"
+"President Eden" = "Président Eden"
+"Colonel Autumn" = "Colonel Autumn"
+"Moira Brown" = "Moira Brown"
+"Amata" = "Amata"
+"Fawkes" = "Fawkes"
+"Charon" = "Charon"
+"Star Paladin Cross" = "Étoile Paladin Cross"
+"Butch DeLoria" = "Butch DeLoria"
+"Jericho" = "Jéricho"
+"Elder Lyons" = "Ancien Lyons"
+"Sarah Lyons" = "Sarah Lyons"
+"Lone Wanderer" = "Solitaire"
+"Harold" = "Harold"
+
+# ═══════════════════════════════════════════════════════════════
+# OBJETS ET ARMES UNIQUES
+# ═══════════════════════════════════════════════════════════════
+"Nuka-Cola Quantum" = "Nuka-Cola Quantum"
+"Alien Blaster" = "Blaster Alien"
+"Lincoln’s Repeater" = "Répétition de Lincoln"
+"Rock-It Launcher" = "Lance-Détritus"
+"Railway Rifle" = "Fusil de Chemin de Fer"
+"Dart Gun" = "Pistolet Flèchette"
+"Deathclaw Gauntlet" = "Gantelet Griffe de la Mort"
+"Wasteland Survival Guide" = "Guide de Survie des Terres Dévastées"
+
+# ═══════════════════════════════════════════════════════════════
+# PERKS (FO3)
+# ═══════════════════════════════════════════════════════════════
+"Bloody Mess" = "Carnage"
+"Pyromaniac" = "Pyromane"
+"Explorer" = "Explorateur"
+"Strong Back" = "Dos Solide"
+"Pack Rat" = "Rat des Greniers"
+"Grim Reaper’s Sprint" = "Foulée du Faucheur"
+"Finesse" = "Finesse"
+"Fast Metabolism" = "Métabolisme Rapide"
+"Nerd Rage!" = "Colère du Geek !"
+"Mysterious Stranger" = "L’Inconnu Mystérieux"
+"Rad Resistance" = "Résistance aux Radiations"
+"Robotics Expert" = "Expert en Robotique"
+"Cannibal" = "Cannibale"
+"Concentrated Fire" = "Tir Concentré"
+"Paralyzing Palm" = "Paume Paralysante"
+
+# ═══════════════════════════════════════════════════════════════
+# MISSIONS PRINCIPALES
+# ═══════════════════════════════════════════════════════════════
+"The Waters of Life" = "Les Eaux de la Vie"
+"Take it Back!" = "Reprenez-le !"
+"The Power of the Atom" = "Le Pouvoir de l’Atome"
+"Following in His Footsteps" = "Sur Ses Traces"
+"Project Purity" = "Projet Pureté"
+"Aqua Pura" = "Aqua Pura"
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-PROTECTION
+# ═══════════════════════════════════════════════════════════════
+"Cabot" = "Cabot"
+"Solitaire" = "Solitaire"
+"Régulateurs" = "Régulateurs"
+"Esclavagistes" = "Esclavagistes"
+"Serpents des Tunnels" = "Serpents des Tunnels"
+"Renégats" = "Renégats"
