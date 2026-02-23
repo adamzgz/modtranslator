@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import io
-import struct
 
 from modtranslator.core.plugin import load_plugin, plugin_from_bytes, plugin_to_bytes, save_plugin
 from modtranslator.core.writer import write_plugin

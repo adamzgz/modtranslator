@@ -11,26 +11,22 @@ from threading import Event
 import pytest
 
 from modtranslator.backends.dummy import DummyBackend
-from modtranslator.core.constants import Game
 from modtranslator.core.writer import write_plugin
 from modtranslator.pipeline import (
     BatchResult,
     CancelledError,
     GameChoice,
-    ScanResult,
     _build_dedup_map,
     _check_cancel,
     _FileContext,
     _translate_chunks,
     batch_translate_esp,
     batch_translate_mcm,
-    batch_translate_pex,
     create_backend,
     scan_directory,
     scan_file,
 )
 from tests.conftest import make_plugin, make_subrecord
-
 
 # ── Helpers ──
 
@@ -76,7 +72,7 @@ def _write_pex(path: Path, strings: list[tuple[int, str]]) -> None:
     buf.write(b"host")
     # String table
     buf.write(struct.pack(">H", len(strings)))
-    for type_tag, text in strings:
+    for _type_tag, text in strings:
         encoded = text.encode("utf-8")
         buf.write(struct.pack(">H", len(encoded)))
         buf.write(encoded)
@@ -307,7 +303,7 @@ class TestBatchTranslateEsp:
         output_dir.mkdir()
 
         phases = []
-        result = batch_translate_esp(
+        batch_translate_esp(
             [esp],
             lang="ES",
             backend=DummyBackend(),

@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta
 
-import pytest
-
 from modtranslator.reporting.formatters import save_report, to_csv, to_json, to_markdown
 from modtranslator.reporting.report import TranslationReport
 

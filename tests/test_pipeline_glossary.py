@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from modtranslator.core.constants import Game
 from modtranslator.pipeline import GameChoice, resolve_glossary_paths
 
