@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import io
-import struct
 import zlib
 
 from modtranslator.core.constants import Game, RecordFlag
 from modtranslator.core.parser import parse_plugin
 from modtranslator.core.records import GroupRecord, PluginFile, Record, Subrecord
 from modtranslator.core.writer import write_plugin
-from tests.conftest import make_group, make_plugin, make_record, make_subrecord, make_tes4_header
+from tests.conftest import make_group, make_record, make_subrecord, make_tes4_header
 
 
 class TestCompressedRecords:
@@ -79,7 +78,7 @@ class TestCompressedRecords:
 
         buf = io.BytesIO()
         write_plugin(plugin, buf)
-        raw = buf.getvalue()
+        buf.getvalue()
 
         # Should still be valid — parseable
         buf.seek(0)

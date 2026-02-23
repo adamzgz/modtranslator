@@ -379,6 +379,7 @@ class TestMultilangPipelineDirect:
     def test_batch_translate_esp_fr(self, tmp_path):
         """batch_translate_esp with lang='FR' and dummy backend."""
         import shutil
+
         from modtranslator.backends.dummy import DummyBackend
         from modtranslator.pipeline import GameChoice, batch_translate_esp
 
@@ -405,6 +406,7 @@ class TestMultilangPipelineDirect:
     def test_batch_translate_esp_de(self, tmp_path):
         """batch_translate_esp with lang='DE' and dummy backend."""
         import shutil
+
         from modtranslator.backends.dummy import DummyBackend
         from modtranslator.pipeline import GameChoice, batch_translate_esp
 
@@ -429,6 +431,7 @@ class TestMultilangPipelineDirect:
     def test_batch_translate_esp_ru_skyrim(self, tmp_path):
         """batch_translate_esp with lang='RU' on Skyrim inline plugin."""
         import shutil
+
         from modtranslator.backends.dummy import DummyBackend
         from modtranslator.pipeline import GameChoice, batch_translate_esp
 
@@ -535,6 +538,7 @@ class TestMultilangPipelineDirect:
     def test_deduplication_works_across_langs(self, tmp_path):
         """Deduplication works for non-ES: identical strings translated once."""
         import shutil
+
         from modtranslator.backends.dummy import DummyBackend
         from modtranslator.pipeline import GameChoice, batch_translate_esp
 

@@ -10,7 +10,6 @@ from modtranslator.translation.target_protect import (
     restore_target_words,
 )
 
-
 # === Parametrized tests across languages ===
 
 # (lang, word_in_dictionary, sample_text_with_target_word)

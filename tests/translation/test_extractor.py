@@ -361,9 +361,10 @@ class TestFo4Extractor:
 
     def test_fo4_multiple_record_types(self):
         """Multiple FO4 record types extracted in a single plugin."""
-        from tests.conftest import make_fo4_plugin, make_record, make_group
-        from modtranslator.core.records import PluginFile, RecordFlag
         import struct
+
+        from modtranslator.core.records import PluginFile
+        from tests.conftest import make_group, make_record
 
         hedr_data = struct.pack("<f", 1.0) + struct.pack("<I", 0) + struct.pack("<I", 0)
         from modtranslator.core.records import Record, Subrecord

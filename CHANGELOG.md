@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.2.1] - 2026-02-23
+
+### Fixed
+
+- Lint errors in test files: unused imports, unsorted import blocks, line too long.
+- Updated README with current stats: 906 tests, ~79% coverage, 35 glossaries, multi-language architecture.
+- Cleaned up git history: squashed incremental commits into 4 milestone commits.
+
+---
+
 ## [0.2.0] - 2026-02-22
 
 ### Added
@@ -55,6 +65,16 @@ All notable changes to this project will be documented in this file.
 # Registro de Cambios
 
 Todos los cambios relevantes de este proyecto se documentan en este archivo.
+
+---
+
+## [0.2.1] - 2026-02-23
+
+### Corregido
+
+- Errores de lint en archivos de test: imports no usados, bloques de import desordenados, línea demasiado larga.
+- README actualizado con estadísticas actuales: 906 tests, ~79% cobertura, 35 glosarios, arquitectura multi-idioma.
+- Historial de git limpiado: commits incrementales consolidados en 4 commits por hito.
 
 ---
 

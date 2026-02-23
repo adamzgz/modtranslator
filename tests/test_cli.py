@@ -587,7 +587,11 @@ class TestCLIBatchPex:
             "batch-pex", str(fake_path),
             "--dummy",
         ])
-        assert result.exit_code != 0 or "Error" in result.output or "Not a directory" in result.output
+        assert (
+            result.exit_code != 0
+            or "Error" in result.output
+            or "Not a directory" in result.output
+        )
 
     def test_batch_pex_with_skyrim_pex(self, tmp_path):
         """batch-pex translates a minimal Skyrim PEX file with dummy backend."""

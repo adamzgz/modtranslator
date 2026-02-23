@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-import pytest
-
 from modtranslator.gui.model_manager import (
     _opus_display_name,
     _opus_model_id,
@@ -13,7 +11,6 @@ from modtranslator.gui.model_manager import (
     get_missing_model_ids,
     get_model_status,
 )
-
 
 # ---------------------------------------------------------------------------
 # _opus_model_id
