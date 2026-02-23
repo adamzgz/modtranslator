@@ -1,101 +1,122 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller spec for ModTranslator GUI (--onedir build)."""
+"""PyInstaller spec for modtranslator GUI — Windows x64.
 
-import os
-import sys
+Bundles: core + GUI + CTranslate2 + sentencepiece + transformers (tokenizer/conversion)
+Excludes: torch, tensorflow, jax (not needed at runtime after CT2 conversion)
+Models: download on first use via huggingface_hub (~/.modtranslator/models/)
+"""
 
-block_cipher = None
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
-# Paths
-PROJECT_ROOT = os.path.dirname(os.path.abspath(SPEC))
-SRC_DIR = os.path.join(PROJECT_ROOT, 'src')
+# ── Data files ────────────────────────────────────────────────────────────────
+datas = []
+datas += collect_data_files("customtkinter")
+datas += collect_data_files("modtranslator")          # spanish_words.txt via importlib.resources
+datas += [("glossaries", "glossaries")]               # TOML glossaries
 
+# ── Hidden imports ────────────────────────────────────────────────────────────
+hiddenimports = [
+    # GUI
+    "customtkinter",
+    "tkinter",
+    "tkinter.filedialog",
+    "tkinter.messagebox",
+    # CTranslate2
+    "ctranslate2",
+    "ctranslate2.converters",
+    "ctranslate2.converters.transformers",
+    # Transformers tokenizers (needed for MarianTokenizer + NLLB tokenizer)
+    "transformers",
+    "transformers.models.marian",
+    "transformers.models.marian.tokenization_marian",
+    "transformers.models.nllb",
+    "transformers.models.m2m_100",
+    "transformers.models.m2m_100.tokenization_m2m_100",
+    "sentencepiece",
+    "tokenizers",
+    # HuggingFace hub (model download)
+    "huggingface_hub",
+    "huggingface_hub.file_download",
+    # Utils
+    "filelock",
+    "tqdm",
+    "tqdm.auto",
+    "regex",
+    "requests",
+    "packaging",
+    "packaging.version",
+    "safetensors",
+    # modtranslator internals (dynamic imports in pipeline/backends)
+    "modtranslator.backends.opus_mt",
+    "modtranslator.backends.nllb",
+    "modtranslator.backends.hybrid",
+    "modtranslator.backends.deepl",
+    "modtranslator.backends.dummy",
+    "modtranslator.gui.worker",
+    "modtranslator.gui.model_manager",
+]
+
+# ── Excludes (not needed at runtime) ─────────────────────────────────────────
+excludes = [
+    "torch",
+    "torchvision",
+    "torchaudio",
+    "tensorflow",
+    "tensorflow_core",
+    "jax",
+    "flax",
+    "IPython",
+    "jupyter",
+    "notebook",
+    "matplotlib",
+    "PIL",
+    "cv2",
+    "sklearn",
+    "scipy",
+    "pandas",
+    "pytest",
+    "sphinx",
+]
+
+# ── Analysis ──────────────────────────────────────────────────────────────────
 a = Analysis(
-    ['modtranslator_gui.py'],
-    pathex=[SRC_DIR],
+    ["modtranslator_gui.py"],
+    pathex=["src"],
     binaries=[],
-    datas=[
-        # Glossary TOML files
-        (os.path.join(PROJECT_ROOT, 'glossaries'), 'glossaries'),
-        # Spanish dictionary for language detection
-        (os.path.join(SRC_DIR, 'modtranslator', 'data'), os.path.join('modtranslator', 'data')),
-    ],
-    hiddenimports=[
-        'modtranslator',
-        'modtranslator.cli',
-        'modtranslator.pipeline',
-        'modtranslator.gui',
-        'modtranslator.gui.app',
-        'modtranslator.gui.worker',
-        'modtranslator.gui.model_manager',
-        'modtranslator.core',
-        'modtranslator.core.parser',
-        'modtranslator.core.writer',
-        'modtranslator.core.plugin',
-        'modtranslator.core.constants',
-        'modtranslator.core.compression',
-        'modtranslator.core.records',
-        'modtranslator.core.string_table',
-        'modtranslator.core.pex_parser',
-        'modtranslator.translation',
-        'modtranslator.translation.cache',
-        'modtranslator.translation.extractor',
-        'modtranslator.translation.glossary',
-        'modtranslator.translation.lang_detect',
-        'modtranslator.translation.patcher',
-        'modtranslator.translation.registry',
-        'modtranslator.translation.spanish_protect',
-        'modtranslator.backends',
-        'modtranslator.backends.base',
-        'modtranslator.backends.dummy',
-        'modtranslator.backends.deepl',
-        'modtranslator.backends.opus_mt',
-        'modtranslator.backends.nllb',
-        'modtranslator.backends.hybrid',
-        'modtranslator.reporting',
-        'modtranslator.reporting.report',
-        'modtranslator.reporting.formatters',
-    ],
+    datas=datas,
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[
-        # torch is ~2GB and not needed (ctranslate2 has its own CUDA bindings)
-        'torch',
-    ],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
+    excludes=excludes,
     noarchive=False,
+    optimize=1,
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
     a.scripts,
     [],
     exclude_binaries=True,
-    name='ModTranslator',
+    name="modtranslator-gui",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,  # No console window for GUI app
+    console=False,     # no terminal window
     disable_windowed_traceback=False,
     argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
+    icon=None,
 )
 
 coll = COLLECT(
     exe,
     a.binaries,
-    a.zipfiles,
     a.datas,
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='ModTranslator',
+    name="modtranslator-gui",
 )

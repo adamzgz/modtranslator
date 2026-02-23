@@ -267,3 +267,119 @@ class TestSkyrimExtractor:
         texts = {s.original_text for s in strings}
         assert "Force" in texts
         assert "Fus" in texts
+
+
+class TestFo4Extractor:
+    def test_fo4_omod_full_extracted(self):
+        """FULL in OMOD records (FO4 mod attachment names) should be extracted."""
+        from tests.conftest import make_fo4_plugin
+        plugin = make_fo4_plugin(
+            records=[("OMOD", 0x100, [
+                make_subrecord("EDID", "WeaponMod01"),
+                make_subrecord("FULL", "Rifled Barrel"),
+            ])]
+        )
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+        assert strings[0].original_text == "Rifled Barrel"
+
+    def test_fo4_cmpo_full_extracted(self):
+        """FULL in CMPO records (component objects) should be extracted."""
+        from tests.conftest import make_fo4_plugin
+        plugin = make_fo4_plugin(
+            records=[("CMPO", 0x200, [
+                make_subrecord("EDID", "Component01"),
+                make_subrecord("FULL", "Steel"),
+            ])]
+        )
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+        assert strings[0].original_text == "Steel"
+
+    def test_fo4_innr_full_extracted(self):
+        """FULL in INNR records (instance naming rules) should be extracted."""
+        from tests.conftest import make_fo4_plugin
+        plugin = make_fo4_plugin(
+            records=[("INNR", 0x300, [
+                make_subrecord("EDID", "NamingRule01"),
+                make_subrecord("FULL", "Short Barrel"),
+            ])]
+        )
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+        assert strings[0].original_text == "Short Barrel"
+
+    def test_fo4_dmgt_full_extracted(self):
+        """FULL in DMGT records (damage types) should be extracted."""
+        from tests.conftest import make_fo4_plugin
+        plugin = make_fo4_plugin(
+            records=[("DMGT", 0x400, [
+                make_subrecord("EDID", "DmgType01"),
+                make_subrecord("FULL", "Radiation Damage"),
+            ])]
+        )
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+        assert strings[0].original_text == "Radiation Damage"
+
+    def test_fo4_localized_extraction(self):
+        """FO4 localized plugin reads text from string tables via StringID."""
+        from tests.conftest import make_fo4_plugin
+        sts = StringTableSet()
+        sts.strings = StringTable(StringTableType.STRINGS, {100: "10mm Pistol"})
+        sts.build_merged()
+
+        plugin = make_fo4_plugin(
+            records=[("WEAP", 0x100, [
+                make_subrecord("EDID", "Weapon01"),
+                make_string_id_subrecord("FULL", 100),
+            ])],
+            localized=True,
+            string_tables=sts,
+        )
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+        assert strings[0].original_text == "10mm Pistol"
+        assert strings[0].string_id == 100
+
+    def test_fo4_localized_string_id_zero_skipped(self):
+        """StringID 0 in localized FO4 plugin should be skipped."""
+        from tests.conftest import make_fo4_plugin
+        sts = StringTableSet()
+        sts.strings = StringTable(StringTableType.STRINGS, {})
+        sts.build_merged()
+
+        plugin = make_fo4_plugin(
+            records=[("WEAP", 0x100, [
+                make_string_id_subrecord("FULL", 0),
+            ])],
+            localized=True,
+            string_tables=sts,
+        )
+        strings = extract_strings(plugin)
+        assert len(strings) == 0
+
+    def test_fo4_multiple_record_types(self):
+        """Multiple FO4 record types extracted in a single plugin."""
+        from tests.conftest import make_fo4_plugin, make_record, make_group
+        from modtranslator.core.records import PluginFile, RecordFlag
+        import struct
+
+        hedr_data = struct.pack("<f", 1.0) + struct.pack("<I", 0) + struct.pack("<I", 0)
+        from modtranslator.core.records import Record, Subrecord
+        header = Record(type=b"TES4", flags=0, form_id=0, vcs1=0, vcs2=0,
+                        subrecords=[Subrecord(type=b"HEDR", data=bytearray(hedr_data))])
+
+        from modtranslator.core.constants import Game
+        plugin = PluginFile(header=header, groups=[], game=Game.FALLOUT4)
+
+        omod_rec = make_record("OMOD", 0x100, [make_subrecord("FULL", "Rifled Barrel")])
+        cmpo_rec = make_record("CMPO", 0x200, [make_subrecord("FULL", "Steel")])
+        grp1 = make_group("OMOD", [omod_rec])
+        grp2 = make_group("CMPO", [cmpo_rec])
+        plugin.groups.extend([grp1, grp2])
+
+        strings = extract_strings(plugin)
+        texts = {s.original_text for s in strings}
+        assert "Rifled Barrel" in texts
+        assert "Steel" in texts

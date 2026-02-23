@@ -8,14 +8,17 @@
 # ═══════════════════════════════════════════════════════════════
 # CONSUMIBLES Y QUÍMICOS
 # ═══════════════════════════════════════════════════════════════
-"Sweetroll" = "Bollo dulce"
+"Sweetroll" = "Bollo"
 "Stimpak" = "Estimulante"
 "Super Stimpak" = "Superestimulante"
 "Nuka-Cola" = "Nuka-Cola"
 "Rad-X" = "Rad-X"
 "RadAway" = "RadAway"
 "Mentats" = "Mentats"
-"Buffout" = "Buffout"
+"Orange Mentats" = "Mentats de naranja"
+"Grape Mentats" = "Mentats de uva"
+"Berry Mentats" = "Mentats frutos rojos"
+"Buffout" = "Musculeína"
 "Jet" = "Jet"
 "Ultrajet" = "Ultrajet"
 "Psycho" = "Psico"
@@ -23,22 +26,48 @@
 "Stealth Boy" = "Stealth Boy"
 "Bobby Pin" = "Horquilla"
 "Holotape" = "Holodisco"
-"Blood Pack" = "Bolsa de sangre"
+"Blood Pack" = "Unidad de sangre"
 "Purified Water" = "Agua purificada"
 "Dirty Water" = "Agua sucia"
+"Irradiated Water" = "Agua irradiada"
+"Ant Nectar" = "Néctar de hormiga"
+"Fire Ant Nectar" = "Néctar de hormiga de fuego"
+"Ant Pheromones" = "Feromonas de hormiga"
+"Antivenom" = "Antídoto"
+"Doctor's Bag" = "Bolsa de doctor"
+"Mutfruit" = "Multifruta"
+"Crunchy Mutfruit" = "Multifruta crujiente"
+"Xander Root" = "Raíz de xandria"
+"Bitter Drink" = "Bebida amarga"
+"Atomic Cocktail" = "Cóctel atómico"
+"Fixer" = "Reparatina"
 
 # --- Comida envasada (marcas del mundo Fallout) ---
 "Sugar Bombs" = "Bombas de azúcar"
-"Fancy Lads Snack Cakes" = "Pastelitos Fancy Lads"
-"Dandy Boy Apples" = "Manzanas Dandy Boy"
+"Fancy Lads Snack Cakes" = "Bollitos Los Finos"
+"Dandy Boy Apples" = "Manzanas Dandy"
 "Salisbury Steak" = "Filete Salisbury"
-"InstaMash" = "InstaMash"
-"Cram" = "Cram"
-"Pork n' Beans" = "Cerdo con judías"
-"YumYum Deviled Eggs" = "Huevos rellenos YumYum"
-"Iguana Bits" = "Trozos de iguana"
-"Squirrel Stew" = "Estofado de ardilla"
-"Squirrel on a Stick" = "Ardilla en un palo"
+"InstaMash" = "Instapuré"
+"Cram" = "Carne en lata"
+"Pork n' Beans" = "Cochinillo con alubias"
+"YumYum Deviled Eggs" = "Huevos malditos ÑamÑam"
+"Iguana Bits" = "Bocaditos de iguana"
+"Squirrel Stew" = "Ardilla guisada"
+"Squirrel on a Stick" = "Pincho de ardilla"
+"Blamco Mac and Cheese" = "Macarrones con queso Blamco"
+"Potato Crisps" = "Patatas fritas"
+"Gum Drops" = "Gominolas"
+"Bubblegum" = "Chicle"
+"Brahmin Steak" = "Filete de brahmán"
+"Ant Meat" = "Carne de hormiga"
+"Mole Rat Meat" = "Carne de rata topo"
+"Dog Meat" = "Carne de perro"
+"Strange Meat" = "Carne extraña"
+"Strange Meat Pie" = "Pastel de carne extraña"
+"Moldy Food" = "Comida mohosa"
+"Fresh Apple" = "Manzana fresca"
+"Fresh Potato" = "Patata fresca"
+"Caravan Lunch" = "Almuerzo de caravana"
 
 # --- Productos Fallout (marcas inventadas, proteger) ---
 "Abraxo Cleaner" = "Limpiador Abraxo"
@@ -48,9 +77,41 @@
 # ═══════════════════════════════════════════════════════════════
 # MUNICIÓN
 # ═══════════════════════════════════════════════════════════════
-"Mini Nuke" = "Mininuque"
+"Mini Nuke" = "Minibomba nuclear"
 "Microfusion Cell" = "Célula de microfusión"
-"Electron Charge Pack" = "Paquete de carga electrónica"
+"Electron Charge Pack" = "Cargador de electrones"
+
+# ═══════════════════════════════════════════════════════════════
+# HABILIDADES (que Opus-MT traduce mal o de forma inconsistente)
+# ═══════════════════════════════════════════════════════════════
+"Barter" = "Comercio"
+"Repair" = "Reparación"
+"Medicine" = "Medicina"
+"Science" = "Ciencia"
+"Explosives" = "Explosivos"
+"Sneak" = "Sigilo"
+"Speech" = "Labia"
+"Outdoorsman" = "Explorador"
+"Throwing" = "Lanzamiento"
+"Guns" = "Armas de fuego"
+
+# ═══════════════════════════════════════════════════════════════
+# ESTADÍSTICAS DE COMBATE
+# ═══════════════════════════════════════════════════════════════
+"Damage Threshold" = "Umbral de daño"
+"Damage Resistance" = "Resistencia al daño"
+"Action Points" = "Puntos de acción"
+"Hit Points" = "Puntos de vida"
+"Critical Hit" = "Golpe crítico"
+"Critical Chance" = "Probabilidad de crítico"
+
+# ═══════════════════════════════════════════════════════════════
+# ESTADOS Y EFECTOS
+# ═══════════════════════════════════════════════════════════════
+"Crippled" = "Mutilado"
+"Addiction" = "Adicción"
+"Irradiated" = "Irradiado"
+"Overdose" = "Sobredosis"
 
 # ═══════════════════════════════════════════════════════════════
 # MECÁNICAS DE JUEGO
@@ -60,13 +121,17 @@
 "Pip-Boy" = "Pip-Boy"
 "Perk" = "Extra"
 "Bobblehead" = "Cabezón"
-"Bottlecap" = "Chapas"
+"Bottlecap" = "Chapa"
 "Karma" = "Karma"
 "Lockpick" = "Ganzúa"
 "Pre-War" = "Preguerra"
 "Overseer" = "Supervisor"
 "Vault Dweller" = "Morador del Refugio"
 "Workbench" = "Banco de trabajo"
+"Great War" = "Gran Guerra"
+"Resource Wars" = "Guerras de Recursos"
+"G.E.C.K." = "G.E.C.K."
+"FEV" = "VEF"
 
 # ═══════════════════════════════════════════════════════════════
 # STATS S.P.E.C.I.A.L.
@@ -96,25 +161,36 @@
 "Super Mutant Master" = "Supermutante maestro"
 "Super Mutant Brute" = "Supermutante bruto"
 "Super Mutant" = "Supermutante"
+"Nightkin" = "Nocturnos"
 "Feral Ghoul Reaver" = "Necrófago salvaje devastador"
 "Feral Ghoul Roamer" = "Necrófago salvaje errante"
 "Feral Ghoul" = "Necrófago salvaje"
-"Glowing One" = "Luminiscente"
+"Glowing One" = "El Resplandeciente"
 "Ghoul" = "Necrófago"
 "Deathclaw" = "Sanguinario"
 "Radroach" = "Mutaracha"
-"Radscorpion" = "Radescorpión"
+"Radscorpion" = "Mutascorpius"
 "Bloatfly" = "Tochomosca"
 "Mole Rat" = "Rata topo"
 "Brahmin" = "Brahmán"
 "Yao Guai" = "Yao Guai"
-"Mirelurk King" = "Rey mirelurk"
-"Mirelurk Hunter" = "Cazador mirelurk"
-"Mirelurk" = "Mirelurk"
+"Mirelurk King" = "Rey hombre pinza"
+"Mirelurk Hunter" = "Cazador hombre pinza"
+"Mirelurk" = "Hombre pinza"
 "Centaur" = "Centauro"
 "Fire Ant" = "Hormiga de fuego"
 "Giant Ant" = "Hormiga gigante"
 "Raider" = "Saqueador"
+"Abomination" = "Abominación"
+
+# ═══════════════════════════════════════════════════════════════
+# ROBOTS
+# ═══════════════════════════════════════════════════════════════
+"Protectron" = "Protectron"
+"Sentry Bot" = "Robot centinela"
+"Eyebot" = "Eyebot"
+"Robobrain" = "Robocéfalo"
+"Liberty Prime" = "Liberty Prime"
 
 # ═══════════════════════════════════════════════════════════════
 # FACCIONES COMPARTIDAS
@@ -130,6 +206,9 @@
 "Vault-Tec" = "Vault-Tec"
 "Power Armor" = "Servoarmadura"
 "Nuka-World" = "Nuka-World"
+"Caravan" = "Caravana"
+"Wastelander" = "Habitante del yermo"
+"Scavenger" = "Chatarrero"
 
 # ═══════════════════════════════════════════════════════════════
 # ROPA Y ARMADURA
@@ -139,6 +218,10 @@
 "Power Helmet" = "Casco de servoarmadura"
 "Raider Armor" = "Armadura de saqueador"
 "Tesla Armor" = "Armadura Tesla"
+"Combat Armor" = "Armadura de combate"
+"Leather Armor" = "Armadura de cuero"
+"Metal Armor" = "Armadura metálica"
+"Recon Armor" = "Armadura de reconocimiento"
 
 # ═══════════════════════════════════════════════════════════════
 # ARMAS
@@ -150,10 +233,11 @@
 "Flamer" = "Lanzallamas"
 "Gatling Laser" = "Láser Gatling"
 "Gauss Rifle" = "Rifle Gauss"
-"Super Sledge" = "Supermazo"
-"Power Fist" = "Puño de poder"
+"Super Sledge" = "Supertrineo"
+"Power Fist" = "Servopuño"
 "Ripper" = "Destripador"
-"Shishkebab" = "Shishkebab"
+"Shishkebab" = "Pincho moruno"
+"Tesla Cannon" = "Cañón Tesla"
 
 # --- Armas de energía ---
 "Laser Rifle" = "Rifle láser"
@@ -172,10 +256,25 @@
 "10mm Pistol" = "Pistola de 10 mm"
 "Combat Knife" = "Cuchillo de combate"
 "Baseball Bat" = "Bate de béisbol"
+"Sledgehammer" = "Mazo"
+"Lead Pipe" = "Tubería de plomo"
+"Tire Iron" = "Palanca de rueda"
+"Pool Cue" = "Taco de billar"
 "Frag Grenade" = "Granada de fragmentación"
 "Frag Mine" = "Mina de fragmentación"
 "Pulse Grenade" = "Granada de pulso"
 "Plasma Grenade" = "Granada de plasma"
+
+# ═══════════════════════════════════════════════════════════════
+# RANGOS DE LA HERMANDAD DEL ACERO
+# ═══════════════════════════════════════════════════════════════
+"Elder" = "Elder"
+"Paladin" = "Paladín"
+"Star Paladin" = "Estelar Paladín"
+"Sentinel" = "Centinela"
+"Scribe" = "Escriba"
+"Knight" = "Caballero"
+"Initiate" = "Iniciado"
 
 # ═══════════════════════════════════════════════════════════════
 # AUTO-PROTECCIÓN: palabras en español que NO deben re-traducirse
@@ -191,19 +290,24 @@
 "Sanguinario" = "Sanguinario"
 "Mutaracha" = "Mutaracha"
 "Tochomosca" = "Tochomosca"
-"Radescorpión" = "Radescorpión"
+"Mutascorpius" = "Mutascorpius"
 "Supermutante" = "Supermutante"
 "Servoarmadura" = "Servoarmadura"
-"Luminiscente" = "Luminiscente"
+"El Resplandeciente" = "El Resplandeciente"
 "Brahmán" = "Brahmán"
-"Supermazo" = "Supermazo"
+"Supertrineo" = "Supertrineo"
 "Destripador" = "Destripador"
+"Servopuño" = "Servopuño"
+"Musculeína" = "Musculeína"
+"Hombre pinza" = "Hombre pinza"
 "Lanzamisiles" = "Lanzamisiles"
 "Lanzallamas" = "Lanzallamas"
 "Preguerra" = "Preguerra"
 "Holodisco" = "Holodisco"
 "Horquilla" = "Horquilla"
 "Ganzúa" = "Ganzúa"
+"Instapuré" = "Instapuré"
+"Nocturnos" = "Nocturnos"
 
 # --- Palabras españolas genéricas ---
 "Chico" = "Chico"

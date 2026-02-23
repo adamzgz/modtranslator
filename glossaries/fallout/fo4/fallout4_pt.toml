@@ -1,0 +1,262 @@
+# Fallout 4 → Portuguese (Brazilian)
+# Game-specific items, factions, characters, and mechanics.
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# CONSUMÍVEIS FO4
+# ═══════════════════════════════════════════════════════════════
+"Daytripper" = "Viajante"
+"Fury" = "Fúria"
+"Overdrive" = "Overdrive"
+"X-Cell" = "X-Cell"
+"Buffjet" = "Buffjet"
+"Bufftats" = "Bufftats"
+"Psychojet" = "Psychojet"
+"Psychobuff" = "Psychobuff"
+"Nuka-Cola Cherry" = "Nuka-Cola Cereja"
+"Nuka-Cola Dark" = "Nuka-Cola Escura"
+"Nuka-Cola Wild" = "Nuka-Cola Selvagem"
+"Nuka-Cola Quartz" = "Nuka-Cola Quartzo"
+"Nuka-Cola Victory" = "Nuka-Cola Vitória"
+"Nuka-Cola Quantum" = "Nuka-Cola Quântum"
+"Nuka-Cola Orange" = "Nuka-Cola Laranja"
+"Nuka-Cola Cranberry" = "Nuka-Cola Cranberry"
+
+# ═══════════════════════════════════════════════════════════════
+# MECÂNICAS DE JOGO
+# ═══════════════════════════════════════════════════════════════
+"Sole Survivor" = "Único Sobrevivente"
+"Settlement" = "Assentamento"
+"Workshop" = "Oficina"
+"Supply Line" = "Linha de Suprimentos"
+"Institute" = "Instituto"
+"Synth" = "Sintético"
+"Gen 1 Synth" = "Sintético Gen. 1"
+"Gen 2 Synth" = "Sintético Gen. 2"
+"Gen 3 Synth" = "Sintético Gen. 3"
+"Courser" = "Rastejador"
+"Relay" = "Teletransportador"
+"Railroad" = "Ferroviários"
+"Minutemen" = "Minutemen"
+"General" = "General"
+"Runaway Synth" = "Sintético Fugitivo"
+
+# ═══════════════════════════════════════════════════════════════
+# LOCAIS
+# ═══════════════════════════════════════════════════════════════
+"The Commonwealth" = "A Comunidade"
+"Diamond City" = "Cidade Diamante"
+"Goodneighbor" = "Boa Vizinhança"
+"Sanctuary Hills" = "Colinas Sanctuary"
+"Concord" = "Concord"
+"Cambridge" = "Cambridge"
+"Covenant" = "Aliança"
+"Bunker Hill" = "Colina Bunker"
+"The Castle" = "O Castelo"
+"Jamaica Plain" = "Jamaica Plain"
+"Vault 81" = "Abrigo 81"
+"Vault 95" = "Abrigo 95"
+"Vault 111" = "Abrigo 111"
+"Vault 114" = "Abrigo 114"
+
+# ═══════════════════════════════════════════════════════════════
+# FACÇÕES
+# ═══════════════════════════════════════════════════════════════
+"The Institute" = "O Instituto"
+"The Railroad" = "Os Ferroviários"
+"The Minutemen" = "Os Minutemen"
+"Gunners" = "Pistoleiros"
+"Triggerman" = "Gatilheiro"
+"Triggermen" = "Gatilheiros"
+"Children of Atom" = "Filhos do Átomo"
+"Child of Atom" = "Filho do Átomo"
+"Forged" = "Forjados"
+"Rust Devils" = "Diabos Enferrujados"
+"Disciples" = "Discípulos"
+"The Pack" = "A Matilha"
+"Operators" = "Operadores"
+"Overboss" = "Superboss"
+"Harbormen" = "Portuários"
+"Trappers" = "Caçadores de Armadilha"
+
+# ═══════════════════════════════════════════════════════════════
+# PERSONAGENS
+# ═══════════════════════════════════════════════════════════════
+"Father" = "Pai"
+"Shaun" = "Shaun"
+"Codsworth" = "Codsworth"
+"Nick Valentine" = "Nick Valentine"
+"Piper Wright" = "Piper Wright"
+"Piper" = "Piper"
+"Cait" = "Cait"
+"Hancock" = "Hancock"
+"MacCready" = "MacCready"
+"Deacon" = "Deacon"
+"Curie" = "Curie"
+"Strong" = "Strong"
+"Preston Garvey" = "Preston Garvey"
+"Paladin Danse" = "Paladino Danse"
+"Elder Maxson" = "Ancião Maxson"
+"The Mechanist" = "O Mecanicista"
+"Kellogg" = "Kellogg"
+"Mayor McDonough" = "Prefeito McDonough"
+"Diamond City Radio" = "Rádio Cidade Diamante"
+
+# ═══════════════════════════════════════════════════════════════
+# CRIATURAS FO4
+# ═══════════════════════════════════════════════════════════════
+"Assaultron" = "Assaultron"
+"Stingwing" = "Azieira"
+"Bloodbug" = "Percevejo de Sangue"
+"Radstag" = "Veado Radioativo"
+"Gulper" = "Engolidor"
+"Angler" = "Tamboril"
+"Fog Crawler" = "Rastejador da Névoa"
+"Hermit Crab" = "Caranguejo Ermitão"
+"Mirelurk Queen" = "Rainha Mirelurk"
+"Cave Cricket" = "Grilo das Cavernas"
+"Radgull" = "Gaivota Radioativa"
+"Deathclaw Matriarch" = "Matriarca Garra da Morte"
+"Softshell Mirelurk" = "Mirelurk de Casca Mole"
+"Nukalurk" = "Nuka-lurk"
+
+# ═══════════════════════════════════════════════════════════════
+# ROBÔS
+# ═══════════════════════════════════════════════════════════════
+"Mr. Handy" = "Sr. Prestativo"
+"Mr. Gutsy" = "Sr. Corajoso"
+"Junkbot" = "Ferrobot"
+
+# ═══════════════════════════════════════════════════════════════
+# ARMAS FO4
+# ═══════════════════════════════════════════════════════════════
+"Pipe Pistol" = "Pistola de Cano"
+"Pipe Rifle" = "Fuzil de Cano"
+"Pipe Bolt-Action" = "Fuzil de Ferrolho de Cano"
+"Pipe Revolver" = "Revólver de Cano"
+"Combat Rifle" = "Fuzil de Combate"
+"Double-Barrel Shotgun" = "Espingarda de Dois Canos"
+"Syringer" = "Fuzil Seringa"
+"Junk Jet" = "Lança-Entulho"
+"Laser Musket" = "Mosquete Laser"
+"Gamma Gun" = "Pistola Gama"
+"Railway Rifle" = "Fuzil Ferroviário"
+"Cryolator" = "Criolador"
+"Righteous Authority" = "Autoridade Justa"
+
+# ═══════════════════════════════════════════════════════════════
+# ARMADURA MOTORIZADA
+# ═══════════════════════════════════════════════════════════════
+"T-45 Power Armor" = "Armadura Motorizada T-45"
+"T-51 Power Armor" = "Armadura Motorizada T-51"
+"T-60 Power Armor" = "Armadura Motorizada T-60"
+"X-01 Power Armor" = "Armadura Motorizada X-01"
+"Raider Power Armor" = "Armadura Motorizada de Saqueador"
+"Power Armor Frame" = "Chassi da Armadura Motorizada"
+"Fusion Core" = "Núcleo de Fusão"
+"Power Armor Station" = "Estação de Armadura Motorizada"
+
+# ═══════════════════════════════════════════════════════════════
+# ARMADURA E ROUPAS
+# ═══════════════════════════════════════════════════════════════
+"Ballistic Weave" = "Tecido Balístico"
+"Vault-Tec Jumpsuit" = "Macacão Vault-Tec"
+"Military Fatigues" = "Farda Militar"
+"Courser Uniform" = "Uniforme de Rastejador"
+
+# ═══════════════════════════════════════════════════════════════
+# VANTAGENS FO4
+# ═══════════════════════════════════════════════════════════════
+"Rifleman" = "Fuzileiro"
+"Commando" = "Comando"
+"Gunslinger" = "Pistoleiro"
+"Scrapper" = "Sucateiro"
+"Medic" = "Médico"
+"Sniper" = "Franco-Atirador"
+"Locksmith" = "Serralheiro"
+"Hacker" = "Hacker"
+"Scrounger" = "Catador"
+"Fortune Finder" = "Caçador de Fortuna"
+"Cap Collector" = "Colecionador de Tampinhas"
+"Chem Resistant" = "Resistente a Químicos"
+"Nuclear Physicist" = "Físico Nuclear"
+"Chemist" = "Químico"
+"Armorer" = "Armeiro"
+"Blacksmith" = "Ferreiro"
+"Science!" = "Ciência!"
+"Local Leader" = "Líder Local"
+"Lone Wanderer" = "Andarilho Solitário"
+"Bloody Mess" = "Banho de Sangue"
+"Idiot Savant" = "Idiota Sábio"
+"Mysterious Stranger" = "O Desconhecido Misterioso"
+"Nerd Rage!" = "Fúria Nerd!"
+"Ninja" = "Ninja"
+"Toughness" = "Resistência"
+"Life Giver" = "Dador de Vida"
+"Aquaboy" = "Menino da Água"
+"Aquagirl" = "Menina da Água"
+"Ghoulish" = "Espectral"
+"Solar Powered" = "Energia Solar"
+"Night Person" = "Noctâmbulo"
+"Moving Target" = "Alvo em Movimento"
+"Blitz" = "Blitz"
+"Quick Hands" = "Mãos Rápidas"
+
+# ═══════════════════════════════════════════════════════════════
+# CONSTRUÇÃO DE ASSENTAMENTOS
+# ═══════════════════════════════════════════════════════════════
+"Scrap" = "Desmontar"
+"Salvage" = "Recuperar"
+"Scavenging Station" = "Posto de Coleta"
+"Guard Post" = "Posto de Guarda"
+"Water Purifier" = "Purificador de Água"
+"Settler" = "Colono"
+"Minuteman" = "Minuteman"
+"Provisioner" = "Abastecedor"
+"Happiness" = "Felicidade"
+"Defense" = "Defesa"
+
+# ═══════════════════════════════════════════════════════════════
+# DLCS
+# ═══════════════════════════════════════════════════════════════
+"Automatron" = "Automatron"
+"Far Harbor" = "Porto Distante"
+"Nuka-World" = "Nuka-World"
+"Wasteland Workshop" = "Oficina do Ermo"
+"Mechanist's Lair" = "Covil do Mecanicista"
+"The Gauntlet" = "O Gauntlet"
+"Nuka-Town USA" = "Nuka-Cidade EUA"
+"Galactic Zone" = "Zona Galáctica"
+"Kiddie Kingdom" = "Reino Infantil"
+"Acadia" = "Acádia"
+
+# ═══════════════════════════════════════════════════════════════
+# MISSÕES PRINCIPAIS
+# ═══════════════════════════════════════════════════════════════
+"War Never Changes" = "A Guerra Nunca Muda"
+"Sanctuary" = "Santuário"
+"When Freedom Calls" = "Quando a Liberdade Chama"
+"Reunions" = "Reuniões"
+"The Molecular Level" = "O Nível Molecular"
+"The Nuclear Option" = "A Opção Nuclear"
+"End of the Line" = "Fim da Linha"
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-PROTEÇÃO FO4
+# ═══════════════════════════════════════════════════════════════
+"Assentamento" = "Assentamento"
+"Sintético" = "Sintético"
+"Pistoleiros" = "Pistoleiros"
+"Rastejador" = "Rastejador"
+"Núcleo de Fusão" = "Núcleo de Fusão"
+"Percevejo de Sangue" = "Percevejo de Sangue"
+"Veado Radioativo" = "Veado Radioativo"
+"Engolidor" = "Engolidor"
+"Azieira" = "Azieira"
+"Colono" = "Colono"
+"Abastecedor" = "Abastecedor"
+"Fuzileiro" = "Fuzileiro"
+"Serralheiro" = "Serralheiro"
+"Armeiro" = "Armeiro"
+"Ferreiro" = "Ferreiro"

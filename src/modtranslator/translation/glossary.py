@@ -173,5 +173,5 @@ class Glossary:
         internal state (backward-compatible).
         """
         if mappings is not None:
-            return [self.restore(t, m) for t, m in zip(texts, mappings, strict=False)]
+            return [self.restore(t, m) for t, m in zip(texts, mappings, strict=True)]
         return [self.restore(t) for t in texts]

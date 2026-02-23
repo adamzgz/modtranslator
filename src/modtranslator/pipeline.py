@@ -11,6 +11,7 @@ import gc
 import hashlib
 import json
 import re as _re
+import sys
 import time as _time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -31,7 +32,84 @@ class GameChoice(str, Enum):
     auto = "auto"
     fo3 = "fo3"
     fnv = "fnv"
+    fo4 = "fo4"
     skyrim = "skyrim"
+
+
+# Pipeline progress messages per language
+_PIPELINE_MESSAGES: dict[str, dict[str, str]] = {
+    "EN": {
+        "files_scanned": "Files scanned",
+        "found": "Found",
+        "no_files": "No files",
+        "translating_esp": "Translating {n} ESP/ESM files...",
+        "translating_pex": "Translating {n} PEX files...",
+        "translating_mcm": "Translating MCM files...",
+    },
+    "ES": {
+        "files_scanned": "Archivos escaneados",
+        "found": "Encontrado",
+        "no_files": "Sin archivos",
+        "translating_esp": "Traduciendo {n} archivos ESP/ESM...",
+        "translating_pex": "Traduciendo {n} archivos PEX...",
+        "translating_mcm": "Traduciendo archivos MCM...",
+    },
+    "FR": {
+        "files_scanned": "Fichiers analysés",
+        "found": "Trouvé",
+        "no_files": "Aucun fichier",
+        "translating_esp": "Traduction de {n} fichiers ESP/ESM...",
+        "translating_pex": "Traduction de {n} fichiers PEX...",
+        "translating_mcm": "Traduction des fichiers MCM...",
+    },
+    "DE": {
+        "files_scanned": "Dateien gescannt",
+        "found": "Gefunden",
+        "no_files": "Keine Dateien",
+        "translating_esp": "Übersetze {n} ESP/ESM-Dateien...",
+        "translating_pex": "Übersetze {n} PEX-Dateien...",
+        "translating_mcm": "Übersetze MCM-Dateien...",
+    },
+    "IT": {
+        "files_scanned": "File analizzati",
+        "found": "Trovato",
+        "no_files": "Nessun file",
+        "translating_esp": "Traduzione di {n} file ESP/ESM...",
+        "translating_pex": "Traduzione di {n} file PEX...",
+        "translating_mcm": "Traduzione dei file MCM...",
+    },
+    "PT": {
+        "files_scanned": "Arquivos analisados",
+        "found": "Encontrado",
+        "no_files": "Sem arquivos",
+        "translating_esp": "Traduzindo {n} arquivos ESP/ESM...",
+        "translating_pex": "Traduzindo {n} arquivos PEX...",
+        "translating_mcm": "Traduzindo arquivos MCM...",
+    },
+    "RU": {
+        "files_scanned": "Файлы просканированы",
+        "found": "Найдено",
+        "no_files": "Нет файлов",
+        "translating_esp": "Перевод {n} файлов ESP/ESM...",
+        "translating_pex": "Перевод {n} файлов PEX...",
+        "translating_mcm": "Перевод файлов MCM...",
+    },
+    "PL": {
+        "files_scanned": "Pliki przeskanowane",
+        "found": "Znaleziono",
+        "no_files": "Brak plików",
+        "translating_esp": "Tłumaczenie {n} plików ESP/ESM...",
+        "translating_pex": "Tłumaczenie {n} plików PEX...",
+        "translating_mcm": "Tłumaczenie plików MCM...",
+    },
+}
+
+
+def _msg(lang: str, key: str, **kwargs: object) -> str:
+    """Get a localized pipeline message. Falls back to English."""
+    messages = _PIPELINE_MESSAGES.get(lang.upper(), _PIPELINE_MESSAGES["EN"])
+    template = messages.get(key, _PIPELINE_MESSAGES["EN"].get(key, key))
+    return template.format(**kwargs) if kwargs else template
 
 
 # Type alias for progress callback: (phase, current, total, message)
@@ -69,34 +147,44 @@ def resolve_glossary_paths(
     detected_game: Game,
 ) -> list[Path]:
     """Resolve which glossary files to load based on --glossary, --game, and detected game."""
-    glossaries_dir = Path(__file__).resolve().parent.parent.parent / "glossaries"
+    if getattr(sys, "frozen", False):
+        glossaries_dir = Path(sys._MEIPASS) / "glossaries"  # type: ignore[attr-defined]
+    else:
+        glossaries_dir = Path(__file__).resolve().parent.parent.parent / "glossaries"
 
     if glossary is not None:
         return [glossary] if glossary.exists() else []
 
-    if lang.upper() != "ES":
-        return []
+    lang_lower = lang.lower()
 
     if game != GameChoice.auto:
         effective = game
     elif detected_game == Game.SKYRIM:
         effective = GameChoice.skyrim
+    elif detected_game == Game.FALLOUT4:
+        effective = GameChoice.fo4
     else:
         effective = GameChoice.fo3
 
     if effective == GameChoice.fo3:
         candidates = [
-            glossaries_dir / "fallout_base_es.toml",
-            glossaries_dir / "fallout3_es.toml",
+            glossaries_dir / "fallout" / "base" / f"fallout_base_{lang_lower}.toml",
+            glossaries_dir / "fallout" / "fo3" / f"fallout3_{lang_lower}.toml",
         ]
     elif effective == GameChoice.fnv:
         candidates = [
-            glossaries_dir / "fallout_base_es.toml",
-            glossaries_dir / "falloutnv_es.toml",
+            glossaries_dir / "fallout" / "base" / f"fallout_base_{lang_lower}.toml",
+            glossaries_dir / "fallout" / "fnv" / f"falloutnv_{lang_lower}.toml",
+        ]
+    elif effective == GameChoice.fo4:
+        candidates = [
+            glossaries_dir / "fallout" / "base" / f"fallout_base_{lang_lower}.toml",
+            glossaries_dir / "fallout" / "fo4" / f"fallout4_{lang_lower}.toml",
         ]
     elif effective == GameChoice.skyrim:
         candidates = [
-            glossaries_dir / "skyrim_base_es.toml",
+            glossaries_dir / "skyrim" / f"skyrim_base_{lang_lower}.toml",
+            glossaries_dir / "skyrim" / f"skyrim_{lang_lower}.toml",
         ]
     else:
         return []
@@ -167,7 +255,7 @@ class _FileContext:
     cached: dict[str, str] = field(default_factory=dict)
     protected_texts: list[str] = field(default_factory=list)
     gloss_mappings: list[dict[str, str]] | None = None
-    es_mappings: list[dict[str, str]] | None = None
+    lang_mappings: list[dict[str, str]] | None = None
     dedup_indices: list[int] = field(default_factory=list)
     translations: dict[str, str] = field(default_factory=dict)
     patched_count: int = 0
@@ -223,10 +311,10 @@ def _prepare_file(
         if gloss and texts:
             texts, ctx.gloss_mappings = gloss.protect_batch(texts)  # type: ignore[union-attr]
 
-        if texts and lang.upper() == "ES":
-            from modtranslator.translation.spanish_protect import protect_spanish_batch
+        if texts:
+            from modtranslator.translation.target_protect import protect_target_batch
 
-            texts, ctx.es_mappings = protect_spanish_batch(texts)
+            texts, ctx.lang_mappings = protect_target_batch(texts, lang)
 
         ctx.protected_texts = texts
         ctx.status = "prepared"
@@ -278,10 +366,10 @@ def _writeback_file(
         else:
             translated = []
 
-        if ctx.es_mappings is not None and translated:
-            from modtranslator.translation.spanish_protect import restore_spanish_batch
+        if ctx.lang_mappings is not None and translated:
+            from modtranslator.translation.target_protect import restore_target_batch
 
-            translated = restore_spanish_batch(translated, ctx.es_mappings)
+            translated = restore_target_batch(translated, ctx.lang_mappings)
 
         if gloss and translated:
             translated = gloss.restore_batch(translated, ctx.gloss_mappings)  # type: ignore[union-attr]
@@ -299,15 +387,23 @@ def _writeback_file(
             for s in ctx.all_strings:
                 s.source_file = file_stem
 
+        from modtranslator.core.constants import encoding_for_lang
         st = getattr(ctx.plugin, "string_tables", None)
-        patched = apply_translations(ctx.all_strings, translations, string_tables=st)
+        patched = apply_translations(
+            ctx.all_strings, translations,
+            encoding=encoding_for_lang(lang),
+            string_tables=st,
+        )
         ctx.patched_count = patched
 
+        from modtranslator.core.string_table import ISO_TO_FULL_LANGUAGE
+        output_language = ISO_TO_FULL_LANGUAGE.get(lang.upper(), lang)
+
         if ctx.output_path is not None:
-            save_plugin(ctx.plugin, ctx.output_path)  # type: ignore[arg-type]
+            save_plugin(ctx.plugin, ctx.output_path, output_language=output_language)  # type: ignore[arg-type]
         else:
             out = ctx.file_path.with_stem(f"{ctx.file_path.stem}_{lang}")
-            save_plugin(ctx.plugin, out)  # type: ignore[arg-type]
+            save_plugin(ctx.plugin, out, output_language=output_language)  # type: ignore[arg-type]
 
         ctx.status = "written"
 
@@ -391,13 +487,13 @@ def batch_translate_esp(
 ) -> BatchResult:
     """Translate a list of ESP/ESM files using the 3-phase pipeline."""
     from modtranslator.translation.cache import TranslationCache
-    from modtranslator.translation.lang_detect import _load_spanish_dictionary
+    from modtranslator.translation.lang_detect import _load_dictionary
 
     result = BatchResult()
     t0 = _time.monotonic()
 
     try:
-        _load_spanish_dictionary()
+        _load_dictionary(lang)
         cache = None if no_cache else TranslationCache()
 
         # Detect game from first file if auto
@@ -410,6 +506,8 @@ def batch_translate_esp(
                 detected_game = Game.FALLOUT3
         elif game == GameChoice.skyrim:
             detected_game = Game.SKYRIM
+        elif game == GameChoice.fo4:
+            detected_game = Game.FALLOUT4
         else:
             detected_game = Game.FALLOUT3
 
@@ -447,11 +545,11 @@ def batch_translate_esp(
                         texts, ctx.gloss_mappings = gloss.protect_batch(texts)  # type: ignore[union-attr]
                     else:
                         ctx.gloss_mappings = None
-                    if texts and lang.upper() == "ES":
-                        from modtranslator.translation.spanish_protect import protect_spanish_batch
-                        texts, ctx.es_mappings = protect_spanish_batch(texts)
+                    if texts:
+                        from modtranslator.translation.target_protect import protect_target_batch
+                        texts, ctx.lang_mappings = protect_target_batch(texts, lang)
                     else:
-                        ctx.es_mappings = None
+                        ctx.lang_mappings = None
                     ctx.protected_texts = texts
 
         # Save keys/originals
@@ -507,11 +605,13 @@ def batch_translate_esp(
         ]
         if skipped_with_output:
             from modtranslator.core.plugin import load_plugin, save_plugin
+            from modtranslator.core.string_table import ISO_TO_FULL_LANGUAGE
 
+            _out_lang = ISO_TO_FULL_LANGUAGE.get(lang.upper(), lang)
             for ctx in skipped_with_output:
                 try:
                     plugin = load_plugin(ctx.file_path)
-                    save_plugin(plugin, ctx.output_path)  # type: ignore[arg-type]
+                    save_plugin(plugin, ctx.output_path, output_language=_out_lang)  # type: ignore[arg-type]
                     ctx.status = "written"
                 except Exception as e:
                     ctx.status = "error"
@@ -578,7 +678,12 @@ def batch_translate_pex(
     t0 = _time.monotonic()
 
     try:
-        detected_game = Game.SKYRIM if game == GameChoice.skyrim else Game.FALLOUT3
+        if game == GameChoice.skyrim:
+            detected_game = Game.SKYRIM
+        elif game == GameChoice.fo4:
+            detected_game = Game.FALLOUT4
+        else:
+            detected_game = Game.FALLOUT3
         gloss, glossary_terms, glossary_source_terms = _setup_glossary(
             glossary, lang, game, detected_game,
         )
@@ -589,6 +694,7 @@ def batch_translate_pex(
         all_entries: list[tuple[Path, dict[int, str]]] = []
         unique_texts: list[str] = []
         text_to_index: dict[str, int] = {}
+        parse_error_count = 0
 
         for i, pex_path in enumerate(files):
             _check_cancel(cancel_event)
@@ -610,6 +716,8 @@ def batch_translate_pex(
                             text_to_index[text] = len(unique_texts)
                             unique_texts.append(text)
             except Exception as e:
+                parse_error_count += 1
+                result.error_count += 1
                 result.errors.append((pex_path.name, str(e)))
             if on_progress:
                 on_progress("prepare", i + 1, len(files), pex_path.name)
@@ -633,11 +741,11 @@ def batch_translate_pex(
         if gloss and to_translate:
             to_translate, gloss_mappings = gloss.protect_batch(to_translate)  # type: ignore[union-attr]
 
-        # Protect Spanish words
-        es_mappings: list[dict[str, str]] | None = None
-        if to_translate and lang.upper() == "ES":
-            from modtranslator.translation.spanish_protect import protect_spanish_batch
-            to_translate, es_mappings = protect_spanish_batch(to_translate)
+        # Protect target-language words
+        lang_mappings: list[dict[str, str]] | None = None
+        if to_translate:
+            from modtranslator.translation.target_protect import protect_target_batch
+            to_translate, lang_mappings = protect_target_batch(to_translate, lang)
 
         # Phase 2: Translate
         translated: list[str] = []
@@ -648,9 +756,9 @@ def batch_translate_pex(
                 on_progress=on_progress, cancel_event=cancel_event,
             )
 
-            if es_mappings is not None:
-                from modtranslator.translation.spanish_protect import restore_spanish_batch
-                translated = restore_spanish_batch(translated, es_mappings)
+            if lang_mappings is not None:
+                from modtranslator.translation.target_protect import restore_target_batch
+                translated = restore_target_batch(translated, lang_mappings)
 
             if gloss and gloss_mappings:
                 translated = gloss.restore_batch(translated, gloss_mappings)  # type: ignore[union-attr]
@@ -694,7 +802,7 @@ def batch_translate_pex(
             if on_progress:
                 on_progress("write", i + 1, files_with_text, pex_path.name)
 
-        result.skip_count = len(files) - files_with_text
+        result.skip_count = len(files) - files_with_text - parse_error_count
 
     except CancelledError:
         result.errors.append(("", "Cancelled by user"))
@@ -730,7 +838,14 @@ def batch_translate_mcm(
         "PT": "portuguese", "RU": "russian", "PL": "polish", "CS": "czech",
         "JA": "japanese", "ZH": "chinese",
     }
+    # Short codes used by FO4 MCM files (e.g. _en.txt, _es.txt)
+    lang_short = {
+        "ES": "es", "FR": "fr", "DE": "de", "IT": "it",
+        "PT": "ptbr", "RU": "ru", "PL": "pl", "CS": "cs",
+        "JA": "ja", "ZH": "cn",
+    }
     target_lang_name = lang_names.get(lang.upper(), lang.lower())
+    target_lang_short = lang_short.get(lang.upper(), lang.lower())
 
     translations_dir = directory / "Interface" / "translations"
     mcm_recorder_dir = directory / "McmRecorder"
@@ -744,7 +859,12 @@ def batch_translate_mcm(
     t0 = _time.monotonic()
 
     try:
-        detected_game = Game.SKYRIM if game == GameChoice.skyrim else Game.FALLOUT3
+        if game == GameChoice.skyrim:
+            detected_game = Game.SKYRIM
+        elif game == GameChoice.fo4:
+            detected_game = Game.FALLOUT4
+        else:
+            detected_game = Game.FALLOUT3
         gloss, glossary_terms, glossary_source_terms = _setup_glossary(
             glossary, lang, game, detected_game,
         )
@@ -759,17 +879,20 @@ def batch_translate_mcm(
             all_txt = sorted(translations_dir.iterdir())
             eng_files = [
                 f for f in all_txt
-                if _re.search(r'_english\.txt$', f.name, _re.IGNORECASE)
+                if _re.search(r'_(?:english|en)\.txt$', f.name, _re.IGNORECASE)
             ]
 
             for eng_path in eng_files:
                 _check_cancel(cancel_event)
-                stem = _re.sub(r'(?i)_english\.txt$', '', eng_path.name)
+                stem = _re.sub(r'(?i)_(?:english|en)\.txt$', '', eng_path.name)
 
+                # Check for existing target file (both long and short naming)
                 target_name_variants = [
                     f"{stem}_{target_lang_name}.txt",
                     f"{stem}_{target_lang_name.upper()}.txt",
                     f"{stem}_{target_lang_name.capitalize()}.txt",
+                    f"{stem}_{target_lang_short}.txt",
+                    f"{stem}_{target_lang_short.upper()}.txt",
                 ]
                 existing_spa = None
                 for variant in target_name_variants:
@@ -784,13 +907,16 @@ def batch_translate_mcm(
                     if eng_hash != spa_hash:
                         continue
 
+                # Determine output filename using same convention as source
+                uses_short = _re.search(r'_en\.txt$', eng_path.name, _re.IGNORECASE)
                 if existing_spa is not None:
                     out_name = existing_spa.name
+                elif uses_short:
+                    out_name = f"{stem}_{target_lang_short}.txt"
+                elif "_ENGLISH." in eng_path.name:
+                    out_name = f"{stem}_{target_lang_name.upper()}.txt"
                 else:
-                    if "_ENGLISH." in eng_path.name:
-                        out_name = f"{stem}_{target_lang_name.upper()}.txt"
-                    else:
-                        out_name = f"{stem}_{target_lang_name}.txt"
+                    out_name = f"{stem}_{target_lang_name}.txt"
 
                 if output_dir is not None:
                     out_path = output_dir / out_name
@@ -852,7 +978,7 @@ def batch_translate_mcm(
             return result
 
         if on_progress:
-            on_progress("prepare", total_files, total_files, "Archivos escaneados")
+            on_progress("prepare", total_files, total_files, _msg(lang, "files_scanned"))
 
         # Collect all unique texts
         unique_texts: list[str] = []
@@ -890,16 +1016,46 @@ def batch_translate_mcm(
 
         to_translate = [t for t in texts_for_translation if t not in cached]
 
+        # Protect HTML tags (e.g. <font color='#33dd33'>text</font>)
+        html_mappings: list[dict[str, str]] | None = None
+
+        def _protect_html(texts: list[str]) -> tuple[list[str], list[dict[str, str]]]:
+            mappings: list[dict[str, str]] = []
+            result: list[str] = []
+            for text in texts:
+                tags = _re.findall(r'<[^>]+>', text)
+                mapping: dict[str, str] = {}
+                protected = text
+                for i, tag in enumerate(tags):
+                    placeholder = f"HTx{i}"
+                    mapping[placeholder] = tag
+                    protected = protected.replace(tag, placeholder, 1)
+                mappings.append(mapping)
+                result.append(protected)
+            return result, mappings
+
+        def _restore_html(texts: list[str], mappings: list[dict[str, str]]) -> list[str]:
+            result: list[str] = []
+            for text, mapping in zip(texts, mappings, strict=True):
+                for placeholder, tag in mapping.items():
+                    text = text.replace(placeholder, tag)
+                result.append(text)
+            return result
+
         # Protect glossary terms
         gloss_mappings: list[dict[str, str]] | None = None
         if gloss and to_translate:
             to_translate, gloss_mappings = gloss.protect_batch(to_translate)  # type: ignore[union-attr]
 
-        # Protect Spanish words
-        es_mappings: list[dict[str, str]] | None = None
-        if to_translate and lang.upper() == "ES":
-            from modtranslator.translation.spanish_protect import protect_spanish_batch
-            to_translate, es_mappings = protect_spanish_batch(to_translate)
+        # Protect HTML tags
+        if to_translate and any('<' in t for t in to_translate):
+            to_translate, html_mappings = _protect_html(to_translate)
+
+        # Protect target-language words
+        lang_mappings: list[dict[str, str]] | None = None
+        if to_translate:
+            from modtranslator.translation.target_protect import protect_target_batch
+            to_translate, lang_mappings = protect_target_batch(to_translate, lang)
 
         # Phase 2: Translate
         translated: list[str] = []
@@ -910,9 +1066,12 @@ def batch_translate_mcm(
                 on_progress=on_progress, cancel_event=cancel_event,
             )
 
-            if es_mappings is not None:
-                from modtranslator.translation.spanish_protect import restore_spanish_batch
-                translated = restore_spanish_batch(translated, es_mappings)
+            if lang_mappings is not None:
+                from modtranslator.translation.target_protect import restore_target_batch
+                translated = restore_target_batch(translated, lang_mappings)
+
+            if html_mappings is not None:
+                translated = _restore_html(translated, html_mappings)
 
             if gloss and gloss_mappings:
                 translated = gloss.restore_batch(translated, gloss_mappings)  # type: ignore[union-attr]
@@ -1045,11 +1204,17 @@ def scan_directory(directory: Path) -> ScanResult:
 
     # ESP/ESM files (direct children)
     result.esp_files = sorted(
-        list(directory.glob("*.esp")) + list(directory.glob("*.esm"))
+        list(directory.glob("*.esp"))
+        + list(directory.glob("*.esm"))
+        + list(directory.glob("*.esl"))
     )
 
-    # PEX files (direct children)
-    result.pex_files = sorted(directory.glob("*.pex"))
+    # PEX files (direct children or Scripts/ subdirectory)
+    pex_files = list(directory.glob("*.pex"))
+    scripts_dir = directory / "Scripts"
+    if scripts_dir.is_dir():
+        pex_files.extend(scripts_dir.glob("*.pex"))
+    result.pex_files = sorted(pex_files)
 
     # MCM: check for Interface/translations/ or McmRecorder/
     translations_dir = directory / "Interface" / "translations"
@@ -1104,13 +1269,16 @@ def batch_translate_all(
             found_parts.append(f"{len(scan.pex_files)} PEX")
         if scan.has_mcm:
             found_parts.append("MCM")
-        msg = "Encontrado: " + ", ".join(found_parts) if found_parts else "Sin archivos"
+        if found_parts:
+            msg = _msg(lang, "found") + ": " + ", ".join(found_parts)
+        else:
+            msg = _msg(lang, "no_files")
         on_progress("scan", 0, 0, msg)
 
     # ESP/ESM
     if scan.esp_files:
         if on_progress:
-            on_progress("scan", 0, 0, f"Traduciendo {len(scan.esp_files)} archivos ESP/ESM...")
+            on_progress("scan", 0, 0, _msg(lang, "translating_esp", n=len(scan.esp_files)))
         try:
             _check_cancel(cancel_event)
             result.esp_result = batch_translate_esp(
@@ -1127,7 +1295,7 @@ def batch_translate_all(
     # PEX
     if scan.pex_files:
         if on_progress:
-            on_progress("scan", 0, 0, f"Traduciendo {len(scan.pex_files)} archivos PEX...")
+            on_progress("scan", 0, 0, _msg(lang, "translating_pex", n=len(scan.pex_files)))
         try:
             _check_cancel(cancel_event)
             result.pex_result = batch_translate_pex(
@@ -1144,7 +1312,7 @@ def batch_translate_all(
     # MCM
     if scan.has_mcm and scan.mcm_directory:
         if on_progress:
-            on_progress("scan", 0, 0, "Traduciendo archivos MCM...")
+            on_progress("scan", 0, 0, _msg(lang, "translating_mcm"))
         try:
             _check_cancel(cancel_event)
             result.mcm_result = batch_translate_mcm(

@@ -1,0 +1,116 @@
+# Glossary Fallout 3 → Polish
+# Official Bethesda Polish localization terms.
+# FO3-specific terms not in the base glossary.
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# LOCATIONS
+# ═══════════════════════════════════════════════════════════════
+"Capital Wasteland" = "Pustkowie Stolicy"
+"Vault 101" = "Krypta 101"
+"Vault 87" = "Krypta 87"
+"Vault 92" = "Krypta 92"
+"Vault 112" = "Krypta 112"
+"Megaton" = "Megaton"
+"Rivet City" = "Nitowane Miasto"
+"The Citadel" = "Cytadela"
+"Galaxy News Radio" = "Radio Gwiezdnych Aktualnosci"
+"Tenpenny Tower" = "Wieza Tenpenny'ego"
+"Canterbury Commons" = "Canterbury Commons"
+"Underworld" = "Podziemie"
+"Andale" = "Andale"
+"Paradise Falls" = "Raj w Gruzach"
+"Little Lamplight" = "Lampowe Swiatlo"
+"Oasis" = "Oaza"
+"Evergreen Mills" = "Wieczne Mlyny"
+"Arefu" = "Arefu"
+"Girdershade" = "Kratownica"
+"Minefield" = "Pole Minowe"
+"Republic of Dave" = "Republika Dave'a"
+"Big Town" = "Wielkie Miasto"
+"Grayditch" = "Grayditch"
+
+# ═══════════════════════════════════════════════════════════════
+# DLC LOCATIONS
+# ═══════════════════════════════════════════════════════════════
+"Point Lookout" = "Punkt Obserwacyjny"
+"The Pitt" = "Piec"
+"Anchorage" = "Anchorage"
+"Mothership Zeta" = "Matka Statku Zeta"
+"Adams Air Force Base" = "Baza Lotnicza Adamsa"
+
+# ═══════════════════════════════════════════════════════════════
+# FACTIONS
+# ═══════════════════════════════════════════════════════════════
+"Talon Company" = "Kompania Szponow"
+"Regulators" = "Regulatorzy"
+"Tunnel Snakes" = "Tunelowe Weze"
+"The Family" = "Rodzina"
+"Outcasts" = "Wydziedziczeni"
+"Super Mutant Army" = "Armia Supermutantow"
+"Slavers" = "Handlarze Niewolnikow"
+"Children of the Atom" = "Dzieci Atomu"
+
+# ═══════════════════════════════════════════════════════════════
+# CHARACTERS
+# ═══════════════════════════════════════════════════════════════
+"Lone Wanderer" = "Samotny Wedrowiec"
+"James" = "James"
+"Catherine" = "Katarzyna"
+"Amata" = "Amata"
+"Overseer Almodovar" = "Nadzorca Almodovar"
+"Colonel Autumn" = "Pulkownik Autumn"
+"President Eden" = "Prezydent Eden"
+"Three Dog" = "Trzy Psy"
+"Moira Brown" = "Moira Brown"
+"Dogmeat" = "Psiak"
+"Charon" = "Charon"
+"Fawkes" = "Fawkes"
+"Jericho" = "Jerycho"
+"Star Paladin Cross" = "Gwiezdny Paladin Cross"
+"Butch DeLoria" = "Butch DeLoria"
+"Jonas Palmer" = "Jonas Palmer"
+"Roy Phillips" = "Roy Phillips"
+"Elder Lyons" = "Starszy Lyons"
+"Sarah Lyons" = "Sarah Lyons"
+"Harold" = "Harold"
+
+# ═══════════════════════════════════════════════════════════════
+# UNIQUE WEAPONS
+# ═══════════════════════════════════════════════════════════════
+"The Terrible Shotgun" = "Straszydelko"
+"Lincoln's Repeater" = "Powtarzalnik Lincolna"
+"Ol' Painless" = "Stara Niezawodna"
+"Sydney's 10mm Ultra SMG" = "Ultra-SMG Sydney"
+"Smuggler's End" = "Koniec Przemytnika"
+"Occam's Razor" = "Brzytwa Ockhama"
+"Victory Rifle" = "Karabin Zwyciestwa"
+"Blackhawk" = "Czarny Jastrzab"
+"Backwater Rifle" = "Karabin Zaplecia"
+
+# ═══════════════════════════════════════════════════════════════
+# FO3 PERKS
+# ═══════════════════════════════════════════════════════════════
+"Broken Steel" = "Zlamana Stal"
+"Lady Killer" = "Pogromca Kobiet"
+"Black Widow" = "Czarna Wdowa"
+"Child at Heart" = "Dziecko w Sercu"
+"Entomologist" = "Entomolog"
+"Cyborg" = "Cyborg"
+"Ghoulish" = "Ghulowaty"
+"Power Armor Training" = "Szkolenie z Zbroi Wspomaganej"
+"Hematophage" = "Hematofag"
+
+# ═══════════════════════════════════════════════════════════════
+# MAIN QUESTS
+# ═══════════════════════════════════════════════════════════════
+"Escape!" = "Ucieczka!"
+"Following in His Footsteps" = "Krokami Ojca"
+"Scientific Pursuits" = "Naukowe Poszukiwania"
+"Tranquility Lane" = "Spokojna Uliczka"
+"The Waters of Life" = "Wody Zycia"
+"Picking Up the Trail" = "Podazanie Sladem"
+"Finding the Garden of Eden" = "Szukanie Edenu"
+"The American Dream" = "Amerykanski Sen"
+"Take it Back!" = "Odbijamy!"

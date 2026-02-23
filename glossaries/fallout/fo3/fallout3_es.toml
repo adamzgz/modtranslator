@@ -33,21 +33,31 @@
 "Vault 108" = "Refugio 108"
 "Vault 106" = "Refugio 106"
 "Vault 92" = "Refugio 92"
+"Andale" = "Andale"
+"Minefield" = "Campo de minas"
+"Fort Constantine" = "Fuerte Constantine"
+"Fort Bannister" = "Fuerte Bannister"
+"National Archives" = "Archivos Nacionales"
+"Evergreen Mills" = "Evergreen Mills"
+"Old Olney" = "Viejo Olney"
+"Dunwich Building" = "Edificio Dunwich"
+"Deathclaw Sanctuary" = "Santuario de los sanguinarios"
+"Nuka-Cola Plant" = "Planta de Nuka-Cola"
 
 # --- DLCs ---
-"The Pitt" = "El Pozo"
+"The Pitt" = "The Pitt"
 "Point Lookout" = "Point Lookout"
-"Mothership Zeta" = "Nave Nodriza Zeta"
+"Mothership Zeta" = "Mothership Zeta"
 "Operation: Anchorage" = "Operación: Anchorage"
-"Broken Steel" = "Acero Roto"
+"Broken Steel" = "Broken Steel"
 "Adams Air Force Base" = "Base Aérea Adams"
 
 # ═══════════════════════════════════════════════════════════════
 # FACCIONES
 # ═══════════════════════════════════════════════════════════════
 "Talon Company" = "Compañía Talon"
-"Outcast" = "Proscrito"
 "Outcasts" = "Proscritos"
+"Brotherhood Outcasts" = "Proscritos de la Hermandad del Acero"
 "Regulator" = "Regulador"
 "Regulators" = "Reguladores"
 "Tunnel Snakes" = "Serpientes del Túnel"
@@ -55,6 +65,10 @@
 "Super Mutants" = "Supermutantes"
 "Slavers" = "Esclavistas"
 "Swampfolk" = "Lugareños del pantano"
+"Reilly's Rangers" = "Rangers de Reilly"
+"The Family" = "La Familia"
+"Republic of Dave" = "República de Dave"
+"Temple of the Union" = "Templo de la Unión"
 
 # ═══════════════════════════════════════════════════════════════
 # PERSONAJES
@@ -74,42 +88,60 @@
 "Jericho" = "Jericó"
 "Sergeant RL-3" = "Sargento RL-3"
 "Mr. Burke" = "Sr. Burke"
-"Elder Lyons" = "Anciano Lyons"
+"Elder Lyons" = "Elder Lyons"
 "Sarah Lyons" = "Sarah Lyons"
 "Dr. Li" = "Dra. Li"
 "Scribe Rothchild" = "Escriba Rothchild"
 "Lone Wanderer" = "Trotamundos Solitario"
-
-# ═══════════════════════════════════════════════════════════════
-# RANGOS DE LA HERMANDAD DEL ACERO
-# ═══════════════════════════════════════════════════════════════
-"Star Paladin" = "Estelar Paladín"
-"Paladin" = "Paladín"
-"Sentinel" = "Centinela"
-"Scribe" = "Escriba"
-"Initiate" = "Iniciado"
+"Harold" = "Harold"
 
 # ═══════════════════════════════════════════════════════════════
 # ITEMS Y ARMAS ÚNICAS
 # ═══════════════════════════════════════════════════════════════
-"Nuka-Cola Quantum" = "Nuka-Cola Quantum"
+"Nuka-Cola Quantum" = "Nuka-Cola Quántum"
 "Alien Blaster" = "Bláster alienígena"
 "Lincoln's Repeater" = "Repetidor de Lincoln"
 "Rock-It Launcher" = "Lanzabasura"
-"Railway Rifle" = "Rifle de clavos"
+"Railway Rifle" = "Rifle de ferrocarril"
 "Dart Gun" = "Pistola de dardos"
-"Deathclaw Gauntlet" = "Guantelete de sanguinario"
+"Deathclaw Gauntlet" = "Guantelete sanguinario"
 "Wasteland Survival Guide" = "Guía de supervivencia del Yermo"
 
 # ═══════════════════════════════════════════════════════════════
 # CRIATURAS ESPECÍFICAS FO3
 # ═══════════════════════════════════════════════════════════════
-"Albino Radscorpion" = "Radescorpión albino"
-"Giant Radscorpion" = "Radescorpión gigante"
-"Mirelurk Cake" = "Pastel de mirelurk"
+"Albino Radscorpion" = "Mutascorpius albino"
+"Giant Radscorpion" = "Mutascorpius gigante"
+"Mirelurk Cake" = "Pastel de carne raro"
 "Yao Guai Meat" = "Carne de yao guai"
 "Radroach Meat" = "Carne de mutaracha"
-"Mirelurk Meat" = "Carne de mirelurk"
-"Moldy Food" = "Comida mohosa"
-"Strange Meat" = "Carne extraña"
-"Strange Meat Pie" = "Pastel de carne extraña"
+"Mirelurk Meat" = "Carne de hombre pinza"
+
+# ═══════════════════════════════════════════════════════════════
+# PERKS (FO3 — nombres que Opus-MT traduce mal)
+# ═══════════════════════════════════════════════════════════════
+"Bloody Mess" = "Baño de sangre"
+"Pyromaniac" = "Pirómano"
+"Explorer" = "Explorador"
+"Strong Back" = "Espalda fuerte"
+"Pack Rat" = "Acaparador"
+"Grim Reaper's Sprint" = "Carrera del Segador"
+"Finesse" = "Destreza"
+"Fast Metabolism" = "Metabolismo rápido"
+"Nerd Rage!" = "¡Ira nerd!"
+"Mysterious Stranger" = "El Extraño"
+"Rad Resistance" = "Resistencia a la radiación"
+"Robotics Expert" = "Experto en robótica"
+"Cannibal" = "Caníbal"
+"Concentrated Fire" = "Fuego concentrado"
+"Paralyzing Palm" = "Palma paralizante"
+
+# ═══════════════════════════════════════════════════════════════
+# MISIONES PRINCIPALES
+# ═══════════════════════════════════════════════════════════════
+"The Waters of Life" = "Las aguas de la vida"
+"Take it Back!" = "¡Recupéralo!"
+"The Power of the Atom" = "El poder del átomo"
+"Following in His Footsteps" = "Siguiendo sus pasos"
+"Project Purity" = "Proyecto Pureza"
+"Aqua Pura" = "Aqua Pura"

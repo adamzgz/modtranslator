@@ -43,6 +43,8 @@ class StringTableSet:
     dlstrings: StringTable = field(default_factory=lambda: StringTable(StringTableType.DLSTRINGS))
     ilstrings: StringTable = field(default_factory=lambda: StringTable(StringTableType.ILSTRINGS))
     merged: dict[int, str] = field(default_factory=dict)
+    # The language suffix that was actually found on disk (e.g. "English" or "En")
+    found_language: str = ""
 
     def build_merged(self) -> None:
         """Rebuild the merged lookup dict from all three tables."""
@@ -170,6 +172,10 @@ def load_string_tables(
     Looks for {stem}_{language}.STRINGS, .DLSTRINGS, .ILSTRINGS
     next to the plugin file.
 
+    Tries multiple naming conventions:
+    - Skyrim: "English", "english"
+    - FO4: "En", "en", "EN"
+
     Args:
         plugin_path: Path to the ESP/ESM file.
         language: Language suffix (default "English").
@@ -184,6 +190,9 @@ def load_string_tables(
     # Bethesda convention: string files go in a "strings" subdirectory
     # but some mods put them next to the plugin. Check both.
     search_dirs = [parent / "strings", parent / "Strings", parent]
+
+    # Try multiple language suffixes: full name (Skyrim) and abbreviation (FO4)
+    lang_variants = _language_variants(language)
 
     table_set = StringTableSet()
 
@@ -204,26 +213,86 @@ def load_string_tables(
         StringTableType.ILSTRINGS: "ilstrings",
     }
 
+    found_lang = ""
     for tt, attr_name in attr_map.items():
         ext = type_map[tt]
         variants = ext_variants[ext]
         found = False
         for search_dir in search_dirs:
-            for ext_v in variants:
-                filepath = search_dir / f"{stem}_{language}.{ext_v}"
-                if filepath.exists():
-                    raw = filepath.read_bytes()
-                    table = parse_string_table(raw, tt)
-                    setattr(table_set, attr_name, table)
-                    found = True
+            for lang_v in lang_variants:
+                for ext_v in variants:
+                    filepath = search_dir / f"{stem}_{lang_v}.{ext_v}"
+                    if filepath.exists():
+                        raw = filepath.read_bytes()
+                        table = parse_string_table(raw, tt)
+                        setattr(table_set, attr_name, table)
+                        found = True
+                        if not found_lang:
+                            found_lang = lang_v
+                        break
+                if found:
                     break
             if found:
                 break
         if not found:
             logger.warning("String table file not found: %s_%s.%s", stem, language, ext)
 
+    table_set.found_language = found_lang
     table_set.build_merged()
     return table_set
+
+
+# Mapping from ISO 639-1 codes to canonical full language names.
+# Used to convert CLI/GUI lang codes (ES, FR) to string table names (Spanish, French).
+ISO_TO_FULL_LANGUAGE: dict[str, str] = {
+    "EN": "English",
+    "ES": "Spanish",
+    "FR": "French",
+    "DE": "German",
+    "IT": "Italian",
+    "PT": "Portuguese",
+    "RU": "Russian",
+    "PL": "Polish",
+    "JA": "Japanese",
+    "ZH": "Chinese",
+}
+
+# Mapping from canonical language name to abbreviation variants.
+# Skyrim uses full names (English, Spanish), FO4 uses short codes (En, es).
+_LANG_FULL_TO_SHORT: dict[str, str] = {
+    "english": "en",
+    "spanish": "es",
+    "french": "fr",
+    "german": "de",
+    "italian": "it",
+    "japanese": "ja",
+    "polish": "pl",
+    "russian": "ru",
+    "chinese": "cn",
+    "portuguese": "ptbr",
+}
+
+
+def _language_variants(language: str) -> list[str]:
+    """Return a list of language suffix variants to try when loading string tables."""
+    results = [language]
+    low = language.lower()
+    # Add case variants of the original
+    if language != low:
+        results.append(low)
+    cap = language.capitalize()
+    if cap not in results:
+        results.append(cap)
+    # Add short code variants (for FO4)
+    short = _LANG_FULL_TO_SHORT.get(low)
+    if short:
+        results.extend([short, short.capitalize(), short.upper()])
+    # If the input itself is already a short code, add the full name
+    for full, s in _LANG_FULL_TO_SHORT.items():
+        if low == s:
+            results.extend([full.capitalize(), full])
+            break
+    return results
 
 
 def save_string_tables(
@@ -233,6 +302,9 @@ def save_string_tables(
 ) -> list[Path]:
     """Write the three string table files next to the output plugin.
 
+    If the source string tables were loaded using a short language code (e.g. "En"
+    for FO4), the output will also use the corresponding short code (e.g. "es").
+
     Args:
         tables: The StringTableSet to write.
         plugin_path: Path to the output ESP/ESM file.
@@ -241,6 +313,11 @@ def save_string_tables(
     Returns:
         List of paths written.
     """
+    # If the source used short codes (FO4), convert the output language too
+    if tables.found_language and tables.found_language.lower() in _LANG_FULL_TO_SHORT.values():
+        short = _LANG_FULL_TO_SHORT.get(language.lower())
+        if short:
+            language = short
     plugin_path = Path(plugin_path)
     stem = plugin_path.stem
     parent = plugin_path.parent

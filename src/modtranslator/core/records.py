@@ -58,15 +58,15 @@ class Subrecord:
                 return raw.decode("latin-1")
 
     def encode_string(self, text: str, encoding: str = "cp1252") -> None:
-        """Encode a string and update data (null-terminated)."""
+        """Encode a string and update data (null-terminated).
+
+        Prefers *encoding* (cp1252 by default) so TES4 games can read the
+        result natively.  Falls back to UTF-8 for characters outside the
+        encoding's range.
+        """
         try:
-            encoded = text.encode("utf-8")
-            # Only use UTF-8 if it roundtrips through cp1252 or is ASCII.
-            # TES4 games expect cp1252 so prefer that unless characters require UTF-8.
-            text.encode(encoding)
             encoded = text.encode(encoding)
         except UnicodeEncodeError:
-            # Characters outside cp1252 range — keep UTF-8
             encoded = text.encode("utf-8")
         self.data = bytearray(encoded + b"\x00")
 
@@ -156,6 +156,9 @@ class PluginFile:
                 version = struct.unpack("<f", bytes(sub.data[:4]))[0]
                 if abs(version - 1.70) < 0.02:
                     return Game.SKYRIM
-                if abs(version - 0.94) < 0.01:
+                # FO4: HEDR 0.95 (older CK) or 1.0 (newer CK)
+                if abs(version - 0.95) < 0.006 or abs(version - 1.0) < 0.006:
+                    return Game.FALLOUT4
+                if abs(version - 0.94) < 0.006:
                     return Game.FALLOUT3
         return Game.UNKNOWN

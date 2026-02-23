@@ -1,0 +1,195 @@
+# Fallout: New Vegas → Portuguese (Brazilian)
+# Game-specific locations, characters, factions, and items.
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# LOCAIS
+# ═══════════════════════════════════════════════════════════════
+"Mojave Wasteland" = "Ermo do Mojave"
+"New Vegas" = "New Vegas"
+"The Strip" = "The Strip"
+"Freeside" = "Freeside"
+"Goodsprings" = "Goodsprings"
+"Primm" = "Primm"
+"Novac" = "Novac"
+"Hoover Dam" = "Represa Hoover"
+"Lucky 38" = "Lucky 38"
+"Camp McCarran" = "Acampamento McCarran"
+"Nellis Air Force Base" = "Base Aérea de Nellis"
+"Jacobstown" = "Jacobstown"
+"Nipton" = "Nipton"
+"Hidden Valley" = "Vale Escondido"
+"Helios One" = "Hélio Um"
+"Black Mountain" = "Montanha Negra"
+"The Fort" = "O Forte"
+"Mojave Outpost" = "Posto Avançado do Mojave"
+"Westside" = "Westside"
+"The Thorn" = "O Espinho"
+"Gun Runners" = "Contrabandistas de Armas"
+"Silver Rush" = "Corrida da Prata"
+"Vault 34" = "Abrigo 34"
+"Vault 22" = "Abrigo 22"
+"Vault 3" = "Abrigo 3"
+"Vault 11" = "Abrigo 11"
+"Vault 19" = "Abrigo 19"
+"Vault 21" = "Abrigo 21"
+"Boulder City" = "Boulder City"
+"Bitter Springs" = "Fontes Amargas"
+"Quarry Junction" = "Entroncamento da Pedreira"
+"REPCONN Test Site" = "Local de Testes REPCONN"
+"Cottonwood Cove" = "Enseada Cottonwood"
+"The Tops" = "The Tops"
+"Gomorrah" = "Gomorra"
+"Ultra-Luxe" = "Ultra-Luxe"
+
+# ═══════════════════════════════════════════════════════════════
+# DLCS
+# ═══════════════════════════════════════════════════════════════
+"Sierra Madre" = "Sierra Madre"
+"Big MT" = "Grande Vazio"
+"Zion Canyon" = "Canyon Zion"
+"The Divide" = "A Divisão"
+"Dead Money" = "Dead Money"
+"Honest Hearts" = "Honest Hearts"
+"Old World Blues" = "Old World Blues"
+"Lonesome Road" = "Estrada Solitária"
+"The Sink" = "A Pia"
+
+# ═══════════════════════════════════════════════════════════════
+# FACÇÕES
+# ═══════════════════════════════════════════════════════════════
+"New California Republic" = "República da Nova Califórnia"
+"NCR" = "RNC"
+"Caesar's Legion" = "Legião de César"
+"Boomers" = "Boomers"
+"Great Khans" = "Grandes Khans"
+"Powder Gangers" = "Gangue da Pólvora"
+"Kings" = "Os Reis"
+"Followers of the Apocalypse" = "Seguidores do Apocalipse"
+"White Glove Society" = "Sociedade da Luva Branca"
+"Omertas" = "Omertas"
+"Chairmen" = "Presidentes"
+"Fiends" = "Demônios"
+"Bright Brotherhood" = "Irmandade do Iluminado"
+"Van Graffs" = "Van Graffs"
+"Crimson Caravan" = "Caravana Carmesim"
+"Mojave Express" = "Expresso do Mojave"
+"Vipers" = "Víboras"
+"Jackals" = "Chacais"
+
+# ═══════════════════════════════════════════════════════════════
+# PERSONAGENS
+# ═══════════════════════════════════════════════════════════════
+"Courier" = "Mensageiro"
+"Mr. House" = "Sr. House"
+"Caesar" = "César"
+"Benny" = "Benny"
+"Yes Man" = "Sim Senhor"
+"Legate Lanius" = "Legado Lanius"
+"Chief Hanlon" = "Chefe Hanlon"
+"The King" = "O Rei"
+"Mr. New Vegas" = "Sr. New Vegas"
+"Doc Mitchell" = "Doutor Mitchell"
+"General Oliver" = "General Oliver"
+"Boone" = "Boone"
+"Veronica" = "Veronica"
+"Arcade Gannon" = "Arcade Gannon"
+"Cass" = "Cass"
+"Raul" = "Raul"
+"Lily" = "Lily"
+"Rex" = "Rex"
+"ED-E" = "ED-E"
+"Dean Domino" = "Dean Domino"
+"Father Elijah" = "Padre Elijah"
+"Joshua Graham" = "Joshua Graham"
+"Dog" = "Cachorro"
+"God" = "Deus"
+
+# ═══════════════════════════════════════════════════════════════
+# CRIATURAS FNV
+# ═══════════════════════════════════════════════════════════════
+"Nightstalker" = "Espreitador Noturno"
+"Night Stalker" = "Espreitador Noturno"
+"Bighorner" = "Grandecifre"
+"Cazador" = "Cazador"
+"Cazadores" = "Cazadores"
+"Gecko" = "Gecko"
+"Golden Gecko" = "Gecko Dourado"
+"Giant Gecko" = "Gecko Gigante"
+"Fire Gecko" = "Gecko de Fogo"
+"Lakelurk" = "Espreitador do Lago"
+"Securitron" = "Securitron"
+"Giant Mantis" = "Louva-a-deus Gigante"
+"Coyote" = "Coiote"
+"Ghost People" = "Povo Fantasma"
+"Tunneler" = "Escavador"
+"Marked Men" = "Homens Marcados"
+"Lobotomite" = "Lobotomizado"
+"Think Tank" = "Think Tank"
+
+# ═══════════════════════════════════════════════════════════════
+# ITENS
+# ═══════════════════════════════════════════════════════════════
+"Sunset Sarsaparilla" = "Sunset Salsaparrilha"
+"Platinum Chip" = "Ficha de Platina"
+"Auto-Doc" = "Auto-Doc"
+"Anti-Materiel Rifle" = "Fuzil Antimaterial"
+"Trail Carbine" = "Carabina de Trilha"
+"Cowboy Repeater" = "Repetidor Cowboy"
+"Varmint Rifle" = "Fuzil de Pragas"
+"Service Rifle" = "Fuzil de Serviço"
+"Hunting Revolver" = "Revólver de Caça"
+"This Machine" = "Esta Máquina"
+"Mysterious Magnum" = "Magnum Misterioso"
+"Survivalist's Rifle" = "Fuzil do Sobrevivente"
+
+# ═══════════════════════════════════════════════════════════════
+# REPUTAÇÃO
+# ═══════════════════════════════════════════════════════════════
+"Liked" = "Apreciado"
+"Loved" = "Querido"
+"Hated" = "Odiado"
+"Vilified" = "Difamado"
+"Infamy" = "Infâmia"
+"Fame" = "Fama"
+"Reputation" = "Reputação"
+"Accepted" = "Aceito"
+"Idolized" = "Idolatrado"
+
+# ═══════════════════════════════════════════════════════════════
+# MODO DIFÍCIL
+# ═══════════════════════════════════════════════════════════════
+"Hardcore Mode" = "Modo Difícil"
+"Dehydration" = "Desidratação"
+"Starvation" = "Inação"
+"Sleep Deprivation" = "Privação de Sono"
+"Limb Damage" = "Dano em Membros"
+
+# ═══════════════════════════════════════════════════════════════
+# VANTAGENS FNV
+# ═══════════════════════════════════════════════════════════════
+"Jury Rigging" = "Improvisação"
+"Cowboy" = "Cowboy"
+"Better Criticals" = "Críticos Melhorados"
+"More Criticals" = "Mais Críticos"
+"Tribal Wisdom" = "Sabedoria Tribal"
+"Grunt" = "Soldado Raso"
+"Shotgun Surgeon" = "Cirurgião de Espingarda"
+"Pyromaniac" = "Piromaniíaco"
+"Rad Resistance" = "Resistência à Radiação"
+"Cannibal" = "Canibal"
+"Finesse" = "Finesse"
+"Fast Metabolism" = "Metabolismo Rápido"
+"Mysterious Stranger" = "O Desconhecido Misterioso"
+"Bloody Mess" = "Banho de Sangue"
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-PROTEÇÃO FNV
+# ═══════════════════════════════════════════════════════════════
+"Grandecifre" = "Grandecifre"
+"Espreitador Noturno" = "Espreitador Noturno"
+"Espreitador do Lago" = "Espreitador do Lago"
+"Lobotomizado" = "Lobotomizado"
+"Escavador" = "Escavador"
+"Mensageiro" = "Mensageiro"

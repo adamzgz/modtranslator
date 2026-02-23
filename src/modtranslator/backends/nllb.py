@@ -26,18 +26,42 @@ _INTER_THREADS = min(4, os.cpu_count() or 1)
 REPETITION_PENALTY = 1.2
 _SHORT_INPUT_MAX_WORDS = 5  # dedup/filler-trim post-processing threshold
 _SINGLE_WORD_MAX_OUTPUT = 3  # max words allowed for a 1-word input translation
-_ARTICLES = frozenset({"la", "el", "los", "las", "un", "una"})
 
-# Filler patterns: NLLB hallucinates encyclopedia-like text after short translations.
-# "Blood Pack" → "Bolsa de sangre es el valor de la moneda."
-# We trim at the first filler marker. No legitimate EN→ES translation of a
-# 1-3 word noun phrase should contain "es el/la/un/una..." as a copula.
-_FILLER_PATTERN = re.compile(
-    r"\s+(?:es\s+(?:el|la|un|una|los|las)\b"
-    r"|también\b|y\s+también\b"
-    r"|fue\b)",
-    re.IGNORECASE,
-)
+# Articles and filler patterns per target language.
+# Used by _cap_single_word_output and _trim_hallucinated_filler to handle
+# NLLB artifacts (hallucinations, duplications) for short input strings.
+# Languages not listed fall back to no-op (safe: NLLB only receives long
+# strings in hybrid mode, so artifacts are rare for unlisted languages).
+_ARTICLES_BY_LANG: dict[str, frozenset[str]] = {
+    "ES": frozenset({"la", "el", "los", "las", "un", "una"}),
+    "FR": frozenset({"la", "le", "les", "l", "un", "une", "des"}),
+    "IT": frozenset({"la", "il", "lo", "i", "gli", "le", "un", "una"}),
+    "PT": frozenset({"a", "o", "as", "os", "um", "uma"}),
+    "DE": frozenset({"der", "die", "das", "ein", "eine", "einen", "einem"}),
+}
+
+_FILLER_PATTERNS_BY_LANG: dict[str, re.Pattern[str]] = {
+    "ES": re.compile(
+        r"\s+(?:es\s+(?:el|la|un|una|los|las)\b|también\b|y\s+también\b|fue\b)",
+        re.IGNORECASE,
+    ),
+    "FR": re.compile(
+        r"\s+(?:est\s+(?:le|la|un|une|les|des)\b|aussi\b|et\s+aussi\b|était\b)",
+        re.IGNORECASE,
+    ),
+    "IT": re.compile(
+        r"\s+(?:è\s+(?:il|la|un|una|i|le|gli)\b|anche\b|ed?\s+anche\b|era\b)",
+        re.IGNORECASE,
+    ),
+    "PT": re.compile(
+        r"\s+(?:é\s+(?:o|a|um|uma|os|as)\b|também\b|e\s+também\b|foi\b)",
+        re.IGNORECASE,
+    ),
+    "DE": re.compile(
+        r"\s+(?:ist\s+(?:der|die|das|ein|eine)\b|auch\b|und\s+auch\b|war\b)",
+        re.IGNORECASE,
+    ),
+}
 
 # FLORES-200 language codes used by NLLB
 _FLORES_CODES = {
@@ -60,6 +84,28 @@ _MODEL_VARIANTS = {
 }
 
 _DEFAULT_MODELS_DIR = Path.home() / ".modtranslator" / "models"
+
+
+def _delete_hf_cache(hf_model_name: str) -> None:
+    """Delete the HuggingFace hub cache for a model after CT2 conversion.
+
+    The cache is only needed during conversion; once the CT2 model exists
+    it is never used again. Frees several GB per model.
+    Respects HF_HOME / HUGGINGFACE_HUB_CACHE env overrides.
+    """
+    import os
+
+    hf_home = Path(
+        os.environ.get(
+            "HUGGINGFACE_HUB_CACHE",
+            os.environ.get("HF_HOME", str(Path.home() / ".cache" / "huggingface")),
+        )
+    )
+    # HF_HOME points to the huggingface dir; the hub subdir holds model caches
+    hub_dir = hf_home if hf_home.name == "hub" else hf_home / "hub"
+    cache_dir = hub_dir / ("models--" + hf_model_name.replace("/", "--"))
+    if cache_dir.exists():
+        shutil.rmtree(cache_dir)
 
 
 class NLLBBackend(TranslationBackend):
@@ -193,12 +239,12 @@ class NLLBBackend(TranslationBackend):
         translator, tokenizer = self._get_translator_and_tokenizer(src_flores)
 
         try:
-            return self._translate_chunk(texts, translator, tokenizer, tgt_flores)
+            return self._translate_chunk(texts, translator, tokenizer, tgt_flores, target_lang)
         except RuntimeError:
             if self._device == "cpu":
                 raise
             translator = self._fallback_to_cpu()
-            return self._translate_chunk(texts, translator, tokenizer, tgt_flores)
+            return self._translate_chunk(texts, translator, tokenizer, tgt_flores, target_lang)
 
     def _fallback_to_cpu(self) -> object:
         """Rebuild translator on CPU after CUDA failure."""
@@ -220,6 +266,7 @@ class NLLBBackend(TranslationBackend):
         translator: object,
         tokenizer: object,
         tgt_flores: str,
+        target_lang: str = "ES",
     ) -> list[str]:
         # --- Phase 1: Classify by character length ---
         flat_segments: list[str] = []
@@ -314,8 +361,10 @@ class NLLBBackend(TranslationBackend):
                     self._trim_hallucinated_filler(
                         self._strip_echo(decoded[i], flat_segments[i]),
                         flat_segments[i],
+                        target_lang,
                     ),
                     flat_segments[i],
+                    target_lang,
                 ),
                 flat_segments[i],
             )
@@ -449,12 +498,11 @@ class NLLBBackend(TranslationBackend):
         return translated
 
     @staticmethod
-    def _cap_single_word_output(translated: str, original: str) -> str:
+    def _cap_single_word_output(translated: str, original: str, target_lang: str = "ES") -> str:
         """Cap output length for single-word inputs.
 
-        A single English word legitimately translates to 1-3 Spanish words
-        (noun, article + noun, or compound like "casilla de correos").
-        If NLLB produces more, it's filler:
+        A single English word legitimately translates to 1-3 target-language words
+        (noun, article + noun, or compound). If NLLB produces more, it's filler:
           "Light" → "Luz de la luz"  → "Luz"
           "Booth" → "Booth de la tienda" → "Booth"
         """
@@ -465,27 +513,34 @@ class NLLBBackend(TranslationBackend):
         if len(words) <= _SINGLE_WORD_MAX_OUTPUT:
             return translated
 
-        # Allow article + noun (e.g. "La ketamina")
-        if words[0].lower() in _ARTICLES:
+        # Allow article + noun (e.g. "La ketamina", "Le sac")
+        articles = _ARTICLES_BY_LANG.get(target_lang.upper(), frozenset())
+        if words[0].lower() in articles:
             return " ".join(words[:2])
 
         return words[0]
 
     @staticmethod
-    def _trim_hallucinated_filler(translated: str, original: str) -> str:
+    def _trim_hallucinated_filler(
+        translated: str, original: str, target_lang: str = "ES"
+    ) -> str:
         """Trim hallucinated filler text from short input translations.
 
         NLLB generates encyclopedia-like explanations for short inputs:
           "Blood Pack" → "Bolsa de sangre es el valor de la moneda."
           "Ketamine"   → "La ketamina es una sustancia"
 
-        For inputs ≤ _SHORT_INPUT_MAX_WORDS words, trim at common Spanish
-        filler patterns ("es el/la/un/una", "también").
+        For inputs ≤ _SHORT_INPUT_MAX_WORDS words, trim at the first filler
+        marker in the target language.
         """
         if len(original.split()) > _SHORT_INPUT_MAX_WORDS:
             return translated
 
-        match = _FILLER_PATTERN.search(translated)
+        pattern = _FILLER_PATTERNS_BY_LANG.get(target_lang.upper())
+        if pattern is None:
+            return translated
+
+        match = pattern.search(translated)
         if match:
             trimmed = translated[: match.start()].rstrip(" .,;:")
             if trimmed:
@@ -635,6 +690,8 @@ class NLLBBackend(TranslationBackend):
             raise RuntimeError(
                 f"Failed to convert model {self._hf_model_name}: {e}"
             ) from e
+
+        _delete_hf_cache(self._hf_model_name)
 
     @staticmethod
     def _patch_tokenizer_compat() -> None:

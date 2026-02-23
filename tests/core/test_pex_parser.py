@@ -290,6 +290,76 @@ class TestTranslatableLiteral:
         assert _is_translatable_literal("How many seconds to wait after defeat before respawning.")
 
 
+def _make_fo4_pex_bytes(strings: list[str], post_data: bytes = b"") -> bytes:
+    """Build a minimal FO4 .pex binary (little-endian) with the given string table."""
+    parts: list[bytes] = []
+    parts.append(struct.pack("<I", PEX_MAGIC))
+    parts.append(struct.pack(">BB", 3, 9))  # version (single bytes, no endianness)
+    parts.append(struct.pack("<H", 2))  # game_id=2 (Fallout 4)
+    parts.append(struct.pack("<Q", 0))  # compilation time
+    for _ in range(3):
+        parts.append(struct.pack("<H", 0))
+    parts.append(struct.pack("<H", len(strings)))
+    for s in strings:
+        encoded = s.encode("utf-8")
+        parts.append(struct.pack("<H", len(encoded)))
+        parts.append(encoded)
+    parts.append(post_data)
+    return b"".join(parts)
+
+
+class TestFo4PexParsing:
+    """Tests for Fallout 4 little-endian PEX files."""
+
+    def test_detect_le_magic(self):
+        data = _make_fo4_pex_bytes(["test"])
+        pex = parse_pex(data)
+        assert pex.endian == "<"
+
+    def test_fo4_game_id(self):
+        data = _make_fo4_pex_bytes(["test"])
+        pex = parse_pex(data)
+        assert pex.header.game_id == 2
+
+    def test_fo4_string_table(self):
+        data = _make_fo4_pex_bytes(["alpha", "beta", "gamma"])
+        pex = parse_pex(data)
+        assert pex.string_table == ["alpha", "beta", "gamma"]
+
+    def test_fo4_literal_detection(self):
+        """LE post-table data with type 0x02 markers."""
+        strings = ["ident", "Hello World message", "another_ident"]
+        post = (
+            b"\x01" + struct.pack("<H", 0)
+            + b"\x02" + struct.pack("<H", 1)
+            + b"\x01" + struct.pack("<H", 2)
+        )
+        data = _make_fo4_pex_bytes(strings, post)
+        pex = parse_pex(data)
+        assert 1 in pex.literal_indices
+        assert 0 in pex.ident_indices
+        assert 2 in pex.ident_indices
+
+    def test_fo4_roundtrip(self):
+        strings = ["Hello", "World", "FO4 test string"]
+        data = _make_fo4_pex_bytes(strings, b"\x00" * 20)
+        pex = parse_pex(data)
+        rebuilt = serialize_pex(pex)
+        assert data == rebuilt
+
+    def test_fo4_modified_roundtrip(self):
+        strings = ["Original text"]
+        post = b"\x02" + struct.pack("<H", 0) + b"\x00" * 10
+        data = _make_fo4_pex_bytes(strings, post)
+        pex = parse_pex(data)
+        pex.string_table[0] = "Texto traducido"
+        rebuilt = serialize_pex(pex)
+        pex2 = parse_pex(rebuilt)
+        assert pex2.string_table[0] == "Texto traducido"
+        assert pex2.endian == "<"
+        assert pex2.header.game_id == 2
+
+
 class TestGetTranslatableStrings:
     def test_filters_correctly(self):
         pex = PexFile(

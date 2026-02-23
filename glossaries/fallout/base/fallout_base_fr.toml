@@ -1,0 +1,246 @@
+# Glossary base Fallout 3 / Fallout New Vegas / Fallout 4 → French
+# Official Bethesda French localization terms.
+# Only includes terms that MT models translate incorrectly or inconsistently.
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# CONSUMABLES & CHEMS
+# ═══════════════════════════════════════════════════════════════
+"Stimpak" = "Stimpack"
+"Super Stimpak" = "Super Stimpack"
+"Nuka-Cola" = "Nuka-Cola"
+"Rad-X" = "Rad-X"
+"RadAway" = "RadAway"
+"Mentats" = "Mentats"
+"Buffout" = "Buffout"
+"Jet" = "Jet"
+"Psycho" = "Psycho"
+"Med-X" = "Med-X"
+"Stealth Boy" = "Stealth Boy"
+"Bobby Pin" = "Épingle à cheveux"
+"Holotape" = "Holodisque"
+"Blood Pack" = "Poche de sang"
+"Purified Water" = "Eau purifiée"
+"Dirty Water" = "Eau sale"
+"Mutfruit" = "Mutfruit"
+"Sweetroll" = "Brioche"
+
+# ═══════════════════════════════════════════════════════════════
+# MARQUES DE NOURRITURE
+# ═══════════════════════════════════════════════════════════════
+"Sugar Bombs" = "Bombes Sucrées"
+"Fancy Lads Snack Cakes" = "Petits Gâteaux Les Petits Maîtres"
+"Dandy Boy Apples" = "Pommes Dandy Boy"
+"InstaMash" = "Instantpurée"
+"Cram" = "Bœuf en Boîte"
+"Brahmin Steak" = "Steak de Brahmine"
+"Squirrel Stew" = "Ragoût d’Écureuil"
+"Pork n’ Beans" = "Porc et Haricots"
+"Gum Drops" = "Bonbons"
+
+# ═══════════════════════════════════════════════════════════════
+# MECHANICS
+# ═══════════════════════════════════════════════════════════════
+"V.A.T.S." = "V.A.T.S."
+"S.P.E.C.I.A.L." = "S.P.E.C.I.A.L."
+"Pip-Boy" = "Pip-Boy"
+"Perk" = "Atout"
+"Bobblehead" = "Figurine"
+"Bottlecap" = "Capsule"
+"Karma" = "Karma"
+"Lockpick" = "Crochet"
+"Pre-War" = "Avant-Guerre"
+"Overseer" = "Directeur"
+"Vault Dweller" = "Habitant de l’Abri"
+"Great War" = "Grande Guerre"
+"G.E.C.K." = "G.E.C.K."
+"FEV" = "VEF"
+"Workbench" = "Établi"
+
+# ═══════════════════════════════════════════════════════════════
+# S.P.E.C.I.A.L. STATS
+# ═══════════════════════════════════════════════════════════════
+"Strength" = "Force"
+"Perception" = "Perception"
+"Endurance" = "Endurance"
+"Charisma" = "Charisme"
+"Intelligence" = "Intelligence"
+"Agility" = "Agilité"
+"Luck" = "Chance"
+
+# ═══════════════════════════════════════════════════════════════
+# SKILLS
+# ═══════════════════════════════════════════════════════════════
+"Barter" = "Troc"
+"Repair" = "Réparation"
+"Medicine" = "Médecine"
+"Science" = "Science"
+"Explosives" = "Explosifs"
+"Sneak" = "Discrétion"
+"Speech" = "Éloquence"
+"Guns" = "Armes à feu"
+"Melee Weapons" = "Armes de contact"
+"Energy Weapons" = "Armes à énergie"
+"Unarmed" = "Mains nues"
+"Big Guns" = "Armes lourdes"
+"Small Guns" = "Armes légères"
+"Outdoorsman" = "Survivaliste"
+
+# ═══════════════════════════════════════════════════════════════
+# COMBAT STATS
+# ═══════════════════════════════════════════════════════════════
+"Damage Threshold" = "Seuil de dommages"
+"Damage Resistance" = "Résistance aux dommages"
+"Action Points" = "Points d’action"
+"Hit Points" = "Points de vie"
+"Critical Hit" = "Coup critique"
+
+# ═══════════════════════════════════════════════════════════════
+# STATUS EFFECTS
+# ═══════════════════════════════════════════════════════════════
+"Crippled" = "Mutilé"
+"Addiction" = "Dépendance"
+"Irradiated" = "Irradié"
+"Overdose" = "Overdose"
+
+# ═══════════════════════════════════════════════════════════════
+# WORLD & CONCEPTS
+# ═══════════════════════════════════════════════════════════════
+"Wasteland" = "Terres Dévastées"
+"Vault" = "Abri"
+"Vault-Tec" = "Vault-Tec"
+"Power Armor" = "Armure assistée"
+"Caravan" = "Caravane"
+"Wastelander" = "Habitant des Terres Dévastées"
+"Scavenger" = "Pilleur"
+
+# ═══════════════════════════════════════════════════════════════
+# CREATURES
+# ═══════════════════════════════════════════════════════════════
+"Super Mutant" = "Super-Mutant"
+"Super Mutant Behemoth" = "Béhémoth Super-Mutant"
+"Super Mutant Master" = "Super-Mutant maître"
+"Super Mutant Brute" = "Super-Mutant brute"
+"Nightkin" = "Nocturne"
+"Feral Ghoul" = "Goule sauvage"
+"Glowing One" = "Luminescent"
+"Ghoul" = "Goule"
+"Deathclaw" = "Griffe de la Mort"
+"Radroach" = "Radblatte"
+"Radscorpion" = "Radscorpion"
+"Bloatfly" = "Mouche boursoufflée"
+"Mole Rat" = "Rat-taupe"
+"Brahmin" = "Brahmin"
+"Yao Guai" = "Yao Guai"
+"Mirelurk King" = "Roi Mirelurk"
+"Mirelurk Hunter" = "Chasseur Mirelurk"
+"Mirelurk" = "Mirelurk"
+"Centaur" = "Centaure"
+"Fire Ant" = "Fourmi de feu"
+"Giant Ant" = "Fourmi géante"
+"Raider" = "Pillard"
+
+# ═══════════════════════════════════════════════════════════════
+# ROBOTS
+# ═══════════════════════════════════════════════════════════════
+"Protectron" = "Protectron"
+"Sentry Bot" = "Robot sentinelle"
+"Eyebot" = "Eyebot"
+"Robobrain" = "Cerveau-bot"
+"Liberty Prime" = "Liberty Prime"
+
+# ═══════════════════════════════════════════════════════════════
+# FACTIONS
+# ═══════════════════════════════════════════════════════════════
+"Brotherhood of Steel" = "Confrérie de l’Acier"
+"Enclave" = "Enclave"
+
+# ═══════════════════════════════════════════════════════════════
+# WEAPONS
+# ═══════════════════════════════════════════════════════════════
+"Fat Man" = "Gros Minet"
+"Minigun" = "Minigun"
+"Missile Launcher" = "Lance-missiles"
+"Flamer" = "Lance-flammes"
+"Gatling Laser" = "Laser Gatling"
+"Gauss Rifle" = "Fusil Gauss"
+"Super Sledge" = "Super-massue"
+"Power Fist" = "Poing assisté"
+"Laser Rifle" = "Fusil laser"
+"Laser Pistol" = "Pistolet laser"
+"Plasma Rifle" = "Fusil plasma"
+"Plasma Pistol" = "Pistolet plasma"
+"Frag Grenade" = "Grenade à fragmentation"
+"Mini Nuke" = "Mini-Bombe Nucléaire"
+"Assault Rifle" = "Fusil d’assaut"
+"Hunting Rifle" = "Fusil de chasse"
+"Sniper Rifle" = "Fusil de précision"
+"Combat Shotgun" = "Fusil à pompe de combat"
+"10mm Pistol" = "Pistolet 10 mm"
+"10mm Submachine Gun" = "Mitraillette 10 mm"
+"Combat Knife" = "Couteau de combat"
+"Sledgehammer" = "Masse d’armes"
+"Ripper" = "Éventreur"
+
+# ═══════════════════════════════════════════════════════════════
+# MUNITIONS
+# ═══════════════════════════════════════════════════════════════
+"Microfusion Cell" = "Cellule de microfusion"
+"Electron Charge Pack" = "Chargeur à électrons"
+
+# ═══════════════════════════════════════════════════════════════
+# ARMURES
+# ═══════════════════════════════════════════════════════════════
+"Power Helmet" = "Casque assisté"
+"Raider Armor" = "Armure de pillard"
+"Combat Armor" = "Armure de combat"
+"Leather Armor" = "Armure de cuir"
+"Metal Armor" = "Armure métallique"
+"Recon Armor" = "Armure de reconnaissance"
+"Tesla Armor" = "Armure Tesla"
+
+# ═══════════════════════════════════════════════════════════════
+# BROTHERHOOD RANKS
+# ═══════════════════════════════════════════════════════════════
+"Elder" = "Ancien"
+"Paladin" = "Paladin"
+"Sentinel" = "Sentinelle"
+"Scribe" = "Scribe"
+"Knight" = "Chevalier"
+"Initiate" = "Initié"
+
+# ═══════════════════════════════════════════════════════════════
+# PERKS
+# ═══════════════════════════════════════════════════════════════
+"Bloody Mess" = "Carnage"
+"Pyromaniac" = "Pyromane"
+"Explorer" = "Explorateur"
+"Strong Back" = "Dos Solide"
+"Pack Rat" = "Rat des Greniers"
+"Mysterious Stranger" = "L’Inconnu Mystérieux"
+"Rad Resistance" = "Résistance aux Radiations"
+"Robotics Expert" = "Expert en Robotique"
+"Cannibal" = "Cannibale"
+"Fast Metabolism" = "Métabolisme Rapide"
+"Finesse" = "Finesse"
+"Paralyzing Palm" = "Paume Paralysante"
+"Grim Reaper’s Sprint" = "Foulée du Faucheur"
+"Nerd Rage!" = "Colère du Geek !"
+"Concentrated Fire" = "Tir Concentré"
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-PROTECTION: French terms that should not be re-translated
+# ═══════════════════════════════════════════════════════════════
+"Pillard" = "Pillard"
+"Terres Dévastées" = "Terres Dévastées"
+"Goule" = "Goule"
+"Abri" = "Abri"
+"Super-Mutant" = "Super-Mutant"
+"Griffe de la Mort" = "Griffe de la Mort"
+"Confrérie de l’Acier" = "Confrérie de l’Acier"
+"Armure assistée" = "Armure assistée"
+"Nocturne" = "Nocturne"
+"Lance-flammes" = "Lance-flammes"
+"Lance-missiles" = "Lance-missiles"
+"Poing assisté" = "Poing assisté"

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import struct
 import zlib
 from typing import BinaryIO
@@ -106,18 +107,12 @@ def _write_group(group: GroupRecord, stream: BinaryIO, game: Game) -> None:
     # First, serialize all children to a buffer to compute size
     children_data = bytearray()
     for child in group.children:
+        buf = io.BytesIO()
         if isinstance(child, GroupRecord):
-            import io
-
-            buf = io.BytesIO()
             _write_group(child, buf, game)
-            children_data.extend(buf.getvalue())
         else:
-            import io
-
-            buf = io.BytesIO()
             _write_record(child, buf, game)
-            children_data.extend(buf.getvalue())
+        children_data.extend(buf.getvalue())
 
     group_size = GRUP_HEADER_SIZE + len(children_data)
 

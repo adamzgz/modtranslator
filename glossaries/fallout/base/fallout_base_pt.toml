@@ -1,0 +1,246 @@
+# Glossary base Fallout 3 / Fallout New Vegas / Fallout 4 → Portuguese (Brazilian)
+# Official Bethesda Brazilian Portuguese localization terms.
+# Only includes terms that MT models translate incorrectly or inconsistently.
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# CONSUMABLES & CHEMS
+# ═══════════════════════════════════════════════════════════════
+"Stimpak" = "Estimulante"
+"Super Stimpak" = "Super-Estimulante"
+"Nuka-Cola" = "Nuka-Cola"
+"Rad-X" = "Rad-X"
+"RadAway" = "RadAway"
+"Mentats" = "Mentats"
+"Buffout" = "Buffout"
+"Jet" = "Jet"
+"Psycho" = "Psico"
+"Med-X" = "Med-X"
+"Stealth Boy" = "Stealth Boy"
+"Bobby Pin" = "Grampo"
+"Holotape" = "Holo-fita"
+"Blood Pack" = "Pacote de sangue"
+"Purified Water" = "Água purificada"
+"Dirty Water" = "Água suja"
+"Mutfruit" = "Mutafruto"
+"Sweetroll" = "Pãozinho doce"
+
+# ═══════════════════════════════════════════════════════════════
+# MECHANICS
+# ═══════════════════════════════════════════════════════════════
+"V.A.T.S." = "V.A.T.S."
+"S.P.E.C.I.A.L." = "S.P.E.C.I.A.L."
+"Pip-Boy" = "Pip-Boy"
+"Perk" = "Vantagem"
+"Bobblehead" = "Bobblehead"
+"Bottlecap" = "Tampinha"
+"Karma" = "Karma"
+"Lockpick" = "Gazua"
+"Pre-War" = "Pré-guerra"
+"Overseer" = "Superintendente"
+"Vault Dweller" = "Morador do Abrigo"
+"Great War" = "Grande Guerra"
+"G.E.C.K." = "G.E.C.K."
+"FEV" = "VEF"
+"Workbench" = "Bancada"
+
+# ═══════════════════════════════════════════════════════════════
+# S.P.E.C.I.A.L. STATS
+# ═══════════════════════════════════════════════════════════════
+"Strength" = "Força"
+"Perception" = "Percepção"
+"Endurance" = "Resistência"
+"Charisma" = "Carisma"
+"Intelligence" = "Inteligência"
+"Agility" = "Agilidade"
+"Luck" = "Sorte"
+
+# ═══════════════════════════════════════════════════════════════
+# SKILLS
+# ═══════════════════════════════════════════════════════════════
+"Barter" = "Comércio"
+"Repair" = "Reparo"
+"Medicine" = "Medicina"
+"Science" = "Ciência"
+"Explosives" = "Explosivos"
+"Sneak" = "Furtividade"
+"Speech" = "Lábia"
+"Guns" = "Armas de fogo"
+"Melee Weapons" = "Armas corpo a corpo"
+"Energy Weapons" = "Armas de energia"
+"Unarmed" = "Desarmado"
+"Big Guns" = "Armas pesadas"
+"Small Guns" = "Armas leves"
+"Outdoorsman" = "Sobrevivência"
+
+# ═══════════════════════════════════════════════════════════════
+# COMBAT STATS
+# ═══════════════════════════════════════════════════════════════
+"Damage Threshold" = "Limiar de dano"
+"Damage Resistance" = "Resistência a danos"
+"Action Points" = "Pontos de ação"
+"Hit Points" = "Pontos de vida"
+"Critical Hit" = "Acerto crítico"
+
+# ═══════════════════════════════════════════════════════════════
+# STATUS EFFECTS
+# ═══════════════════════════════════════════════════════════════
+"Crippled" = "Mutilado"
+"Addiction" = "Vício"
+"Irradiated" = "Irradiado"
+"Overdose" = "Overdose"
+
+# ═══════════════════════════════════════════════════════════════
+# WORLD & CONCEPTS
+# ═══════════════════════════════════════════════════════════════
+"Wasteland" = "Ermo"
+"Vault" = "Abrigo"
+"Vault-Tec" = "Vault-Tec"
+"Power Armor" = "Armadura motorizada"
+"Caravan" = "Caravana"
+"Wastelander" = "Habitante do Ermo"
+"Scavenger" = "Sucateiro"
+
+# ═══════════════════════════════════════════════════════════════
+# CREATURES
+# ═══════════════════════════════════════════════════════════════
+"Super Mutant" = "Super-Mutante"
+"Super Mutant Behemoth" = "Behemoth Super-Mutante"
+"Super Mutant Master" = "Super-Mutante mestre"
+"Super Mutant Brute" = "Super-Mutante bruto"
+"Nightkin" = "Criança da Noite"
+"Feral Ghoul" = "Ghoul selvagem"
+"Glowing One" = "Luminescente"
+"Ghoul" = "Ghoul"
+"Deathclaw" = "Garra da Morte"
+"Radroach" = "Radbarata"
+"Radscorpion" = "Radescorpião"
+"Bloatfly" = "Mosca inchada"
+"Mole Rat" = "Toupeira"
+"Brahmin" = "Brahmin"
+"Yao Guai" = "Yao Guai"
+"Mirelurk King" = "Rei Mirelurk"
+"Mirelurk Hunter" = "Caçador Mirelurk"
+"Mirelurk" = "Mirelurk"
+"Fire Ant" = "Formiga de fogo"
+"Giant Ant" = "Formiga gigante"
+"Raider" = "Saqueador"
+
+# ═══════════════════════════════════════════════════════════════
+# ROBOTS
+# ═══════════════════════════════════════════════════════════════
+"Protectron" = "Protectron"
+"Sentry Bot" = "Robô sentinela"
+"Eyebot" = "Eyebot"
+"Robobrain" = "Robo-cérebro"
+"Liberty Prime" = "Liberty Prime"
+
+# ═══════════════════════════════════════════════════════════════
+# FACTIONS
+# ═══════════════════════════════════════════════════════════════
+"Brotherhood of Steel" = "Irmandade do Aço"
+"Enclave" = "Enclave"
+
+# ═══════════════════════════════════════════════════════════════
+# WEAPONS
+# ═══════════════════════════════════════════════════════════════
+"Fat Man" = "Gordão"
+"Minigun" = "Minigun"
+"Missile Launcher" = "Lançador de mísseis"
+"Flamer" = "Lança-chamas"
+"Gatling Laser" = "Laser Gatling"
+"Gauss Rifle" = "Rifle Gauss"
+"Super Sledge" = "Super-Marreta"
+"Power Fist" = "Soco motorizado"
+"Laser Rifle" = "Rifle laser"
+"Laser Pistol" = "Pistola laser"
+"Plasma Rifle" = "Rifle de plasma"
+"Plasma Pistol" = "Pistola de plasma"
+"Frag Grenade" = "Granada de fragmentação"
+"Mini Nuke" = "Mini-Bomba Nuclear"
+"Assault Rifle" = "Fuzil de Assalto"
+"Hunting Rifle" = "Fuzil de Caça"
+"Sniper Rifle" = "Fuzil de Precisão"
+"Combat Shotgun" = "Espingarda de Combate"
+"10mm Pistol" = "Pistola 10mm"
+"10mm Submachine Gun" = "Submetralhadora 10mm"
+"Combat Knife" = "Faca de Combate"
+"Sledgehammer" = "Marreta"
+"Ripper" = "Esquartejador"
+"Shishkebab" = "Espeto de Kebab"
+"Tesla Cannon" = "Canhôo Tesla"
+
+# ═══════════════════════════════════════════════════════════════
+# BROTHERHOOD RANKS
+# ═══════════════════════════════════════════════════════════════
+"Elder" = "Ancião"
+"Paladin" = "Paladino"
+"Sentinel" = "Sentinela"
+"Scribe" = "Escriba"
+"Knight" = "Cavaleiro"
+"Initiate" = "Iniciado"
+
+# ═══════════════════════════════════════════════════════════════
+# MARCAS DE ALIMENTOS
+# ═══════════════════════════════════════════════════════════════
+"Sugar Bombs" = "Bombas de Açúcar"
+"Fancy Lads Snack Cakes" = "Bolinhos Senhorzinhos"
+"Dandy Boy Apples" = "Maçãs Dandy Boy"
+"InstaMash" = "InstaPurê"
+"Cram" = "Carne Enlatada"
+"Brahmin Steak" = "Bife de Brahmin"
+"Squirrel Stew" = "Ensopado de Esquilo"
+"Pork n' Beans" = "Porco com Feijão"
+"Gum Drops" = "Balas de Goma"
+
+# ═══════════════════════════════════════════════════════════════
+# MUNIÇÕES
+# ═══════════════════════════════════════════════════════════════
+"Microfusion Cell" = "Cêlula de Microfusão"
+"Electron Charge Pack" = "Cartucho Eletrônico"
+
+# ═══════════════════════════════════════════════════════════════
+# ARMADURAS
+# ═══════════════════════════════════════════════════════════════
+"Power Helmet" = "Elmo da Armadura Motorizada"
+"Raider Armor" = "Armadura de Saqueador"
+"Combat Armor" = "Armadura de Combate"
+"Leather Armor" = "Armadura de Couro"
+"Metal Armor" = "Armadura Metálica"
+"Recon Armor" = "Armadura de Reconhecimento"
+"Tesla Armor" = "Armadura Tesla"
+
+# ═══════════════════════════════════════════════════════════════
+# PERKS
+# ═══════════════════════════════════════════════════════════════
+"Bloody Mess" = "Banho de Sangue"
+"Pyromaniac" = "Piromaniíaco"
+"Explorer" = "Explorador"
+"Strong Back" = "Costas Fortes"
+"Pack Rat" = "Acumulador"
+"Mysterious Stranger" = "O Desconhecido Misterioso"
+"Rad Resistance" = "Resistência à Radiação"
+"Robotics Expert" = "Especialista em Robótica"
+"Cannibal" = "Canibal"
+"Fast Metabolism" = "Metabolismo Rápido"
+"Finesse" = "Finesse"
+"Paralyzing Palm" = "Palma Paralisante"
+"Grim Reaper's Sprint" = "Corrida do Ceifador"
+"Nerd Rage!" = "Fúria Nerd!"
+"Concentrated Fire" = "Fogo Concentrado"
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-PROTECTION: Portuguese terms that should not be re-translated
+# ═══════════════════════════════════════════════════════════════
+"Saqueador" = "Saqueador"
+"Ermo" = "Ermo"
+"Abrigo" = "Abrigo"
+"Super-Mutante" = "Super-Mutante"
+"Garra da Morte" = "Garra da Morte"
+"Irmandade do Aço" = "Irmandade do Aço"
+"Armadura motorizada" = "Armadura motorizada"
+"Criança da Noite" = "Criança da Noite"
+"Lança-chamas" = "Lança-chamas"
+"Lançador de mísseis" = "Lançador de mísseis"
+"Soco motorizado" = "Soco motorizado"

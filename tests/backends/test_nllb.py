@@ -632,3 +632,59 @@ class TestStripEcho:
         assert cls._strip_echo(
             "Vino tinto", "Red Wine"
         ) == "Vino tinto"
+
+
+class TestMultilangPostProcessing:
+    """Tests for language-aware post-processing in filler trim and cap."""
+
+    def test_trim_filler_french_est_le(self):
+        from modtranslator.backends.nllb import NLLBBackend
+        assert NLLBBackend._trim_hallucinated_filler(
+            "Sac de sang est le seul remède", "Blood Pack", "FR"
+        ) == "Sac de sang"
+
+    def test_trim_filler_french_aussi(self):
+        from modtranslator.backends.nllb import NLLBBackend
+        assert NLLBBackend._trim_hallucinated_filler(
+            "Kétamine aussi connue comme", "Ketamine", "FR"
+        ) == "Kétamine"
+
+    def test_trim_filler_german_ist_der(self):
+        from modtranslator.backends.nllb import NLLBBackend
+        assert NLLBBackend._trim_hallucinated_filler(
+            "Blutbeutel ist der Name eines Produkts", "Blood Pack", "DE"
+        ) == "Blutbeutel"
+
+    def test_trim_filler_italian_è_il(self):
+        from modtranslator.backends.nllb import NLLBBackend
+        assert NLLBBackend._trim_hallucinated_filler(
+            "Sacca di sangue è il prodotto", "Blood Pack", "IT"
+        ) == "Sacca di sangue"
+
+    def test_trim_filler_unknown_lang_passthrough(self):
+        """Languages without a filler pattern return translated unchanged."""
+        from modtranslator.backends.nllb import NLLBBackend
+        text = "Кровяной пакет это продукт"
+        assert NLLBBackend._trim_hallucinated_filler(text, "Blood Pack", "RU") == text
+
+    def test_cap_single_word_french_article(self):
+        """French article 'le' is recognized, allowing article + noun."""
+        from modtranslator.backends.nllb import NLLBBackend
+        assert NLLBBackend._cap_single_word_output(
+            "Le médicament de la douleur", "Stimpak", "FR"
+        ) == "Le médicament"
+
+    def test_cap_single_word_german_article(self):
+        """German article 'der' is recognized."""
+        from modtranslator.backends.nllb import NLLBBackend
+        assert NLLBBackend._cap_single_word_output(
+            "Der Stimulant der Energie", "Stimpak", "DE"
+        ) == "Der Stimulant"
+
+    def test_cap_single_word_unknown_lang_no_article(self):
+        """Unknown language: no article recognized, returns first word when >3 words output."""
+        from modtranslator.backends.nllb import NLLBBackend
+        # 4-word output for 1-word input, no RU articles recognized → first word
+        assert NLLBBackend._cap_single_word_output(
+            "Стимулятор боевой единицы армии", "Stimpak", "RU"
+        ) == "Стимулятор"

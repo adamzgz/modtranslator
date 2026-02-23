@@ -1,0 +1,374 @@
+# Glossary base Skyrim → French
+# Official Bethesda French localization terms.
+# Only includes terms that MT models translate incorrectly or inconsistently.
+
+[terms]
+
+# ═══════════════════════════════════════════════════════════════
+# RACES
+# ═══════════════════════════════════════════════════════════════
+"Altmer" = "Altmer"
+"High Elf" = "Haut-Elfe"
+"Bosmer" = "Bosmer"
+"Wood Elf" = "Elfe des Bois"
+"Dunmer" = "Dunmer"
+"Dark Elf" = "Elfe Noir"
+"Orsimer" = "Orsimer"
+"Breton" = "Breton"
+"Imperial" = "Impérial"
+"Nord" = "Nordique"
+"Redguard" = "Rougegarde"
+"Argonian" = "Argonien"
+"Khajiit" = "Khajiit"
+
+# ═══════════════════════════════════════════════════════════════
+# CITIES & HOLDS
+# ═══════════════════════════════════════════════════════════════
+"Whiterun" = "Blancherive"
+"Solitude" = "Solitude"
+"Windhelm" = "Ventebrume"
+"Riften" = "Riften"
+"Markarth" = "Markarth"
+"Dawnstar" = "Aube-Étoile"
+"Winterhold" = "Froidevaux"
+"Morthal" = "Morthal"
+"Falkreath" = "Falkreath"
+"High Hrothgar" = "Pic-Hrothgar"
+"Throat of the World" = "Gorge du Monde"
+"Riverwood" = "Courant-Boisé"
+"Helgen" = "Helgen"
+"Dragonsbridge" = "Pont du Dragon"
+
+# ═══════════════════════════════════════════════════════════════
+# FACTIONS & GUILDS
+# ═══════════════════════════════════════════════════════════════
+"Companions" = "Compagnons"
+"Thieves Guild" = "Guilde des Voleurs"
+"Dark Brotherhood" = "Confrérie Noire"
+"College of Winterhold" = "Collège de Froidevaux"
+"Stormcloaks" = "Manteaux-de-Tempête"
+"Blades" = "Lames"
+"Greybeards" = "Grisebarbes"
+"Thalmor" = "Thalmor"
+"Forsworn" = "Réprouvés"
+"Silver Hand" = "Main d'Argent"
+"Volkihar" = "Volkihar"
+"Dawnguard" = "Aube-Gardienne"
+"Penitus Oculatus" = "Penitus Oculatus"
+"Bards College" = "Collège des Bardes"
+"Nightingales" = "Rossignols"
+
+# ═══════════════════════════════════════════════════════════════
+# DRAGON SHOUTS
+# ═══════════════════════════════════════════════════════════════
+"Unrelenting Force" = "Force inébranlable"
+"Fus Ro Dah" = "Fus Ro Dah"
+"Whirlwind Sprint" = "Sprint tourbillonnant"
+"Fire Breath" = "Souffle de feu"
+"Frost Breath" = "Souffle de givre"
+"Ice Form" = "Forme de glace"
+"Storm Call" = "Appel de la tempête"
+"Clear Skies" = "Ciel dégagé"
+"Dragonrend" = "Déchirement du Dragon"
+"Marked for Death" = "Marqué pour la mort"
+"Slow Time" = "Ralentissement du temps"
+"Become Ethereal" = "Devenir éthéré"
+"Aura Whisper" = "Murmure de l'Aura"
+"Throw Voice" = "Projeter la voix"
+"Dismay" = "Désarroi"
+"Animal Allegiance" = "Allégeance animale"
+"Elemental Fury" = "Furie élémentaire"
+"Call Dragon" = "Appel du Dragon"
+"Call of Valor" = "Appel de la Valeur"
+"Disarm" = "Désarmement"
+"Drain Vitality" = "Absorption de vitalité"
+"Cyclone" = "Cyclone"
+
+# ═══════════════════════════════════════════════════════════════
+# CREATURES
+# ═══════════════════════════════════════════════════════════════
+"Draugr" = "Draugr"
+"Falmer" = "Falmer"
+"Chaurus" = "Chaurus"
+"Spriggan" = "Spriggan"
+"Hagraven" = "Cornehaie"
+"Wisp" = "Feu follet"
+"Wispmother" = "Mère des feux follets"
+"Mudcrab" = "Crabe des marais"
+"Skeever" = "Skeever"
+"Sabre Cat" = "Chat sabre"
+"Troll" = "Troll"
+"Frost Troll" = "Troll de givre"
+"Giant" = "Géant"
+"Mammoth" = "Mammouth"
+"Horker" = "Horker"
+"Frostbite Spider" = "Araignée glaçante"
+"Dragon" = "Dragon"
+"Dragon Priest" = "Prêtre Dragon"
+"Dwarven Centurion" = "Centurion dwemer"
+"Dwarven Sphere" = "Sphère dwemer"
+"Dwarven Spider" = "Araignée dwemer"
+"Gargoyle" = "Gargouille"
+"Death Hound" = "Chien de la Mort"
+"Riekling" = "Riekling"
+"Lurker" = "Guetteur"
+"Seeker" = "Chercheur"
+"Werebear" = "Ours-garou"
+"Werewolf" = "Loup-garou"
+"Ice Wraith" = "Spectre de glace"
+"Frost Atronach" = "Atronach de givre"
+"Storm Atronach" = "Atronach de tempête"
+"Flame Atronach" = "Atronach de feu"
+"Dremora" = "Drémora"
+"Vampire" = "Vampire"
+"Vampire Lord" = "Seigneur Vampire"
+"Ancient Dragon" = "Dragon ancestral"
+"Elder Dragon" = "Dragon ancien"
+"Blood Dragon" = "Dragon de sang"
+"Frost Dragon" = "Dragon de givre"
+"Skeleton" = "Squelette"
+
+# ═══════════════════════════════════════════════════════════════
+# GAME TERMS
+# ═══════════════════════════════════════════════════════════════
+"Dragonborn" = "Enfant-Dragon"
+"Dovahkiin" = "Dovahkiin"
+"Shout" = "Cri"
+"Word of Power" = "Mot de Pouvoir"
+"Word Wall" = "Mur de Pouvoir"
+"Dragon Soul" = "Âme de Dragon"
+"Thu'um" = "Thu'um"
+"Daedric" = "Daédrique"
+"Daedra" = "Daedra"
+"Aedra" = "Aedra"
+"Dwemer" = "Dwemer"
+"Jarl" = "Jarl"
+"Thane" = "Thane"
+"Housecarl" = "Housecarl"
+"Dragonstone" = "Pierre de Dragon"
+"Dragon Claw" = "Griffe de Dragon"
+"Black Book" = "Livre Noir"
+"Black Books" = "Livres Noirs"
+
+# ═══════════════════════════════════════════════════════════════
+# DAEDRIC PRINCES
+# ═══════════════════════════════════════════════════════════════
+"Azura" = "Azura"
+"Boethiah" = "Boethiah"
+"Clavicus Vile" = "Clavicus Vile"
+"Hermaeus Mora" = "Hermaeus Mora"
+"Hircine" = "Hircine"
+"Malacath" = "Malacath"
+"Mehrunes Dagon" = "Mehrunes Dagon"
+"Mephala" = "Mephala"
+"Meridia" = "Meridia"
+"Molag Bal" = "Molag Bal"
+"Namira" = "Namira"
+"Nocturnal" = "Nocturnal"
+"Peryite" = "Peryite"
+"Sanguine" = "Sanguine"
+"Sheogorath" = "Sheogorath"
+"Vaermina" = "Vaermina"
+
+# ═══════════════════════════════════════════════════════════════
+# DAEDRIC ARTIFACTS
+# ═══════════════════════════════════════════════════════════════
+"Azura's Star" = "Étoile d'Azura"
+"Dawnbreaker" = "Briseur d'Aurore"
+"Mehrunes' Razor" = "Rasoir de Mehrunes"
+"Skeleton Key" = "Passe-partout"
+"Wabbajack" = "Wabbajack"
+"Volendrung" = "Volendrung"
+"Mace of Molag Bal" = "Masse de Molag Bal"
+"Ebony Blade" = "Lame d'ébène"
+"Spellbreaker" = "Brise-sort"
+"Savior's Hide" = "Peau du Sauveur"
+"Oghma Infinium" = "Oghma Infinium"
+
+# ═══════════════════════════════════════════════════════════════
+# CONSUMABLES & ITEMS
+# ═══════════════════════════════════════════════════════════════
+"Skooma" = "Skooma"
+"Moon Sugar" = "Sucre lunaire"
+"Sweetroll" = "Brioche"
+"Mead" = "Hydromel"
+"Soul Gem" = "Pierre d'âme"
+"Black Soul Gem" = "Pierre d'âme noire"
+"Grand Soul Gem" = "Grande pierre d'âme"
+"Elder Scroll" = "Antique Parchemin"
+"Lockpick" = "Crochet"
+"Dragon Bone" = "Os de Dragon"
+"Dragon Scale" = "Écaille de Dragon"
+
+# ═══════════════════════════════════════════════════════════════
+# SKILLS
+# ═══════════════════════════════════════════════════════════════
+"One-Handed" = "Une main"
+"Two-Handed" = "Deux mains"
+"Archery" = "Arc"
+"Block" = "Blocage"
+"Heavy Armor" = "Armure lourde"
+"Light Armor" = "Armure légère"
+"Smithing" = "Forge"
+"Enchanting" = "Enchantement"
+"Alchemy" = "Alchimie"
+"Speech" = "Éloquence"
+"Pickpocket" = "Vol à la tire"
+"Lockpicking" = "Crochetage"
+"Sneak" = "Discrétion"
+"Conjuration" = "Conjuration"
+"Destruction" = "Destruction"
+"Illusion" = "Illusion"
+"Restoration" = "Restauration"
+"Alteration" = "Altération"
+
+# ═══════════════════════════════════════════════════════════════
+# EQUIPMENT MATERIALS
+# ═══════════════════════════════════════════════════════════════
+"Iron" = "Fer"
+"Steel" = "Acier"
+"Elven" = "Elfique"
+"Orcish" = "Orque"
+"Glass" = "Verre"
+"Ebony" = "Ébène"
+
+# ═══════════════════════════════════════════════════════════════
+# KEY LOCATIONS
+# ═══════════════════════════════════════════════════════════════
+"Skyrim" = "Skyrim"
+"Sovngarde" = "Sovngarde"
+"Solstheim" = "Solstheim"
+"Soul Cairn" = "Cairn des Âmes"
+"Apocrypha" = "Apocrypha"
+"Labyrinthian" = "Labyrintia"
+
+# ═══════════════════════════════════════════════════════════════
+# GAME MECHANICS
+# ═══════════════════════════════════════════════════════════════
+"Magicka" = "Magicka"
+"Stamina" = "Endurance"
+"Health" = "Vie"
+"Cooldown" = "Temps de recharge"
+"Vanilla" = "jeu de base"
+"Standing Stone" = "Pierre Dressée"
+"Guardian Stone" = "Pierre Gardienne"
+
+# ═══════════════════════════════════════════════════════════════
+# CHARACTERS
+# ═══════════════════════════════════════════════════════════════
+"Alduin" = "Alduin"
+"Paarthurnax" = "Paarthurnax"
+"Ulfric Stormcloak" = "Ulfric Mantempête"
+"Jarl Balgruuf" = "Jarl Balgruuf"
+"Lydia" = "Lydia"
+"Serana" = "Serana"
+"Harkon" = "Harkon"
+"Miraak" = "Miraak"
+"Odahviing" = "Odahviing"
+"Durnehviir" = "Durnehviir"
+"Delphine" = "Delphine"
+"Esbern" = "Esbern"
+"Brynjolf" = "Brynjolf"
+"Mercer Frey" = "Mercer Frey"
+"Maven Black-Briar" = "Maven Épine-Noire"
+"Astrid" = "Astrid"
+"Cicero" = "Cicéron"
+"Mjoll the Lioness" = "Mjoll la Lionne"
+"Aela the Huntress" = "Aela la Chasseuse"
+"Farkas" = "Farkas"
+"Vilkas" = "Vilkas"
+"Kodlak Whitemane" = "Kodlak Crineblanc"
+"J'zargo" = "J'zargo"
+"Onmund" = "Onmund"
+"Brelyna Maryon" = "Brelyna Maryon"
+"Ancano" = "Ancano"
+"Mirabelle Ervine" = "Mirabelle Ervine"
+"Arch-Mage" = "Archimage"
+"Harbinger" = "Précurseur"
+
+# ═══════════════════════════════════════════════════════════════
+# UNIQUE WEAPONS
+# ═══════════════════════════════════════════════════════════════
+"Nightingale Blade" = "Lame du Rossignol"
+"Nightingale Bow" = "Arc du Rossignol"
+"Chillrend" = "Frisson"
+"Dragonbane" = "Tueur de Dragons"
+"The Pale Blade" = "La Lame Pâle"
+"Meridia's Beacon" = "Balise de Méridiah"
+"Auriel's Bow" = "Arc d'Auriel"
+"Auriel's Shield" = "Bouclier d'Auriel"
+"Harkon's Sword" = "Épée de Harkon"
+"Dawnguard Rune Axe" = "Hache Runique des Alba Custode"
+"Dawnguard Rune Hammer" = "Marteau Runique des Alba Custode"
+"Grimsever" = "Briseur"
+"Bloodthorn" = "Épinetose"
+"Blade of Woe" = "Lame du Malheur"
+"Windshear" = "Tranche-Vent"
+"Ghostblade" = "Lame Fantôme"
+
+# ═══════════════════════════════════════════════════════════════
+# SPELLS
+# ═══════════════════════════════════════════════════════════════
+"Flames" = "Flammes"
+"Frostbite" = "Engelure"
+"Sparks" = "Étincelles"
+"Healing" = "Guérison"
+"Candlelight" = "Lumière de Bougie"
+"Magelight" = "Lumière Magique"
+"Soul Trap" = "Capture d'Âme"
+"Fireball" = "Boule de Feu"
+"Fire Storm" = "Tempête de Feu"
+"Lightning Bolt" = "Éclair"
+"Chain Lightning" = "Éclair en Chaîne"
+"Thunderbolt" = "Tonnerre"
+"Ice Spike" = "Pointe de Glace"
+"Ice Storm" = "Tempête de Glace"
+"Blizzard" = "Blizzard"
+"Conjure Familiar" = "Invoquer un Familier"
+"Raise Zombie" = "Relever un Zombie"
+"Reanimate Corpse" = "Réanimer un Cadavre"
+"Conjure Flame Atronach" = "Invoquer un Atronach de Flamme"
+"Conjure Frost Atronach" = "Invoquer un Atronach de Givre"
+"Conjure Storm Atronach" = "Invoquer un Atronach de Tempête"
+"Conjure Dremora Lord" = "Invoquer un Seigneur Dremora"
+"Fury" = "Fureur"
+"Fear" = "Peur"
+"Calm" = "Calme"
+"Muffle" = "Étouffement"
+"Invisibility" = "Invisibilité"
+"Detect Life" = "Détection du Vivant"
+"Fast Healing" = "Guérison Rapide"
+"Close Wounds" = "Fermer les Plaies"
+"Healing Hands" = "Mains Guérisseuses"
+"Turn Lesser Undead" = "Refouler les Morts-Vivants Mineurs"
+"Stoneflesh" = "Peau de Pierre"
+"Oakflesh" = "Peau de Chêne"
+"Ironflesh" = "Peau de Fer"
+"Ebonyflesh" = "Peau d'Ébène"
+"Dragonhide" = "Écailles de Dragon"
+"Telekinesis" = "Télékinésie"
+"Transmute" = "Transmutation"
+"Waterbreathing" = "Respiration Aquatique"
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-PROTECTION: French terms that should not be re-translated
+# ═══════════════════════════════════════════════════════════════
+"Enfant-Dragon" = "Enfant-Dragon"
+"Loup-garou" = "Loup-garou"
+"Grisebarbes" = "Grisebarbes"
+"Réprouvés" = "Réprouvés"
+"Confrérie Noire" = "Confrérie Noire"
+"Guilde des Voleurs" = "Guilde des Voleurs"
+"Manteaux-de-Tempête" = "Manteaux-de-Tempête"
+"Rossignols" = "Rossignols"
+"Gargouille" = "Gargouille"
+"Feu follet" = "Feu follet"
+"Cornehaie" = "Cornehaie"
+"Pierre d'âme" = "Pierre d'âme"
+"Antique Parchemin" = "Antique Parchemin"
+"Passe-partout" = "Passe-partout"
+
+"Lame du Rossignol" = "Lame du Rossignol"
+"Tueur de Dragons" = "Tueur de Dragons"
+"Lame du Malheur" = "Lame du Malheur"
+"Capture d'Âme" = "Capture d'Âme"
