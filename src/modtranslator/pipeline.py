@@ -22,6 +22,7 @@ from threading import Event
 
 from modtranslator.backends.base import TranslationBackend
 from modtranslator.core.constants import Game
+from modtranslator.core.io_utils import atomic_write
 
 # Files larger than this are parsed twice to avoid holding both the plugin
 # and the translation model in memory simultaneously.
@@ -1143,7 +1144,7 @@ def batch_translate_mcm(
 
                 out_path.parent.mkdir(parents=True, exist_ok=True)
                 content = ''.join(new_lines)
-                out_path.write_bytes(b'\xff\xfe' + content.encode('utf-16-le'))
+                atomic_write(out_path, b'\xff\xfe' + content.encode('utf-16-le'))
                 result.success_count += 1
             except Exception as e:
                 result.error_count += 1
@@ -1159,10 +1160,10 @@ def batch_translate_mcm(
                     if orig_text in translations:
                         data[key] = translations[orig_text]
                 out_json.parent.mkdir(parents=True, exist_ok=True)
-                out_json.write_text(
-                    json.dumps(data, indent=2, ensure_ascii=False) + "\n",
-                    encoding="utf-8",
+                json_bytes = (json.dumps(data, indent=2, ensure_ascii=False) + "\n").encode(
+                    "utf-8"
                 )
+                atomic_write(out_json, json_bytes)
                 result.success_count += 1
             except Exception as e:
                 result.error_count += 1

@@ -16,6 +16,8 @@ import struct
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from modtranslator.core.io_utils import atomic_write
+
 logger = logging.getLogger(__name__)
 
 PEX_MAGIC = 0xFA57C0DE
@@ -375,4 +377,4 @@ def save_pex(pex: PexFile, path: str | Path) -> None:
     """Serialize and save a .pex file to disk."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(serialize_pex(pex))
+    atomic_write(path, serialize_pex(pex))

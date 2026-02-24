@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 from pathlib import Path
 
+from modtranslator.core.io_utils import atomic_write
 from modtranslator.core.parser import parse_plugin
 from modtranslator.core.records import PluginFile
 from modtranslator.core.string_table import load_string_tables, save_string_tables
@@ -36,8 +37,9 @@ def save_plugin(
     If the plugin has string tables, also writes the external string table files.
     """
     path = Path(path)
-    with open(path, "wb") as f:
-        write_plugin(plugin, f)
+    buf = io.BytesIO()
+    write_plugin(plugin, buf)
+    atomic_write(path, buf.getvalue())
 
     if plugin.string_tables is not None:
         save_string_tables(plugin.string_tables, path, language=output_language)

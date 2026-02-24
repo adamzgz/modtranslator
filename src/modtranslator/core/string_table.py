@@ -16,6 +16,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
+from modtranslator.core.io_utils import atomic_write
+
 logger = logging.getLogger(__name__)
 
 
@@ -343,7 +345,7 @@ def save_string_tables(
             continue
         filename = f"{stem}_{language}.{ext}"
         filepath = strings_dir / filename
-        filepath.write_bytes(serialize_string_table(table))
+        atomic_write(filepath, serialize_string_table(table))
         written.append(filepath)
 
     return written
