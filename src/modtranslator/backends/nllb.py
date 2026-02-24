@@ -9,7 +9,9 @@ import shutil
 import subprocess
 import sys
 import warnings
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from pathlib import Path
 
 from modtranslator.backends.base import TranslationBackend
@@ -743,18 +745,17 @@ class NLLBBackend(TranslationBackend):
             # this attribute during get_vocabulary(). For NLLB, all language
             # tokens are already within the main vocab range, so an empty list
             # is safe — no tokens are missed.
-            self._patch_tokenizer_compat()
+            with self._patch_tokenizer_compat():
+                from ctranslate2.converters.transformers import TransformersConverter
 
-            from ctranslate2.converters.transformers import TransformersConverter
-
-            converter = TransformersConverter(
-                self._hf_model_name, low_cpu_mem_usage=True,
-            )
-            converter.convert(
-                str(output_dir),
-                quantization=self._compute_type,
-                force=True,
-            )
+                converter = TransformersConverter(
+                    self._hf_model_name, low_cpu_mem_usage=True,
+                )
+                converter.convert(
+                    str(output_dir),
+                    quantization=self._compute_type,
+                    force=True,
+                )
         except Exception as e:
             # Clean up partial conversion; swallow cleanup errors to preserve original
             try:
@@ -769,8 +770,9 @@ class NLLBBackend(TranslationBackend):
             _delete_hf_cache(self._hf_model_name)
 
     @staticmethod
-    def _patch_tokenizer_compat() -> None:
-        """Patch transformers 5.0+ tokenizer for CTranslate2 converter compat.
+    @contextmanager
+    def _patch_tokenizer_compat() -> Iterator[None]:
+        """Temporarily patch transformers 5.0+ tokenizer for CT2 converter compat.
 
         transformers 5.0 replaced tokenizer classes with TokenizersBackend
         which lacks additional_special_tokens. The __getattr__ that raises
@@ -778,13 +780,13 @@ class NLLBBackend(TranslationBackend):
         We patch it to return [] for that specific attribute so the CT2
         converter's get_vocabulary() doesn't crash. All NLLB language tokens
         are already in the main vocab range, so nothing is lost.
+
+        The patch is scoped to the context manager and reverted on exit.
         """
         try:
             from transformers.tokenization_utils_base import PreTrainedTokenizerBase
         except ImportError:
-            return
-
-        if hasattr(PreTrainedTokenizerBase, "_modtranslator_patched"):
+            yield
             return
 
         original_getattr = PreTrainedTokenizerBase.__getattr__
@@ -795,4 +797,7 @@ class NLLBBackend(TranslationBackend):
             return original_getattr(self, key)  # type: ignore[arg-type]
 
         PreTrainedTokenizerBase.__getattr__ = _patched_getattr  # type: ignore[assignment]
-        PreTrainedTokenizerBase._modtranslator_patched = True  # type: ignore[attr-defined]
+        try:
+            yield
+        finally:
+            PreTrainedTokenizerBase.__getattr__ = original_getattr  # type: ignore[assignment]
