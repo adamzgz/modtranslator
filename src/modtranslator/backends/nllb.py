@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import sys
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -253,6 +254,13 @@ class NLLBBackend(TranslationBackend):
         """Rebuild translator on CPU after CUDA failure."""
         import ctranslate2
 
+        warnings.warn(
+            "CUDA error during translation — falling back to CPU. "
+            "Translation will be significantly slower.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        self._translator = None
         self._device = "cpu"
         self._compute_type = "int8"
         self._ensure_model()

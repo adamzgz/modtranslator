@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import shutil
 import sys
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -247,9 +248,16 @@ class OpusMTBackend(TranslationBackend):
         """Rebuild translator on CPU after CUDA failure."""
         import ctranslate2
 
+        warnings.warn(
+            "CUDA error during translation — falling back to CPU. "
+            "Translation will be significantly slower.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        key = (source, target)
+        self._translators.pop(key, None)
         self._device = "cpu"
         self._compute_type = "int8"
-        key = (source, target)
         self._ensure_model(source, target)
         model_name = self._model_name(source, target)
         ct2_dir = str(self._get_ct2_dir(model_name))
