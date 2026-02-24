@@ -258,7 +258,9 @@ class TestHybridFallback:
 
             backend = HybridBackend(device="cpu")
             texts = ["Short", "Short two", "A much longer string that exceeds threshold"]
-            result = backend.translate_batch(texts, "RU")
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                result = backend.translate_batch(texts, "RU")
 
             # All texts go to NLLB in one chunk
             mock_nllb.translate_batch.assert_called_once_with(texts, "RU", None)

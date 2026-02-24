@@ -98,14 +98,14 @@ class TestUIStrings:
 class TestSettings:
     def test_load_returns_empty_dict_when_file_missing(self, tmp_path: Path) -> None:
         fake_file = tmp_path / "nonexistent.json"
-        with patch("modtranslator.gui.app._SETTINGS_FILE", fake_file):
+        with patch("modtranslator.gui._widgets._SETTINGS_FILE", fake_file):
             result = _load_settings()
         assert result == {}
 
     def test_load_returns_empty_dict_on_corrupt_json(self, tmp_path: Path) -> None:
         fake_file = tmp_path / "bad.json"
         fake_file.write_text("{invalid json", encoding="utf-8")
-        with patch("modtranslator.gui.app._SETTINGS_FILE", fake_file):
+        with patch("modtranslator.gui._widgets._SETTINGS_FILE", fake_file):
             result = _load_settings()
         assert result == {}
 
@@ -113,7 +113,7 @@ class TestSettings:
         fake_file = tmp_path / "settings.json"
         data = {"lang": "ES", "backend": "hybrid"}
         fake_file.write_text(json.dumps(data), encoding="utf-8")
-        with patch("modtranslator.gui.app._SETTINGS_FILE", fake_file):
+        with patch("modtranslator.gui._widgets._SETTINGS_FILE", fake_file):
             result = _load_settings()
         assert result == data
 
@@ -121,8 +121,8 @@ class TestSettings:
         settings_dir = tmp_path / "subdir"
         settings_file = settings_dir / "settings.json"
         with (
-            patch("modtranslator.gui.app._SETTINGS_DIR", settings_dir),
-            patch("modtranslator.gui.app._SETTINGS_FILE", settings_file),
+            patch("modtranslator.gui._widgets._SETTINGS_DIR", settings_dir),
+            patch("modtranslator.gui._widgets._SETTINGS_FILE", settings_file),
         ):
             _save_settings({"key": "value"})
         assert settings_file.exists()
@@ -133,8 +133,8 @@ class TestSettings:
         deep_dir = tmp_path / "a" / "b" / "c"
         settings_file = deep_dir / "settings.json"
         with (
-            patch("modtranslator.gui.app._SETTINGS_DIR", deep_dir),
-            patch("modtranslator.gui.app._SETTINGS_FILE", settings_file),
+            patch("modtranslator.gui._widgets._SETTINGS_DIR", deep_dir),
+            patch("modtranslator.gui._widgets._SETTINGS_FILE", settings_file),
         ):
             _save_settings({"nested": True})
         assert deep_dir.exists()
@@ -145,8 +145,8 @@ class TestSettings:
         settings_file = settings_dir / "settings.json"
         data = {"lang": "FR", "cache": True, "deepl_key": "abc123"}
         with (
-            patch("modtranslator.gui.app._SETTINGS_DIR", settings_dir),
-            patch("modtranslator.gui.app._SETTINGS_FILE", settings_file),
+            patch("modtranslator.gui._widgets._SETTINGS_DIR", settings_dir),
+            patch("modtranslator.gui._widgets._SETTINGS_FILE", settings_file),
         ):
             _save_settings(data)
             result = _load_settings()
