@@ -13,6 +13,7 @@ import json
 import re as _re
 import sys
 import time as _time
+import warnings
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
@@ -625,20 +626,27 @@ def batch_translate_esp(
 
         # Cache write-back
         if cache is not None:
-            cache_entries: list[tuple[str, str, str, str]] = []
-            for ctx in contexts:
-                if ctx.status == "written":
-                    for key, orig in zip(
-                        ctx.to_translate_keys,
-                        ctx.to_translate_originals,
-                        strict=True,
-                    ):
-                        t_text = ctx.translations.get(key, "")
-                        if t_text:
-                            cache_entries.append((key, lang, orig, t_text))
-            if cache_entries:
-                cache.put_batch(cache_entries, backend=backend_label)
-            cache.close()
+            try:
+                cache_entries: list[tuple[str, str, str, str]] = []
+                for ctx in contexts:
+                    if ctx.status == "written":
+                        for key, orig in zip(
+                            ctx.to_translate_keys,
+                            ctx.to_translate_originals,
+                            strict=True,
+                        ):
+                            t_text = ctx.translations.get(key, "")
+                            if t_text:
+                                cache_entries.append((key, lang, orig, t_text))
+                if cache_entries:
+                    cache.put_batch(cache_entries, backend=backend_label)
+            except Exception as exc:
+                warnings.warn(
+                    f"Failed to write translation cache: {exc}",
+                    stacklevel=1,
+                )
+            finally:
+                cache.close()
 
         # Collect results
         for ctx in contexts:
@@ -778,15 +786,23 @@ def batch_translate_pex(
             translations[orig] = trans
 
         # Cache new translations
-        if cache is not None and translated:
-            cache_entries = [
-                (orig, lang, orig, translations[orig])
-                for orig in uncached_originals
-                if orig in translations
-            ]
-            if cache_entries:
-                cache.put_batch(cache_entries, backend=backend_label)
-            cache.close()
+        if cache is not None:
+            try:
+                if translated:
+                    cache_entries = [
+                        (orig, lang, orig, translations[orig])
+                        for orig in uncached_originals
+                        if orig in translations
+                    ]
+                    if cache_entries:
+                        cache.put_batch(cache_entries, backend=backend_label)
+            except Exception as exc:
+                warnings.warn(
+                    f"Failed to write translation cache: {exc}",
+                    stacklevel=1,
+                )
+            finally:
+                cache.close()
 
         # Phase 3: Write
         files_with_text = len(all_entries)
@@ -1093,15 +1109,23 @@ def batch_translate_mcm(
             translations[orig] = trans
 
         # Cache new translations
-        if cache is not None and translated:
-            cache_entries = [
-                (orig, lang, orig, translations[orig])
-                for orig in uncached_originals
-                if orig in translations
-            ]
-            if cache_entries:
-                cache.put_batch(cache_entries, backend=backend_label)
-            cache.close()
+        if cache is not None:
+            try:
+                if translated:
+                    cache_entries = [
+                        (orig, lang, orig, translations[orig])
+                        for orig in uncached_originals
+                        if orig in translations
+                    ]
+                    if cache_entries:
+                        cache.put_batch(cache_entries, backend=backend_label)
+            except Exception as exc:
+                warnings.warn(
+                    f"Failed to write translation cache: {exc}",
+                    stacklevel=1,
+                )
+            finally:
+                cache.close()
 
         # Phase 3: Write
         write_idx = 0
@@ -1176,11 +1200,13 @@ def get_cache_info() -> dict[str, object]:
     from modtranslator.translation.cache import TranslationCache
 
     cache = TranslationCache()
-    info = {
-        "count": cache.count(),
-        "path": str(cache._db_path),
-    }
-    cache.close()
+    try:
+        info = {
+            "count": cache.count(),
+            "path": str(cache._db_path),
+        }
+    finally:
+        cache.close()
     return info
 
 
@@ -1189,8 +1215,10 @@ def clear_cache() -> int:
     from modtranslator.translation.cache import TranslationCache
 
     cache = TranslationCache()
-    deleted = cache.clear()
-    cache.close()
+    try:
+        deleted = cache.clear()
+    finally:
+        cache.close()
     return deleted
 
 
