@@ -845,3 +845,37 @@ class TestOomRetry:
             result = backend.translate_batch(["Hello"], "ES")
             assert len(result) == 1
             assert backend._gpu_batch_size == 64  # unchanged, no OOM retry
+
+
+class TestNLLBEdgeCases:
+    def test_unsupported_source_language(self, mock_nllb_env):
+        """Unsupported source language raises ValueError."""
+        backend = mock_nllb_env.NLLBBackend(
+            device="cpu", models_dir=mock_nllb_env.models_dir,
+        )
+
+        with pytest.raises(ValueError, match="Unsupported source language"):
+            backend.translate_batch(["Hello"], "ES", source_lang="XX")
+
+    def test_unsupported_target_language(self, mock_nllb_env):
+        """Unsupported target language raises ValueError."""
+        backend = mock_nllb_env.NLLBBackend(
+            device="cpu", models_dir=mock_nllb_env.models_dir,
+        )
+
+        with pytest.raises(ValueError, match="Unsupported target language"):
+            backend.translate_batch(["Hello"], "XX")
+
+    def test_compute_gpu_batch_size_zero_vram(self):
+        """_compute_gpu_batch_size with VRAM=0 clamps to 16."""
+        from modtranslator.backends.nllb import _compute_gpu_batch_size
+
+        result = _compute_gpu_batch_size(0)
+        assert result == 16
+
+    def test_compute_gpu_batch_size_at_model_size(self):
+        """_compute_gpu_batch_size with VRAM exactly at model size clamps to 16."""
+        from modtranslator.backends.nllb import _NLLB_MODEL_VRAM_MB, _compute_gpu_batch_size
+
+        result = _compute_gpu_batch_size(_NLLB_MODEL_VRAM_MB)
+        assert result == 16

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import io
 
+import pytest
+
 from modtranslator.core.plugin import load_plugin, plugin_from_bytes, plugin_to_bytes, save_plugin
 from modtranslator.core.writer import write_plugin
-from tests.conftest import make_plugin, make_subrecord
+from tests.conftest import make_plugin, make_skyrim_plugin, make_subrecord
 
 
 class TestPluginToBytes:
@@ -115,3 +117,45 @@ class TestLoadSavePlugin:
         # Verify at least one string table file was created
         st_files = list(tmp_path.glob("Test_*.*STRINGS"))
         assert len(st_files) > 0
+
+
+class TestPluginErrorCases:
+    def test_load_nonexistent_file(self, tmp_path):
+        """load_plugin with non-existent file raises FileNotFoundError."""
+        fake_path = tmp_path / "nonexistent.esp"
+        with pytest.raises(FileNotFoundError):
+            load_plugin(fake_path)
+
+    def test_plugin_from_bytes_truncated(self):
+        """plugin_from_bytes with truncated/invalid bytes raises ValueError."""
+        with pytest.raises(ValueError):
+            plugin_from_bytes(b"TES4" + b"\x00" * 4)
+
+    def test_plugin_from_bytes_empty(self):
+        """plugin_from_bytes with empty bytes raises ValueError."""
+        with pytest.raises(ValueError):
+            plugin_from_bytes(b"")
+
+    def test_load_localized_plugin_missing_string_tables(self, tmp_path):
+        """load_plugin with localized flag but no .STRINGS files → empty string tables."""
+        from modtranslator.core.constants import RecordFlag
+
+        plugin = make_skyrim_plugin(
+            records=[("WEAP", 0x100, [make_subrecord("FULL", "Sword")])],
+            localized=True,
+        )
+        # Force the localized flag in the header
+        plugin.header.flags |= RecordFlag.LOCALIZED
+
+        path = tmp_path / "Test.esp"
+        with open(path, "wb") as f:
+            write_plugin(plugin, f)
+
+        loaded = load_plugin(path)
+        # Plugin is localized but no string table files exist
+        # string_tables should be loaded (possibly empty) or None
+        if loaded.string_tables is not None:
+            # All tables should be empty
+            assert loaded.string_tables.strings.entries == {}
+            assert loaded.string_tables.dlstrings.entries == {}
+            assert loaded.string_tables.ilstrings.entries == {}

@@ -129,6 +129,76 @@ class TestSkyrimPatcher:
         assert sts.dlstrings.entries[10] == "Un arma fina."
 
 
+class TestPatcherEdgeCases:
+    def test_empty_strings_list(self):
+        """apply_translations with empty strings list returns 0."""
+        patched = apply_translations([], {"some_key": "some_value"})
+        assert patched == 0
+
+    def test_localized_string_id_without_string_tables(self):
+        """Localized string (string_id set) but string_tables=None falls to inline."""
+        sts = StringTableSet()
+        sts.strings = StringTable(StringTableType.STRINGS, {42: "Iron Sword"})
+        sts.build_merged()
+
+        plugin = make_skyrim_plugin(
+            records=[("WEAP", 0x100, [
+                make_subrecord("EDID", "TestSword"),
+                make_string_id_subrecord("FULL", 42),
+            ])],
+            localized=True,
+            string_tables=sts,
+        )
+
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+        assert strings[0].string_id == 42
+
+        # Pass string_tables=None — the patcher should still patch (inline path)
+        translations = {strings[0].key: "Espada de Hierro"}
+        patched = apply_translations(strings, translations, string_tables=None)
+        # Falls to inline encode_string path since string_tables is None
+        assert patched == 1
+
+    def test_localized_string_id_not_in_any_table(self):
+        """Localized string where string_id doesn't exist in any table → patched count = 0."""
+        from modtranslator.translation.extractor import TranslatableString
+
+        sts = StringTableSet()
+        sts.strings = StringTable(StringTableType.STRINGS, {99: "Other"})
+        sts.build_merged()
+
+        # Construct a TranslatableString with string_id=42 (not in any table)
+        sub = make_string_id_subrecord("FULL", 42)
+        ts = TranslatableString(
+            record_type=b"WEAP",
+            subrecord_type=b"FULL",
+            form_id=0x100,
+            original_text="Missing Text",
+            subrecord=sub,
+            string_id=42,
+        )
+
+        translations = {ts.key: "Espada"}
+        patched = apply_translations([ts], translations, string_tables=sts)
+        assert patched == 0
+
+    def test_encode_string_fallback_non_cp1252(self):
+        """Text with non-cp1252 chars (e.g. emoji) triggers UTF-8 fallback in encode_string."""
+        plugin = make_plugin([
+            ("WEAP", 0x100, [make_subrecord("FULL", "Sword")]),
+        ])
+        strings = extract_strings(plugin)
+        translations = {strings[0].key: "Espada \U0001f5e1"}  # 🗡 emoji
+        patched = apply_translations(strings, translations)
+        assert patched == 1
+        # Should have fallen back to UTF-8 encoding
+        sub = strings[0].subrecord
+        raw = bytes(sub.data).rstrip(b"\x00")
+        decoded = raw.decode("utf-8")
+        assert "\U0001f5e1" in decoded
+
+
 class TestFo4Patcher:
     def test_patch_fo4_localized_updates_string_table(self):
         """Patching a FO4 localized string updates the string table."""
