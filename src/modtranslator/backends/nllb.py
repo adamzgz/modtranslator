@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 import shutil
+import subprocess
 import sys
 import warnings
 from concurrent.futures import ThreadPoolExecutor
@@ -13,7 +15,8 @@ from pathlib import Path
 from modtranslator.backends.base import TranslationBackend
 
 MAX_BATCH_SIZE = 256
-_GPU_MAX_BATCH_SIZE = 32  # NLLB 1.3B float16 ~2.6GB; 256 overflows 8GB VRAM
+_GPU_BATCH_SIZE_DEFAULT = 32  # NLLB 1.3B float16 ~2.6GB; 256 overflows 8GB VRAM
+_NLLB_MODEL_VRAM_MB = 2600  # Approximate VRAM used by NLLB 1.3B model itself
 DEFAULT_BEAM_SIZE = 2
 MAX_TOKENS = 900  # NLLB supports 1024 positions; leave margin
 CHAR_HEURISTIC_THRESHOLD = int(MAX_TOKENS * 2.5)  # ~2250 chars
@@ -86,6 +89,38 @@ _MODEL_VARIANTS = {
 
 _DEFAULT_MODELS_DIR = Path.home() / ".modtranslator" / "models"
 
+log = logging.getLogger(__name__)
+
+
+def _detect_vram_mb() -> int | None:
+    """Detect total GPU VRAM in MB via nvidia-smi.
+
+    Returns None if nvidia-smi is unavailable or parsing fails.
+    """
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode != 0:
+            return None
+        # Take first GPU's VRAM
+        line = result.stdout.strip().splitlines()[0].strip()
+        return int(line)
+    except (OSError, ValueError, IndexError, subprocess.TimeoutExpired):
+        return None
+
+
+def _compute_gpu_batch_size(vram_mb: int) -> int:
+    """Compute GPU batch size scaled to available VRAM.
+
+    Linear scaling: each ~80MB of free VRAM (after model) supports ~1 batch item.
+    Clamped to [16, 128]. 8GB → 32 (maintains current default).
+    """
+    return min(128, max(16, (vram_mb - _NLLB_MODEL_VRAM_MB) // 80))
+
 
 def _delete_hf_cache(hf_model_name: str) -> None:
     """Delete the HuggingFace hub cache for a model after CT2 conversion.
@@ -153,6 +188,17 @@ class NLLBBackend(TranslationBackend):
 
         self._device = self._resolve_device(device)
         self._compute_type = self._resolve_compute_type(self._device)
+
+        # Auto-scale GPU batch size based on VRAM
+        if self._device == "cuda":
+            vram = _detect_vram_mb()
+            if vram is not None:
+                self._gpu_batch_size = _compute_gpu_batch_size(vram)
+                log.info("Detected %d MB VRAM → GPU batch size %d", vram, self._gpu_batch_size)
+            else:
+                self._gpu_batch_size = _GPU_BATCH_SIZE_DEFAULT
+        else:
+            self._gpu_batch_size = _GPU_BATCH_SIZE_DEFAULT
 
         # Single translator + tokenizer (multilingual model)
         self._translator: object | None = None
@@ -244,9 +290,23 @@ class NLLBBackend(TranslationBackend):
 
         try:
             return self._translate_chunk(texts, translator, tokenizer, tgt_flores, target_lang)
-        except RuntimeError:
+        except RuntimeError as exc:
             if self._device == "cpu":
                 raise
+            # OOM retry: halve batch size once before falling back to CPU
+            if "out of memory" in str(exc).lower() and self._gpu_batch_size > 16:
+                old_size = self._gpu_batch_size
+                self._gpu_batch_size = max(16, self._gpu_batch_size // 2)
+                log.warning(
+                    "CUDA OOM with batch size %d, retrying with %d",
+                    old_size, self._gpu_batch_size,
+                )
+                try:
+                    return self._translate_chunk(
+                        texts, translator, tokenizer, tgt_flores, target_lang,
+                    )
+                except RuntimeError:
+                    pass  # Fall through to CPU fallback
             translator = self._fallback_to_cpu()
             return self._translate_chunk(texts, translator, tokenizer, tgt_flores, target_lang)
 
@@ -329,7 +389,7 @@ class NLLBBackend(TranslationBackend):
         # --- Phase 4: Translate with target_prefix + batch decode ---
         target_prefix = [[tgt_flores]] * len(tokenized)
 
-        batch_size = _GPU_MAX_BATCH_SIZE if self._device == "cuda" else MAX_BATCH_SIZE
+        batch_size = self._gpu_batch_size if self._device == "cuda" else MAX_BATCH_SIZE
         results = translator.translate_batch(  # type: ignore[union-attr]
             tokenized,
             target_prefix=target_prefix,

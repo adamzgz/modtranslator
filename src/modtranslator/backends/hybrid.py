@@ -27,7 +27,9 @@ DEFAULT_WORD_THRESHOLD = 4
 
 # NLLB accumulates tokenized texts in GPU memory. Sending 20K+ texts at once
 # can exhaust VRAM (8GB). Chunk to keep GPU memory bounded.
-_NLLB_CHUNK_SIZE = 500
+# Default 500 assumes 8GB VRAM (batch_size=32, ratio ~15x).
+_NLLB_CHUNK_SIZE_DEFAULT = 500
+_CHUNK_BATCH_RATIO = 15  # chunk_size / gpu_batch_size ≈ 15
 
 
 class HybridBackend(TranslationBackend):
@@ -48,6 +50,9 @@ class HybridBackend(TranslationBackend):
         self._word_threshold = word_threshold
         self._device = device
         self._nllb = NLLBBackend(device=device, model_size=nllb_model_size)
+
+        # Scale NLLB chunk size proportionally to GPU batch size
+        self._nllb_chunk_size = self._nllb._gpu_batch_size * _CHUNK_BATCH_RATIO
 
         # Opus-MT backend, resolved lazily on first translate_batch call.
         # None means NLLB-only mode (no Opus-MT available for the language pair).
@@ -115,8 +120,8 @@ class HybridBackend(TranslationBackend):
         if self._opus is None:
             # NLLB-only mode: send all strings to NLLB in chunks
             results: list[str] = []
-            for start in range(0, len(texts), _NLLB_CHUNK_SIZE):
-                chunk = texts[start : start + _NLLB_CHUNK_SIZE]
+            for start in range(0, len(texts), self._nllb_chunk_size):
+                chunk = texts[start : start + self._nllb_chunk_size]
                 results.extend(self._nllb.translate_batch(chunk, target_lang, source_lang))
             return results
 
@@ -144,8 +149,8 @@ class HybridBackend(TranslationBackend):
             )
         if long_texts:
             # Chunk NLLB calls to avoid GPU memory exhaustion on large files
-            for start in range(0, len(long_texts), _NLLB_CHUNK_SIZE):
-                chunk = long_texts[start : start + _NLLB_CHUNK_SIZE]
+            for start in range(0, len(long_texts), self._nllb_chunk_size):
+                chunk = long_texts[start : start + self._nllb_chunk_size]
                 long_results.extend(
                     self._nllb.translate_batch(chunk, target_lang, source_lang)
                 )

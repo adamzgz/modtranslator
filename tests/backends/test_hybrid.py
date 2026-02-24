@@ -27,6 +27,7 @@ def mock_hybrid():
     ):
         mock_tc_big = MagicMock()
         mock_nllb = MagicMock()
+        mock_nllb._gpu_batch_size = 32  # Default for 8GB VRAM
         mock_opus_cls.return_value = mock_tc_big
         mock_nllb_cls.return_value = mock_nllb
 
@@ -201,7 +202,7 @@ class TestHybridFallback:
             base_inst.translate_batch.return_value = ["Hallo"]
 
             mock_opus_cls.side_effect = [tc_big_inst, base_inst]
-            mock_nllb_cls.return_value = MagicMock()
+            mock_nllb_cls.return_value = MagicMock(_gpu_batch_size=32)
 
             backend = HybridBackend(device="cpu")
             result = backend.translate_batch(["Hello"], "DE")
@@ -224,7 +225,7 @@ class TestHybridFallback:
             failing_inst._ensure_model.side_effect = RuntimeError("no model")
             mock_opus_cls.return_value = failing_inst
 
-            mock_nllb = MagicMock()
+            mock_nllb = MagicMock(_gpu_batch_size=32)
             mock_nllb.translate_batch.return_value = ["Привет"]
             mock_nllb_cls.return_value = mock_nllb
 
@@ -251,7 +252,7 @@ class TestHybridFallback:
             failing_inst._ensure_model.side_effect = RuntimeError("no model")
             mock_opus_cls.return_value = failing_inst
 
-            mock_nllb = MagicMock()
+            mock_nllb = MagicMock(_gpu_batch_size=32)
             mock_nllb.translate_batch.return_value = ["A", "B", "C"]
             mock_nllb_cls.return_value = mock_nllb
 
@@ -273,7 +274,7 @@ class TestHybridFallback:
             mock_opus_inst._ensure_model.return_value = None
             mock_opus_inst.translate_batch.return_value = ["X"]
             mock_opus_cls.return_value = mock_opus_inst
-            mock_nllb_cls.return_value = MagicMock()
+            mock_nllb_cls.return_value = MagicMock(_gpu_batch_size=32)
 
             backend = HybridBackend(device="cpu")
             backend.translate_batch(["Hi"], "FR")
@@ -307,7 +308,7 @@ class TestHybridMode:
             base_inst._ensure_model.return_value = None
             base_inst.translate_batch.return_value = ["Hola"]
             mock_opus_cls.side_effect = [tc_big_inst, base_inst]
-            mock_nllb_cls.return_value = MagicMock()
+            mock_nllb_cls.return_value = MagicMock(_gpu_batch_size=32)
 
             backend = HybridBackend(device="cpu")
             backend.translate_batch(["Hello"], "ES")
@@ -321,7 +322,7 @@ class TestHybridMode:
             failing = MagicMock()
             failing._ensure_model.side_effect = RuntimeError("no model")
             mock_opus_cls.return_value = failing
-            mock_nllb = MagicMock()
+            mock_nllb = MagicMock(_gpu_batch_size=32)
             mock_nllb.translate_batch.return_value = ["Hola"]
             mock_nllb_cls.return_value = mock_nllb
 
@@ -330,6 +331,40 @@ class TestHybridMode:
                 warnings.simplefilter("always")
                 backend.translate_batch(["Hello"], "ES")
             assert backend.mode == "nllb-only"
+
+
+class TestHybridChunkScaling:
+    """Tests for NLLB chunk size scaling based on GPU batch size."""
+
+    def test_chunk_size_scales_with_gpu_batch_size(self):
+        """Chunk size = gpu_batch_size * 15."""
+        with patch(_PATCH_OPUS), patch(_PATCH_NLLB) as mock_nllb_cls:
+            mock_nllb = MagicMock()
+            mock_nllb._gpu_batch_size = 64  # e.g. 12GB VRAM
+            mock_nllb_cls.return_value = mock_nllb
+
+            backend = HybridBackend(device="cpu")
+            assert backend._nllb_chunk_size == 64 * 15  # 960
+
+    def test_chunk_size_default_for_8gb(self):
+        """Default batch_size=32 → chunk=480 (close to old 500)."""
+        with patch(_PATCH_OPUS), patch(_PATCH_NLLB) as mock_nllb_cls:
+            mock_nllb = MagicMock()
+            mock_nllb._gpu_batch_size = 32
+            mock_nllb_cls.return_value = mock_nllb
+
+            backend = HybridBackend(device="cpu")
+            assert backend._nllb_chunk_size == 32 * 15  # 480
+
+    def test_chunk_size_128_batch(self):
+        """Max batch_size=128 → chunk=1920."""
+        with patch(_PATCH_OPUS), patch(_PATCH_NLLB) as mock_nllb_cls:
+            mock_nllb = MagicMock()
+            mock_nllb._gpu_batch_size = 128
+            mock_nllb_cls.return_value = mock_nllb
+
+            backend = HybridBackend(device="cpu")
+            assert backend._nllb_chunk_size == 128 * 15  # 1920
 
 
 class TestHybridCLI:
