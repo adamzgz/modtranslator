@@ -6,6 +6,7 @@ import os
 import shutil
 import sys
 import warnings
+from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -17,6 +18,7 @@ MAX_TOKENS = 480  # Marian models support max 512 positions; leave margin
 CHAR_HEURISTIC_THRESHOLD = int(MAX_TOKENS * 2.5)  # ~1200 chars; below this, no token check needed
 _NUM_TOKENIZER_WORKERS = 4
 _INTER_THREADS = min(4, os.cpu_count() or 1)  # CTranslate2 workers; >4 doesn't help CT2
+_MAX_CACHED_PAIRS = 3  # Max language pairs kept in memory (~500MB each)
 
 _MODEL_VARIANTS = {
     "base": None,       # Dynamic: opus-mt-{src}-{tgt}
@@ -125,9 +127,10 @@ class OpusMTBackend(TranslationBackend):
         self._device = self._resolve_device(device)
         self._compute_type = self._resolve_compute_type(self._device)
 
-        # Caches for loaded translators and tokenizers, keyed by (source, target)
-        self._translators: dict[tuple[str, str], object] = {}
-        self._tokenizers: dict[tuple[str, str], object] = {}
+        # LRU caches for loaded translators and tokenizers, keyed by (source, target).
+        # Each pair holds ~500MB; cap at _MAX_CACHED_PAIRS to bound memory.
+        self._translators: OrderedDict[tuple[str, str], object] = OrderedDict()
+        self._tokenizers: OrderedDict[tuple[str, str], object] = OrderedDict()
 
     @staticmethod
     def _register_nvidia_dll_dirs() -> None:
@@ -439,7 +442,16 @@ class OpusMTBackend(TranslationBackend):
         self, source: str, target: str
     ) -> tuple[object, object]:
         key = (source, target)
-        if key not in self._translators:
+        if key in self._translators:
+            # Move to end (most recently used)
+            self._translators.move_to_end(key)
+            self._tokenizers.move_to_end(key)
+        else:
+            # Evict oldest entries if at capacity
+            while len(self._translators) >= _MAX_CACHED_PAIRS:
+                self._translators.popitem(last=False)
+                self._tokenizers.popitem(last=False)
+
             self._ensure_model(source, target)
             import ctranslate2
             from transformers import AutoTokenizer

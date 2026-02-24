@@ -483,3 +483,60 @@ class TestModelVariants:
                 device="cpu", models_dir=mock_opus_env.models_dir,
                 model_variant="nonexistent",
             )
+
+
+class TestLRUEviction:
+    def test_evicts_oldest_when_exceeding_max_pairs(self, mock_opus_env):
+        """Cache should evict oldest pair when _MAX_CACHED_PAIRS is exceeded."""
+        from modtranslator.backends.opus_mt import _MAX_CACHED_PAIRS
+
+        backend = mock_opus_env.OpusMTBackend(
+            device="cpu", models_dir=mock_opus_env.models_dir,
+        )
+
+        # Pre-create model dirs for multiple language pairs
+        for lang in ("es", "fr", "de", "it"):
+            model_dir = mock_opus_env.models_dir / f"opus-mt-en-{lang}-ct2-int8"
+            model_dir.mkdir(parents=True, exist_ok=True)
+            (model_dir / "model.bin").write_bytes(b"fake")
+
+        # Translate to _MAX_CACHED_PAIRS + 1 languages to trigger eviction
+        langs = ["ES", "FR", "DE", "IT"]
+        for lang in langs[:_MAX_CACHED_PAIRS + 1]:
+            backend.translate_batch(["Hello"], lang)
+
+        assert len(backend._translators) == _MAX_CACHED_PAIRS
+        assert len(backend._tokenizers) == _MAX_CACHED_PAIRS
+
+        # First pair (en, es) should have been evicted
+        assert ("en", "es") not in backend._translators
+
+    def test_reuse_moves_to_end(self, mock_opus_env):
+        """Accessing an existing pair should refresh it (move to end)."""
+        backend = mock_opus_env.OpusMTBackend(
+            device="cpu", models_dir=mock_opus_env.models_dir,
+        )
+
+        for lang in ("es", "fr", "de"):
+            model_dir = mock_opus_env.models_dir / f"opus-mt-en-{lang}-ct2-int8"
+            model_dir.mkdir(parents=True, exist_ok=True)
+            (model_dir / "model.bin").write_bytes(b"fake")
+
+        # Load es, fr, de (fills cache to _MAX_CACHED_PAIRS=3)
+        backend.translate_batch(["Hello"], "ES")
+        backend.translate_batch(["Hello"], "FR")
+        backend.translate_batch(["Hello"], "DE")
+
+        # Re-access es (moves it to end, so fr becomes oldest)
+        backend.translate_batch(["Hello"], "ES")
+
+        # Now load it (should evict fr, not es)
+        model_dir = mock_opus_env.models_dir / "opus-mt-en-it-ct2-int8"
+        model_dir.mkdir(parents=True, exist_ok=True)
+        (model_dir / "model.bin").write_bytes(b"fake")
+        backend.translate_batch(["Hello"], "IT")
+
+        assert ("en", "es") in backend._translators  # refreshed, not evicted
+        assert ("en", "fr") not in backend._translators  # oldest, evicted
+        assert ("en", "de") in backend._translators
+        assert ("en", "it") in backend._translators
