@@ -104,8 +104,11 @@ def _delete_hf_cache(hf_model_name: str) -> None:
     # HF_HOME points to the huggingface dir; the hub subdir holds model caches
     hub_dir = hf_home if hf_home.name == "hub" else hf_home / "hub"
     cache_dir = hub_dir / ("models--" + hf_model_name.replace("/", "--"))
-    if cache_dir.exists():
-        shutil.rmtree(cache_dir)
+    try:
+        if cache_dir.exists():
+            shutil.rmtree(cache_dir)
+    except OSError:
+        pass  # Best-effort cleanup; don't crash if cache can't be deleted
 
 
 class NLLBBackend(TranslationBackend):
@@ -685,13 +688,17 @@ class NLLBBackend(TranslationBackend):
                 force=True,
             )
         except Exception as e:
-            if output_dir.exists():
-                shutil.rmtree(output_dir)
+            # Clean up partial conversion; swallow cleanup errors to preserve original
+            try:
+                if output_dir.exists():
+                    shutil.rmtree(output_dir)
+            except OSError:
+                pass
             raise RuntimeError(
                 f"Failed to convert model {self._hf_model_name}: {e}"
             ) from e
-
-        _delete_hf_cache(self._hf_model_name)
+        finally:
+            _delete_hf_cache(self._hf_model_name)
 
     @staticmethod
     def _patch_tokenizer_compat() -> None:
