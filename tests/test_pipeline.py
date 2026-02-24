@@ -139,17 +139,19 @@ class TestBuildDedupMap:
 class TestTranslateChunks:
     def test_basic_translation(self):
         backend = DummyBackend()
-        result = _translate_chunks(["hello", "world"], backend, "ES")
+        result, errors = _translate_chunks(["hello", "world"], backend, "ES")
         assert result == ["[ES] hello", "[ES] world"]
+        assert errors == []
 
     def test_progress_callback(self):
         backend = DummyBackend()
         calls = []
-        result = _translate_chunks(
+        result, errors = _translate_chunks(
             ["a", "b", "c"], backend, "ES", chunk_size=2,
             on_progress=lambda phase, cur, total, msg: calls.append((phase, cur, total)),
         )
         assert result == ["[ES] a", "[ES] b", "[ES] c"]
+        assert errors == []
         assert len(calls) == 2  # 2 chunks
 
     def test_cancel_between_chunks(self):

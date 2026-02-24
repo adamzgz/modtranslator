@@ -425,17 +425,29 @@ def _translate_chunks(
     on_progress: ProgressCallback | None = None,
     cancel_event: Event | None = None,
     phase_name: str = "translate",
-) -> list[str]:
-    """Translate texts in chunks with progress and cancellation."""
+) -> tuple[list[str], list[str]]:
+    """Translate texts in chunks with progress and cancellation.
+
+    Returns (translated_texts, chunk_errors).
+    """
     translated: list[str] = []
+    chunk_errors: list[str] = []
     total = len(texts)
     for chunk_start in range(0, total, chunk_size):
         _check_cancel(cancel_event)
         chunk = texts[chunk_start:chunk_start + chunk_size]
-        translated.extend(backend.translate_batch(chunk, lang))
+        try:
+            translated.extend(backend.translate_batch(chunk, lang))
+        except CancelledError:
+            raise
+        except Exception as e:
+            chunk_errors.append(
+                f"Chunk {chunk_start // chunk_size + 1}: {e}"
+            )
+            translated.extend(chunk)  # fallback: original text
         if on_progress:
             on_progress(phase_name, len(translated), total, "")
-    return translated
+    return translated, chunk_errors
 
 
 # ── Setup glossary helper ──
@@ -577,18 +589,12 @@ def batch_translate_esp(
         translated_unique: list[str] = []
         if unique_texts:
             _check_cancel(cancel_event)
-            try:
-                translated_unique = _translate_chunks(
-                    unique_texts, backend, lang,
-                    on_progress=on_progress, cancel_event=cancel_event,
-                )
-            except CancelledError:
-                raise
-            except Exception as e:
-                for ctx in contexts:
-                    if ctx.status == "prepared":
-                        ctx.status = "error"
-                        ctx.error_message = f"Backend error: {e}"
+            translated_unique, chunk_errors = _translate_chunks(
+                unique_texts, backend, lang,
+                on_progress=on_progress, cancel_event=cancel_event,
+            )
+            for err in chunk_errors:
+                result.errors.append(("batch", err))
 
         # ── Phase 3: Write ──
         writable = [c for c in contexts if c.status == "prepared"]
@@ -751,10 +757,12 @@ def batch_translate_pex(
         translated: list[str] = []
         if to_translate:
             _check_cancel(cancel_event)
-            translated = _translate_chunks(
+            translated, chunk_errors = _translate_chunks(
                 to_translate, backend, lang,
                 on_progress=on_progress, cancel_event=cancel_event,
             )
+            for err in chunk_errors:
+                result.errors.append(("batch", err))
 
             if lang_mappings is not None:
                 from modtranslator.translation.target_protect import restore_target_batch
@@ -1061,10 +1069,12 @@ def batch_translate_mcm(
         translated: list[str] = []
         if to_translate:
             _check_cancel(cancel_event)
-            translated = _translate_chunks(
+            translated, chunk_errors = _translate_chunks(
                 to_translate, backend, lang,
                 on_progress=on_progress, cancel_event=cancel_event,
             )
+            for err in chunk_errors:
+                result.errors.append(("batch", err))
 
             if lang_mappings is not None:
                 from modtranslator.translation.target_protect import restore_target_batch
