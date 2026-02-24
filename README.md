@@ -42,9 +42,8 @@ Yo quería jugar con mods sin tener la mitad de los textos en español y la otra
 - **GUI incluida** — interfaz gráfica con CustomTkinter, sin necesidad de terminal
 - **CLI completa** — para usuarios avanzados y automatización
 - **3 tipos de archivo** — ESP/ESM (plugins), PEX (scripts de Papyrus), MCM (menús de configuración)
-- **7 backends de traducción** — modelos offline (CTranslate2 y HuggingFace) y API cloud
+- **4 backends de traducción** — 3 modelos offline (CTranslate2) y API cloud (DeepL)
 - **7 idiomas de destino** — ES, FR, DE, IT, PT, RU, PL
-- **Descarga automática de modelos** — los backends HuggingFace descargan el modelo al primer uso
 - **GUI multilingüe** — la interfaz se adapta al idioma de destino seleccionado
 - **Cache de traducciones** — no retraduce strings ya procesados
 - **Glosarios por juego e idioma** — protege terminología oficial en los 7 idiomas (Refugio, Estimulante, Sanguinario...)
@@ -68,8 +67,8 @@ Descarga el ZIP de la sección Releases — no necesita Python ni dependencias.
 ### Desde código
 
 ```bash
-pip install -e ".[opus-mt,nllb]"
-python modtranslator_gui.py
+pip install -e ".[gui,opus-mt,nllb]"
+modtranslator-gui
 ```
 
 ## Instalación (CLI)
@@ -122,12 +121,9 @@ modtranslator batch-mcm "C:\Games\Skyrim\Data" --backend opus-mt
 | **Opus-MT tc-big** | 241–468 str/s | Gratis | Muy buena | Sí |
 | Opus-MT base | 188–291 str/s | Gratis | Buena | Sí |
 | NLLB 1.3B | 32–71 str/s | Gratis | Excelente (texto largo) | Sí |
-| HF Híbrido (hf-hybrid) | variable | Gratis | Mejor combinada | Sí |
-| HF Opus-MT (hf-opus-mt) | variable | Gratis | Muy buena | Sí |
-| HF NLLB (hf-nllb) | variable | Gratis | Excelente (texto largo) | Sí |
 | DeepL | Online | API key | Muy buena | No |
 
-Los backends **CTranslate2** (`hybrid`, `opus-mt`, `nllb`) son más rápidos y recomendados con GPU NVIDIA. Los backends **HuggingFace** (`hf-hybrid`, `hf-opus-mt`, `hf-nllb`) descargan el modelo automáticamente al primer uso y son más compatibles con hardware variado.
+Los backends offline usan **CTranslate2** y son recomendados con GPU NVIDIA para máxima velocidad.
 
 El backend **híbrido** enruta strings cortos (1–3 palabras) a Opus-MT tc-big y strings largos (4+ palabras) a NLLB 1.3B — combinando la velocidad de tc-big con la fluidez de NLLB en oraciones complejas.
 
@@ -289,9 +285,6 @@ src/modtranslator/
 │   ├── opus_mt.py            Helsinki-NLP + CTranslate2 (base + tc-big)
 │   ├── nllb.py               Meta NLLB-200 + CTranslate2 (600M/1.3B)
 │   ├── hybrid.py             tc-big (corto) + NLLB (largo)
-│   ├── hf_opus_mt.py         HuggingFace Transformers Opus-MT
-│   ├── hf_nllb.py            HuggingFace NLLB-200
-│   ├── hf_hybrid.py          HF Opus-MT (corto) + HF NLLB (largo); descarga automática
 │   ├── deepl.py              API de DeepL
 │   └── dummy.py              Backend de test: prefija [XX]
 ├── translation/            Extracción, filtrado y parcheo de strings
@@ -306,10 +299,12 @@ src/modtranslator/
 │   ├── app.py                Ventana principal, backup selectivo, traducción in-place
 │   ├── worker.py             Worker en background thread
 │   └── model_manager.py      Detección GPU y gestión de modelos
+├── reporting/              TranslationReport con estadísticas; salida JSON/Markdown/CSV
+│   ├── report.py
+│   └── formatters.py
 └── data/                   Diccionarios por idioma (ES, FR, DE, IT, PT, RU, PL)
 
 glossaries/                 Archivos TOML de terminología por juego e idioma (35 archivos)
-reporting/                  TranslationReport con estadísticas; salida JSON/Markdown/CSV
 tests/                      906 tests, ~79% cobertura
 ```
 
@@ -399,9 +394,8 @@ I wanted to play modded games without half the text in Spanish and the other hal
 - **GUI included** — graphical interface with CustomTkinter, no terminal needed
 - **Full CLI** — for advanced users and automation
 - **3 file types** — ESP/ESM (plugins), PEX (Papyrus scripts), MCM (configuration menus)
-- **7 translation backends** — offline models (CTranslate2 and HuggingFace) and cloud APIs
+- **4 translation backends** — 3 offline models (CTranslate2) and cloud API (DeepL)
 - **7 target languages** — ES, FR, DE, IT, PT, RU, PL
-- **Automatic model download** — HuggingFace backends download the model on first use
 - **Multilingual GUI** — interface language follows the selected target language
 - **Translation cache** — skips previously translated strings
 - **Per-game, per-language glossaries** — protects official terminology across all 7 languages
@@ -425,8 +419,8 @@ Download the ZIP from Releases — no Python or dependencies needed.
 ### From source
 
 ```bash
-pip install -e ".[opus-mt,nllb]"
-python modtranslator_gui.py
+pip install -e ".[gui,opus-mt,nllb]"
+modtranslator-gui
 ```
 
 ## Installation (CLI)
@@ -479,12 +473,9 @@ modtranslator batch-mcm "C:\Games\Skyrim\Data" --backend opus-mt
 | **Opus-MT tc-big** | 241–468 str/s | Free | Very good | Yes |
 | Opus-MT base | 188–291 str/s | Free | Good | Yes |
 | NLLB 1.3B | 32–71 str/s | Free | Excellent (long text) | Yes |
-| HF Hybrid (hf-hybrid) | variable | Free | Best combined | Yes |
-| HF Opus-MT (hf-opus-mt) | variable | Free | Very good | Yes |
-| HF NLLB (hf-nllb) | variable | Free | Excellent (long text) | Yes |
 | DeepL | Online | API key | Very good | No |
 
-**CTranslate2** backends (`hybrid`, `opus-mt`, `nllb`) are faster and recommended with NVIDIA GPUs. **HuggingFace** backends (`hf-hybrid`, `hf-opus-mt`, `hf-nllb`) auto-download the model on first use and are more broadly compatible.
+Offline backends use **CTranslate2** and are recommended with NVIDIA GPUs for maximum speed.
 
 The **hybrid** backend routes short strings (1–3 words) to Opus-MT tc-big and longer strings (4+ words) to NLLB 1.3B — combining tc-big's speed with NLLB's fluency on complex sentences.
 
@@ -646,9 +637,6 @@ src/modtranslator/
 │   ├── opus_mt.py            Helsinki-NLP + CTranslate2 (base + tc-big)
 │   ├── nllb.py               Meta NLLB-200 + CTranslate2 (600M/1.3B)
 │   ├── hybrid.py             tc-big (short) + NLLB (long) routing
-│   ├── hf_opus_mt.py         HuggingFace Transformers Opus-MT
-│   ├── hf_nllb.py            HuggingFace NLLB-200
-│   ├── hf_hybrid.py          HF Opus-MT (short) + HF NLLB (long); auto-download
 │   ├── deepl.py              DeepL API
 │   └── dummy.py              Test backend: prefixes [XX]
 ├── translation/            String extraction, filtering, and patching
@@ -663,10 +651,12 @@ src/modtranslator/
 │   ├── app.py                Main window, selective backup, in-place translation
 │   ├── worker.py             Background thread worker
 │   └── model_manager.py      GPU detection and model management
+├── reporting/              TranslationReport with stats; JSON/Markdown/CSV output
+│   ├── report.py
+│   └── formatters.py
 └── data/                   Per-language word dictionaries (ES, FR, DE, IT, PT, RU, PL)
 
 glossaries/                 Per-game, per-language TOML terminology files (35 files)
-reporting/                  TranslationReport with stats; JSON/Markdown/CSV output
 tests/                      906 tests, ~79% coverage
 ```
 
