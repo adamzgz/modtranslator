@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -214,7 +215,7 @@ class TestHybridFallback:
             ]
 
     def test_falls_back_to_nllb_only_when_no_opus(self):
-        """When no Opus-MT is available, all strings go to NLLB."""
+        """When no Opus-MT is available, all strings go to NLLB with a warning."""
         with (
             patch(_PATCH_OPUS) as mock_opus_cls,
             patch(_PATCH_NLLB) as mock_nllb_cls,
@@ -228,9 +229,15 @@ class TestHybridFallback:
             mock_nllb_cls.return_value = mock_nllb
 
             backend = HybridBackend(device="cpu")
-            result = backend.translate_batch(["Hello"], "RU")
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                result = backend.translate_batch(["Hello"], "RU")
+                assert len(w) == 1
+                assert "Opus-MT not available" in str(w[0].message)
+                assert "NLLB-only" in str(w[0].message)
 
             assert backend._opus is None
+            assert backend.mode == "nllb-only"
             mock_nllb.translate_batch.assert_called_once()
             assert result == ["Привет"]
 
@@ -274,6 +281,55 @@ class TestHybridFallback:
 
             # OpusMTBackend() called exactly twice (tc-big attempt, which succeeds)
             assert mock_opus_cls.call_count == 1
+
+
+class TestHybridMode:
+    """Tests for the mode property."""
+
+    def test_mode_pending_before_init(self, mock_hybrid):
+        backend = mock_hybrid[0]
+        assert backend.mode == "pending"
+
+    def test_mode_tc_big_after_init(self, mock_hybrid):
+        backend, mock_tc, _, _, _ = mock_hybrid
+        mock_tc.translate_batch.return_value = ["Hola"]
+        backend.translate_batch(["Hello"], "ES", "EN")
+        assert backend.mode == "opus-mt-tc-big+nllb"
+
+    def test_mode_base_after_fallback(self):
+        with (
+            patch(_PATCH_OPUS) as mock_opus_cls,
+            patch(_PATCH_NLLB) as mock_nllb_cls,
+        ):
+            tc_big_inst = MagicMock()
+            tc_big_inst._ensure_model.side_effect = RuntimeError("not found")
+            base_inst = MagicMock()
+            base_inst._ensure_model.return_value = None
+            base_inst.translate_batch.return_value = ["Hola"]
+            mock_opus_cls.side_effect = [tc_big_inst, base_inst]
+            mock_nllb_cls.return_value = MagicMock()
+
+            backend = HybridBackend(device="cpu")
+            backend.translate_batch(["Hello"], "ES")
+            assert backend.mode == "opus-mt-base+nllb"
+
+    def test_mode_nllb_only(self):
+        with (
+            patch(_PATCH_OPUS) as mock_opus_cls,
+            patch(_PATCH_NLLB) as mock_nllb_cls,
+        ):
+            failing = MagicMock()
+            failing._ensure_model.side_effect = RuntimeError("no model")
+            mock_opus_cls.return_value = failing
+            mock_nllb = MagicMock()
+            mock_nllb.translate_batch.return_value = ["Hola"]
+            mock_nllb_cls.return_value = mock_nllb
+
+            backend = HybridBackend(device="cpu")
+            with warnings.catch_warnings(record=True):
+                warnings.simplefilter("always")
+                backend.translate_batch(["Hello"], "ES")
+            assert backend.mode == "nllb-only"
 
 
 class TestHybridCLI:

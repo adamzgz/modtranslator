@@ -16,6 +16,8 @@ Analysis on 9,708 strings (4 ESMs) showed:
 
 from __future__ import annotations
 
+import warnings
+
 from modtranslator.backends.base import TranslationBackend
 
 # Strings with fewer words than this go to Opus-MT; the rest go to NLLB.
@@ -51,6 +53,20 @@ class HybridBackend(TranslationBackend):
         # None means NLLB-only mode (no Opus-MT available for the language pair).
         self._opus: object | None = None
         self._opus_initialized: bool = False  # True once _init_opus has run
+        self._opus_variant: str | None = None  # "tc-big" or "base" if loaded
+
+    @property
+    def mode(self) -> str:
+        """Active mode after first translate_batch call.
+
+        Returns "opus-mt-{variant}+nllb" or "nllb-only".
+        Before initialization, returns "pending".
+        """
+        if not self._opus_initialized:
+            return "pending"
+        if self._opus is None:
+            return "nllb-only"
+        return f"opus-mt-{self._opus_variant}+nllb"
 
     def _init_opus(self, target_lang: str, source_lang: str | None) -> None:
         """Detect best available Opus-MT variant for the language pair.
@@ -66,15 +82,23 @@ class HybridBackend(TranslationBackend):
         tgt_key = target_lang.upper()
         tgt = _LANG_CODES.get(tgt_key, tgt_key.lower())
 
+        errors: list[str] = []
         for variant in ("tc-big", "base"):
             try:
                 backend = OpusMTBackend(device=self._device, model_variant=variant)
                 backend._ensure_model(src, tgt)
                 self._opus = backend
+                self._opus_variant = variant
                 return
-            except Exception:
+            except Exception as exc:
+                errors.append(f"opus-mt-{variant}: {exc}")
                 continue
         # No Opus-MT available → NLLB-only (self._opus stays None)
+        warnings.warn(
+            f"Opus-MT not available for {src}→{tgt}, using NLLB-only mode. "
+            f"Tried: {'; '.join(errors)}",
+            stacklevel=2,
+        )
 
     def translate_batch(
         self,
