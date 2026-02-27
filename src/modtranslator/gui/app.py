@@ -676,9 +676,9 @@ class ModTranslatorApp(ctk.CTk):
             self.after(0, lambda n=name: self.progress_label.configure(
                 text=f"Descargando {n}...",
             ))
-            ok = download_model(model_id)
+            ok, err = download_model(model_id)
             if not ok:
-                log(f"  Error al descargar {name}.")
+                log(f"  Error al descargar {name}: {err}")
                 self.after(0, lambda n=name: self._on_model_download_error(n))
                 return
             log(f"  {name} listo.")
@@ -960,8 +960,12 @@ class SettingsWindow(ctk.CTkToplevel):
         assert isinstance(model, ModelInfo)
 
         def _do_download() -> None:
-            success = download_model(model.description)
-            self.after(0, lambda: self._on_download_done(model.name, success))
+            success, err = download_model(model.description)
+            if not success:
+                self.after(0, lambda: self._on_download_done(model.name, False, err))
+            else:
+                self.after(0, lambda: self._on_download_done(model.name, True, ""))
+
 
         self._download_status = ctk.CTkLabel(
             self, text=self._t("settings_model_downloading").format(name=model.name),
@@ -970,7 +974,7 @@ class SettingsWindow(ctk.CTkToplevel):
         self._download_status.grid(row=10, column=0, padx=10, pady=5)
         threading.Thread(target=_do_download, daemon=True).start()
 
-    def _on_download_done(self, name: str, success: bool) -> None:
+    def _on_download_done(self, name: str, success: bool, error: str = "") -> None:
         if hasattr(self, "_download_status"):
             self._download_status.destroy()
         if success:
@@ -979,9 +983,10 @@ class SettingsWindow(ctk.CTkToplevel):
                 self._t("settings_download_ok").format(name=name),
             )
         else:
+            detail = f"\n\n{error}" if error else ""
             messagebox.showerror(
                 self._t("msg_error"),
-                self._t("settings_download_err").format(name=name),
+                self._t("settings_download_err").format(name=name) + detail,
             )
 
     def _clear_cache(self) -> None:

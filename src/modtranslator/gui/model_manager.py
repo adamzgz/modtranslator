@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import shutil
 import subprocess
 import sys
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -131,17 +134,95 @@ def get_model_status(lang: str = "ES") -> list[ModelInfo]:
     return models
 
 
-def download_model(model_description: str, on_progress: object = None) -> bool:
-    """Download a model by its description (HuggingFace model ID).
+def download_model(
+    model_id: str, on_progress: object = None,
+) -> tuple[bool, str]:
+    """Download and convert a model to CTranslate2 format.
 
-    Returns True on success, False on failure.
+    Returns (success, error_message).
     """
     try:
-        from huggingface_hub import snapshot_download
-        snapshot_download(model_description)
-        return True
-    except Exception:
-        return False
+        import ctranslate2  # noqa: F401
+        from ctranslate2.converters.transformers import TransformersConverter
+    except ImportError:
+        return False, "ctranslate2 not installed"
+
+    models_dir = Path.home() / ".modtranslator" / "models"
+    models_dir.mkdir(parents=True, exist_ok=True)
+    short_name = model_id.split("/")[-1]
+    ct2_dir = models_dir / f"{short_name}-ct2-int8"
+
+    if (ct2_dir / "model.bin").exists():
+        return True, ""
+
+    try:
+        if "nllb" in model_id.lower():
+            with _nllb_tokenizer_patch():
+                converter = TransformersConverter(model_id, low_cpu_mem_usage=True)
+                converter.convert(str(ct2_dir), quantization="int8", force=True)
+        else:
+            converter = TransformersConverter(model_id, low_cpu_mem_usage=True)
+            converter.convert(str(ct2_dir), quantization="int8", force=True)
+    except Exception as e:
+        if ct2_dir.exists():
+            shutil.rmtree(ct2_dir, ignore_errors=True)
+        return False, str(e)
+    finally:
+        _delete_hf_cache(model_id)
+
+    return True, ""
+
+
+def _delete_hf_cache(hf_model_name: str) -> None:
+    """Delete the HuggingFace hub cache for a model after CT2 conversion.
+
+    The cache is only needed during conversion; once the CT2 model exists
+    it is never used again. Frees several GB per model.
+    Respects HF_HOME / HUGGINGFACE_HUB_CACHE env overrides.
+    """
+    import os
+
+    hf_home = Path(
+        os.environ.get(
+            "HUGGINGFACE_HUB_CACHE",
+            os.environ.get("HF_HOME", str(Path.home() / ".cache" / "huggingface")),
+        )
+    )
+    hub_dir = hf_home if hf_home.name == "hub" else hf_home / "hub"
+    cache_dir = hub_dir / ("models--" + hf_model_name.replace("/", "--"))
+    try:
+        if cache_dir.exists():
+            shutil.rmtree(cache_dir)
+    except OSError:
+        pass  # Best-effort cleanup; don't crash if cache can't be deleted
+
+
+@contextmanager
+def _nllb_tokenizer_patch() -> Iterator[None]:
+    """Temporarily patch transformers 5.0+ tokenizer for CT2 converter compat.
+
+    transformers 5.0 replaced tokenizer classes with TokenizersBackend
+    which lacks additional_special_tokens. We patch __getattr__ to return []
+    for that attribute so the CT2 converter's get_vocabulary() doesn't crash.
+    """
+    try:
+        from transformers.tokenization_utils_base import PreTrainedTokenizerBase
+    except ImportError:
+        yield
+        return
+
+    original_getattr = PreTrainedTokenizerBase.__getattr__
+
+    def _patched_getattr(self: object, key: str) -> object:
+        if key == "additional_special_tokens":
+            return []
+        return original_getattr(self, key)  # type: ignore[no-untyped-call,arg-type]
+
+    PreTrainedTokenizerBase.__getattr__ = _patched_getattr  # type: ignore[method-assign]
+    try:
+        yield
+    finally:
+        PreTrainedTokenizerBase.__getattr__ = original_getattr  # type: ignore[method-assign]
 
 
 def check_backend_ready(backend_name: str, lang: str = "ES") -> tuple[bool, str]:
