@@ -221,7 +221,7 @@ class ModTranslatorApp(ctk.CTk):
         self.lang_var = ctk.StringVar(value=self.settings.get("lang", "ES"))
         ctk.CTkOptionMenu(
             opts, variable=self.lang_var,
-            values=["ES", "FR", "DE", "IT", "PT", "RU", "PL"],
+            values=["ES", "FR", "DE", "IT", "PT", "RU"],
             width=80,
         ).pack(side="left", padx=(0, 15))
 
@@ -513,7 +513,7 @@ class ModTranslatorApp(ctk.CTk):
             return False
 
         ready, msg = check_backend_ready(backend_name, lang=self.lang_var.get())
-        if not ready and "descargado" not in msg:
+        if not ready and "not downloaded" not in msg:
             messagebox.showerror("Backend no disponible", msg)
             return False
 
@@ -556,15 +556,6 @@ class ModTranslatorApp(ctk.CTk):
 
         backend_name = self._get_backend_name()
         api_key = self.settings.get("deepl_api_key", "").strip() or None
-
-        try:
-            backend, backend_label = create_backend(backend_name, api_key=api_key)
-        except ValueError as e:
-            messagebox.showerror("Error", str(e))
-            self._reset_buttons()
-            return
-
-        self.log.append(f"Backend: {backend_label}")
 
         input_path = Path(self.input_folder.path)
         output_path_str = self.output_folder.path
@@ -612,26 +603,36 @@ class ModTranslatorApp(ctk.CTk):
             except Exception as e:
                 self.log.append(f"Aviso: no se pudo crear backup: {e}")
 
-        # Lanzar traducción
-        common_kwargs = dict(
+        # Parámetros base (sin backend aún — se crea en background)
+        base_kwargs = dict(
             lang=self.lang_var.get(),
-            backend=backend,
-            backend_label=backend_label,
             game=self._get_game_choice(),
             skip_translated=True,
             no_cache=not self.cache_var.get(),
         )
 
+        # Si faltan modelos, descargar + crear backend todo en background
         missing_models = get_missing_model_ids(backend_name, lang=self.lang_var.get())
         if missing_models:
+            self.progress_bar.configure(mode="indeterminate")
+            self.progress_bar.start()
             threading.Thread(
                 target=self._auto_download_models,
-                args=(missing_models, input_path, output_dir, common_kwargs),
+                args=(missing_models, input_path, output_dir, base_kwargs,
+                      backend_name, api_key),
                 daemon=True,
             ).start()
             return
 
-        self._launch_worker(input_path, output_dir, common_kwargs)
+        # Crear backend (puede ser lento por imports de torch/ctranslate2)
+        self.progress_bar.configure(mode="indeterminate")
+        self.progress_bar.start()
+        self.progress_label.configure(text=self._t("msg_starting"))
+        threading.Thread(
+            target=self._create_backend_and_launch,
+            args=(backend_name, api_key, input_path, output_dir, base_kwargs),
+            daemon=True,
+        ).start()
 
     def _cancel(self) -> None:
         if self.worker.is_running:
@@ -657,39 +658,85 @@ class ModTranslatorApp(ctk.CTk):
                 **common_kwargs,
             )
 
+    def _create_backend_and_launch(
+        self,
+        backend_name: str,
+        api_key: str | None,
+        input_path: Path,
+        output_dir: Path,
+        base_kwargs: dict,
+    ) -> None:
+        """Create backend in background thread, then launch worker on main thread."""
+        def log(msg: str) -> None:
+            self.after(0, lambda m=msg: self.log.append(m))
+
+        try:
+            backend, backend_label = create_backend(backend_name, api_key=api_key)
+        except Exception as e:
+            self.after(0, lambda: self._on_backend_create_error(str(e)))
+            return
+
+        log(f"Backend: {backend_label}")
+        common_kwargs = {**base_kwargs, "backend": backend, "backend_label": backend_label}
+        self.after(0, lambda: self._stop_indeterminate_and_launch(
+            input_path, output_dir, common_kwargs,
+        ))
+
+    def _on_backend_create_error(self, error: str) -> None:
+        self.progress_bar.stop()
+        self.progress_bar.configure(mode="determinate")
+        self.progress_bar.set(0)
+        messagebox.showerror("Error", error)
+        self._reset_buttons()
+
     def _auto_download_models(
         self,
         missing: list[tuple[str, str]],
         input_path: Path,
         output_dir: Path,
-        common_kwargs: dict,
+        base_kwargs: dict,
+        backend_name: str,
+        api_key: str | None,
     ) -> None:
-        """Download missing models in background, then start the worker."""
+        """Download missing models in background, then create backend and start worker."""
         def log(msg: str) -> None:
             self.after(0, lambda m=msg: self.log.append(m))
 
         total = len(missing)
-        log(f"Descargando {total} modelo(s) necesarios (puede tardar varios minutos)...")
+        log(self._t("dl_start").format(n=total))
 
         for i, (name, model_id) in enumerate(missing, 1):
-            log(f"[{i}/{total}] Descargando {name}...")
-            self.after(0, lambda n=name: self.progress_label.configure(
-                text=f"Descargando {n}...",
-            ))
+            log(self._t("dl_progress").format(i=i, n=total, name=name))
+            msg = self._t("dl_progress_short").format(name=name)
+            self.after(0, lambda m=msg: self.progress_label.configure(text=m))
             ok, err = download_model(model_id)
             if not ok:
-                log(f"  Error al descargar {name}: {err}")
+                log(self._t("dl_error").format(name=name, err=err))
                 self.after(0, lambda n=name: self._on_model_download_error(n))
                 return
-            log(f"  {name} listo.")
+            log(self._t("dl_done").format(name=name))
 
-        log("Modelos listos. Iniciando traducción...")
-        self.after(0, lambda: self._launch_worker(input_path, output_dir, common_kwargs))
+        log(self._t("dl_all_done"))
+        self._create_backend_and_launch(
+            backend_name, api_key, input_path, output_dir, base_kwargs,
+        )
+
+    def _stop_indeterminate_and_launch(
+        self, input_path: Path, output_dir: Path, common_kwargs: dict,
+    ) -> None:
+        """Stop indeterminate progress bar and launch translation worker."""
+        self.progress_bar.stop()
+        self.progress_bar.configure(mode="determinate")
+        self.progress_bar.set(0)
+        self._launch_worker(input_path, output_dir, common_kwargs)
 
     def _on_model_download_error(self, name: str) -> None:
+        self.progress_bar.stop()
+        self.progress_bar.configure(mode="determinate")
+        self.progress_bar.set(0)
         messagebox.showerror(
-            "Error",
-            f"No se pudo descargar el modelo:\n{name}\n\nComprueba tu conexión a internet.",
+            self._t("msg_error"),
+            self._t("dl_error_dialog").format(name=name),
         )
         self._reset_buttons()
 

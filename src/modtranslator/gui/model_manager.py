@@ -30,7 +30,6 @@ _OPUS_VARIANTS: dict[str, list[str]] = {
     "PT": ["tc-big", "base"],
     "DE": ["base"],
     "RU": ["base"],
-    "PL": ["base"],
 }
 
 
