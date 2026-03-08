@@ -2,7 +2,7 @@
 
 **Traductor automático offline de mods para juegos Bethesda.**
 
-Traduce archivos ESP/ESM, scripts PEX y archivos MCM de forma completamente offline usando modelos de traducción neuronal. Compatible con Fallout 3, Fallout: New Vegas, Fallout 4 y Skyrim (SE/AE). Soporta 7 idiomas de destino: español, francés, alemán, italiano, portugués, ruso y polaco.
+Traduce archivos ESP/ESM, scripts PEX y archivos MCM de forma completamente offline usando modelos de traducción neuronal. Compatible con Fallout 3, Fallout: New Vegas, Fallout 4 y Skyrim (SE/AE). Soporta 6 idiomas de destino: español, francés, alemán, italiano, portugués y ruso.
 
 > **Probado con los 4 juegos soportados.** Fallout 3 (124 archivos, ~97K strings), Fallout: New Vegas (244 archivos, ~142K strings), Skyrim SE/AE (542 archivos, ~128K strings + 2.302 scripts PEX + MCM) y Fallout 4 (726 archivos + 465 PEX + 60 MCM, ~323K strings) — todos funcionan correctamente con los mods traducidos.
 
@@ -43,10 +43,10 @@ Yo quería jugar con mods sin tener la mitad de los textos en español y la otra
 - **CLI completa** — para usuarios avanzados y automatización
 - **3 tipos de archivo** — ESP/ESM (plugins), PEX (scripts de Papyrus), MCM (menús de configuración)
 - **4 backends de traducción** — 3 modelos offline (CTranslate2) y API cloud (DeepL)
-- **7 idiomas de destino** — ES, FR, DE, IT, PT, RU, PL
+- **6 idiomas de destino** — ES, FR, DE, IT, PT, RU
 - **GUI multilingüe** — la interfaz se adapta al idioma de destino seleccionado
 - **Cache de traducciones** — no retraduce strings ya procesados
-- **Glosarios por juego e idioma** — protege terminología oficial en los 7 idiomas (Refugio, Estimulante, Sanguinario...)
+- **Glosarios por juego e idioma** — protege terminología oficial en los 6 idiomas (Refugio, Estimulante, Sanguinario...)
 
 ## GUI
 
@@ -249,7 +249,7 @@ Para archivos de más de 150 MB (como Fallout3.esm con ~280 MB), se usa una estr
 
 ## Glosarios por Juego
 
-35 glosarios TOML que protegen la terminología oficial de Bethesda en los 7 idiomas soportados (`{lang}` = `es`, `fr`, `de`, `it`, `pt`, `ru`, `pl`):
+30 glosarios TOML que protegen la terminología oficial de Bethesda en los 6 idiomas soportados (`{lang}` = `es`, `fr`, `de`, `it`, `pt`, `ru`):
 
 ```toml
 [terms]
@@ -302,9 +302,9 @@ src/modtranslator/
 ├── reporting/              TranslationReport con estadísticas; salida JSON/Markdown/CSV
 │   ├── report.py
 │   └── formatters.py
-└── data/                   Diccionarios por idioma (ES, FR, DE, IT, PT, RU, PL)
+└── data/                   Diccionarios por idioma (ES, FR, DE, IT, PT, RU)
 
-glossaries/                 Archivos TOML de terminología por juego e idioma (35 archivos)
+glossaries/                 Archivos TOML de terminología por juego e idioma (30 archivos)
 tests/                      906 tests, ~79% cobertura
 ```
 
@@ -354,7 +354,7 @@ Este proyecto está bajo la licencia MIT.
 
 **Automatic offline translator for Bethesda game mods.**
 
-Translates ESP/ESM files, PEX scripts, and MCM files completely offline using neural machine translation models. Compatible with Fallout 3, Fallout: New Vegas, Fallout 4, and Skyrim (SE/AE). Supports 7 target languages: Spanish, French, German, Italian, Portuguese, Russian, and Polish.
+Translates ESP/ESM files, PEX scripts, and MCM files completely offline using neural machine translation models. Compatible with Fallout 3, Fallout: New Vegas, Fallout 4, and Skyrim (SE/AE). Supports 6 target languages: Spanish, French, German, Italian, Portuguese, and Russian.
 
 > **Tested on all 4 supported games.** Fallout 3 (124 files, ~97K strings), Fallout: New Vegas (244 files, ~142K strings), Skyrim SE/AE (542 files, ~128K strings + 2,302 PEX scripts + MCM) and Fallout 4 (726 files + 465 PEX + 60 MCM, ~323K strings) — all games work correctly with translated mods.
 
@@ -395,10 +395,10 @@ I wanted to play modded games without half the text in Spanish and the other hal
 - **Full CLI** — for advanced users and automation
 - **3 file types** — ESP/ESM (plugins), PEX (Papyrus scripts), MCM (configuration menus)
 - **4 translation backends** — 3 offline models (CTranslate2) and cloud API (DeepL)
-- **7 target languages** — ES, FR, DE, IT, PT, RU, PL
+- **6 target languages** — ES, FR, DE, IT, PT, RU
 - **Multilingual GUI** — interface language follows the selected target language
 - **Translation cache** — skips previously translated strings
-- **Per-game, per-language glossaries** — protects official terminology across all 7 languages
+- **Per-game, per-language glossaries** — protects official terminology across all 6 languages
 
 ## GUI
 
@@ -601,7 +601,7 @@ For files over 150 MB (like Fallout3.esm at ~280 MB), the pipeline uses a double
 
 ## Per-Game Glossaries
 
-35 TOML glossaries protect official Bethesda terminology from machine translation across all 7 supported languages (`{lang}` = `es`, `fr`, `de`, `it`, `pt`, `ru`, `pl`):
+30 TOML glossaries protect official Bethesda terminology from machine translation across all 6 supported languages (`{lang}` = `es`, `fr`, `de`, `it`, `pt`, `ru`):
 
 ```toml
 [terms]
@@ -654,9 +654,9 @@ src/modtranslator/
 ├── reporting/              TranslationReport with stats; JSON/Markdown/CSV output
 │   ├── report.py
 │   └── formatters.py
-└── data/                   Per-language word dictionaries (ES, FR, DE, IT, PT, RU, PL)
+└── data/                   Per-language word dictionaries (ES, FR, DE, IT, PT, RU)
 
-glossaries/                 Per-game, per-language TOML terminology files (35 files)
+glossaries/                 Per-game, per-language TOML terminology files (30 files)
 tests/                      906 tests, ~79% coverage
 ```
 
