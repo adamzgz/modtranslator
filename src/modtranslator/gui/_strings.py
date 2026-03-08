@@ -166,7 +166,10 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "dl_error": "  Error al descargar {name}: {err}",
         "dl_done": "  {name} listo.",
         "dl_all_done": "Modelos descargados. Cargando motor de traducción...",
-        "dl_error_dialog": "No se pudo descargar el modelo:\n{name}\n\nComprueba tu conexión a internet.",
+        "dl_error_dialog": (
+            "No se pudo descargar el modelo:\n{name}\n\n"
+            "Comprueba tu conexión a internet."
+        ),
     },
     "FR": {
         "subtitle": "Traducteur de mods",
@@ -247,7 +250,10 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "dl_error": "  Erreur lors du téléchargement de {name} : {err}",
         "dl_done": "  {name} prêt.",
         "dl_all_done": "Modèles téléchargés. Chargement du moteur de traduction...",
-        "dl_error_dialog": "Impossible de télécharger le modèle :\n{name}\n\nVérifiez votre connexion internet.",
+        "dl_error_dialog": (
+            "Impossible de télécharger le modèle :\n{name}\n\n"
+            "Vérifiez votre connexion internet."
+        ),
     },
     "DE": {
         "subtitle": "Mod-Übersetzer",
@@ -322,13 +328,19 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "settings_cache_path": "Speicherort: {path}",
         "settings_cache_cleared": "{n} Übersetzungen aus dem Cache gelöscht.",
         "settings_api_saved": "API-Schlüssel gespeichert.",
-        "dl_start": "{n} benötigte(s) Modell(e) werden heruntergeladen (kann mehrere Minuten dauern)...",
+        "dl_start": (
+            "{n} benötigte(s) Modell(e) werden heruntergeladen"
+            " (kann mehrere Minuten dauern)..."
+        ),
         "dl_progress": "[{i}/{n}] {name} wird heruntergeladen...",
         "dl_progress_short": "{name} wird heruntergeladen...",
         "dl_error": "  Fehler beim Herunterladen von {name}: {err}",
         "dl_done": "  {name} bereit.",
         "dl_all_done": "Modelle heruntergeladen. Übersetzungsmotor wird geladen...",
-        "dl_error_dialog": "Modell konnte nicht heruntergeladen werden:\n{name}\n\nÜberprüfe deine Internetverbindung.",
+        "dl_error_dialog": (
+            "Modell konnte nicht heruntergeladen werden:\n{name}\n\n"
+            "Überprüfe deine Internetverbindung."
+        ),
     },
     "IT": {
         "subtitle": "Traduttore di mod",
@@ -409,7 +421,10 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "dl_error": "  Errore nel download di {name}: {err}",
         "dl_done": "  {name} pronto.",
         "dl_all_done": "Modelli scaricati. Caricamento del motore di traduzione...",
-        "dl_error_dialog": "Impossibile scaricare il modello:\n{name}\n\nControlla la tua connessione internet.",
+        "dl_error_dialog": (
+            "Impossibile scaricare il modello:\n{name}\n\n"
+            "Controlla la tua connessione internet."
+        ),
     },
     "PT": {
         "subtitle": "Tradutor de mods",
@@ -490,7 +505,10 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "dl_error": "  Erro ao baixar {name}: {err}",
         "dl_done": "  {name} pronto.",
         "dl_all_done": "Modelos baixados. Carregando motor de tradução...",
-        "dl_error_dialog": "Não foi possível baixar o modelo:\n{name}\n\nVerifique sua conexão com a internet.",
+        "dl_error_dialog": (
+            "Não foi possível baixar o modelo:\n{name}\n\n"
+            "Verifique sua conexão com a internet."
+        ),
     },
     "RU": {
         "subtitle": "Переводчик модов",
@@ -571,7 +589,10 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "dl_error": "  Ошибка загрузки {name}: {err}",
         "dl_done": "  {name} готово.",
         "dl_all_done": "Модели загружены. Загрузка движка перевода...",
-        "dl_error_dialog": "Не удалось загрузить модель:\n{name}\n\nПроверьте подключение к интернету.",
+        "dl_error_dialog": (
+            "Не удалось загрузить модель:\n{name}\n\n"
+            "Проверьте подключение к интернету."
+        ),
     },
     "PL": {
         "subtitle": "Tłumacz modów",
@@ -652,6 +673,9 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "dl_error": "  Błąd pobierania {name}: {err}",
         "dl_done": "  {name} gotowe.",
         "dl_all_done": "Modele pobrane. Ładowanie silnika tłumaczenia...",
-        "dl_error_dialog": "Nie udało się pobrać modelu:\n{name}\n\nSprawdź połączenie z internetem.",
+        "dl_error_dialog": (
+            "Nie udało się pobrać modelu:\n{name}\n\n"
+            "Sprawdź połączenie z internetem."
+        ),
     },
 }

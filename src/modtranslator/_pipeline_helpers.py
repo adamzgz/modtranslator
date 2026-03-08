@@ -49,6 +49,13 @@ def resolve_glossary_paths(
     else:
         effective = GameChoice.fo3
 
+    if effective == GameChoice.minecraft:
+        candidates = [
+            glossaries_dir / "minecraft" / f"minecraft_base_{lang_lower}.toml",
+            glossaries_dir / "minecraft" / f"minecraft_{lang_lower}.toml",
+        ]
+        return [p for p in candidates if p.exists()]
+
     if effective == GameChoice.fo3:
         candidates = [
             glossaries_dir / "fallout" / "base" / f"fallout_base_{lang_lower}.toml",
@@ -379,7 +386,7 @@ def clear_cache() -> int:
 
 
 def scan_directory(directory: Path) -> ScanResult:
-    """Scan a directory for translatable content (ESP/ESM, PEX, MCM)."""
+    """Scan a directory for translatable content (ESP/ESM, PEX, MCM, Minecraft JARs)."""
     result = ScanResult()
 
     # ESP/ESM files (direct children)
@@ -402,5 +409,12 @@ def scan_directory(directory: Path) -> ScanResult:
     if translations_dir.is_dir() or mcm_recorder_dir.is_dir():
         result.has_mcm = True
         result.mcm_directory = directory
+
+    # Minecraft JAR files (direct children or mods/ subdirectory)
+    jar_files = list(directory.glob("*.jar"))
+    mods_dir = directory / "mods"
+    if mods_dir.is_dir():
+        jar_files.extend(mods_dir.glob("*.jar"))
+    result.mc_files = sorted(jar_files)
 
     return result

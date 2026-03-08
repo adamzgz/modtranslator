@@ -212,7 +212,7 @@ class ModTranslatorApp(ctk.CTk):
         self.game_var = ctk.StringVar(value=self.settings.get("game", "Auto"))
         ctk.CTkOptionMenu(
             opts, variable=self.game_var,
-            values=["Auto", "Fallout 3", "Fallout NV", "Fallout 4", "Skyrim"],
+            values=["Auto", "Fallout 3", "Fallout NV", "Fallout 4", "Skyrim", "Minecraft"],
             width=120,
         ).pack(side="left", padx=(0, 15))
 
@@ -464,6 +464,7 @@ class ModTranslatorApp(ctk.CTk):
             "Fallout NV": GameChoice.fnv,
             "Fallout 4": GameChoice.fo4,
             "Skyrim": GameChoice.skyrim,
+            "Minecraft": GameChoice.minecraft,
         }.get(self.game_var.get(), GameChoice.auto)
 
     def _get_backend_name(self) -> str:
@@ -672,8 +673,10 @@ class ModTranslatorApp(ctk.CTk):
 
         try:
             backend, backend_label = create_backend(backend_name, api_key=api_key)
-        except Exception as e:
-            self.after(0, lambda: self._on_backend_create_error(str(e)))
+        except Exception:
+            import traceback
+            err_msg = traceback.format_exc()
+            self.after(0, lambda: self._on_backend_create_error(err_msg))
             return
 
         log(f"Backend: {backend_label}")

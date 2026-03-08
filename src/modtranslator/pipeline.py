@@ -749,6 +749,341 @@ def batch_translate_mcm(
 
 
 # ═══════════════════════════════════════════════════════════════════
+# Public API: Minecraft JAR batch translation
+# ═══════════════════════════════════════════════════════════════════
+
+
+def batch_translate_mc(
+    files: list[Path],
+    *,
+    lang: str = "ES",
+    backend: TranslationBackend,
+    backend_label: str,
+    glossary: Path | None = None,
+    skip_translated: bool = True,
+    output_dir: Path | None = None,
+    no_cache: bool = False,
+    on_progress: ProgressCallback | None = None,
+    cancel_event: Event | None = None,
+) -> BatchResult:
+    """Translate Minecraft mod JAR files.
+
+    For each JAR:
+    1. Scan for en_us.json (or en_US.lang) inside assets/*/lang/
+    2. Load existing target translation if present
+    3. Calculate missing keys (en_us - existing_target)
+    4. Filter: only strings, non-empty, alphabetic, not comment keys
+    5. Protect format specifiers (%s, %1$s) and color codes (§a)
+    6. Translate with deduplication across all JARs
+    7. Restore protections
+    8. Merge: existing_target + new translations
+    9. Rebuild JAR with updated/new lang file
+    """
+    from modtranslator.core.mc_jar import rebuild_jar_with_lang, scan_jar
+    from modtranslator.core.mc_lang_parser import (
+        FORMAT_SPEC_RE,
+        MC_LANG_MAP,
+        SECTION_SIGN_RE,
+        dump_json_lang,
+        dump_legacy_lang,
+        filter_translatable,
+        merge_translations,
+        parse_json_lang,
+        parse_legacy_lang,
+    )
+    from modtranslator.translation.cache import TranslationCache
+
+    result = BatchResult()
+    t0 = _time.monotonic()
+
+    target_locale = MC_LANG_MAP.get(lang.upper(), "es_es")
+
+    try:
+        gloss, glossary_terms, glossary_source_terms = _setup_glossary(
+            glossary, lang, GameChoice.minecraft, Game.FALLOUT3,  # Game doesn't matter
+        )
+
+        cache = None if no_cache else TranslationCache()
+
+        # ── Phase 1: Scan JARs and collect translatable strings ──
+
+        # Per-JAR state for Phase 3
+        jar_entries: list[tuple[
+            Path,  # jar_path
+            Path | None,  # output_path
+            list[tuple[  # per-mod entries in this JAR
+                str,  # en_us zip path
+                str,  # target zip path
+                dict[str, str],  # en_us entries
+                dict[str, str],  # existing target entries
+                dict[str, str],  # keys to translate {key: en_text}
+                str,  # format ("json" or "lang")
+                str,  # indent
+            ]],
+        ]] = []
+
+        unique_texts: list[str] = []
+        text_to_index: dict[str, int] = {}
+        signed_count = 0
+
+        for i, jar_path in enumerate(files):
+            _check_cancel(cancel_event)
+
+            scan = scan_jar(jar_path, target_locale)
+
+            if scan.error:
+                result.error_count += 1
+                result.errors.append((jar_path.name, scan.error))
+                if on_progress:
+                    on_progress("prepare", i + 1, len(files), jar_path.name)
+                continue
+
+            if scan.is_signed:
+                signed_count += 1
+                result.skip_count += 1
+                if on_progress:
+                    on_progress("prepare", i + 1, len(files), f"{jar_path.name} (signed)")
+                continue
+
+            if not scan.lang_entries:
+                result.skip_count += 1
+                if on_progress:
+                    on_progress("prepare", i + 1, len(files), jar_path.name)
+                continue
+
+            out_path = (output_dir / jar_path.name) if output_dir else None
+            mod_entries: list[tuple[str, str, dict, dict, dict, str, str]] = []
+
+            for entry in scan.lang_entries:
+                # Parse en_us
+                if entry.format == "json":
+                    en_entries = parse_json_lang(entry.en_us_content)
+                else:
+                    en_entries = parse_legacy_lang(entry.en_us_content)
+
+                # Parse existing target
+                existing: dict[str, str] = {}
+                if entry.target_content is not None:
+                    if entry.format == "json":
+                        existing = parse_json_lang(entry.target_content)
+                    else:
+                        existing = parse_legacy_lang(entry.target_content)
+
+                # Filter to translatable keys
+                to_translate = filter_translatable(en_entries, existing)
+
+                # Skip translated strings (language detection)
+                if skip_translated and to_translate:
+                    from modtranslator.translation.lang_detect import should_translate
+                    to_translate = {
+                        k: v for k, v in to_translate.items()
+                        if should_translate(v, lang, glossary_terms, glossary_source_terms)
+                    }
+
+                if not to_translate:
+                    continue
+
+                # Collect unique texts for deduplication
+                for text in to_translate.values():
+                    if text not in text_to_index:
+                        text_to_index[text] = len(unique_texts)
+                        unique_texts.append(text)
+
+                # Determine target zip path
+                lang_dir = "/".join(entry.en_us_path.split("/")[:-1])
+                if entry.target_path is not None:
+                    target_zip = entry.target_path
+                elif entry.format == "json":
+                    target_zip = f"{lang_dir}/{target_locale}.json"
+                else:
+                    target_zip = f"{lang_dir}/{target_locale}.lang"
+
+                mod_entries.append((
+                    entry.en_us_path,
+                    target_zip,
+                    en_entries,
+                    existing,
+                    to_translate,
+                    entry.format,
+                    entry.indent,
+                ))
+
+            if mod_entries:
+                jar_entries.append((jar_path, out_path, mod_entries))
+
+            if on_progress:
+                on_progress("prepare", i + 1, len(files), jar_path.name)
+
+        result.total_strings = len(unique_texts)
+
+        if not unique_texts:
+            result.skip_count = len(files) - result.error_count
+            result.elapsed_seconds = _time.monotonic() - t0
+            return result
+
+        # Cache check
+        cached: dict[str, str] = {}
+        if cache is not None:
+            cached = cache.get_batch(unique_texts, lang)
+
+        to_translate_texts = [t for t in unique_texts if t not in cached]
+
+        # ── Protect format specifiers and color codes ──
+
+        fmt_mappings: list[dict[str, str]] = []
+        protected_texts: list[str] = []
+
+        for text in to_translate_texts:
+            mapping: dict[str, str] = {}
+            protected = text
+
+            # Protect format specifiers (%s, %1$s, %d, etc.)
+            fmt_matches = FORMAT_SPEC_RE.findall(protected)
+            for j, match in enumerate(fmt_matches):
+                placeholder = f"FMx{j}"
+                mapping[placeholder] = match
+                protected = protected.replace(match, placeholder, 1)
+
+            # Protect section sign codes (§a, §6, etc.)
+            sc_matches = SECTION_SIGN_RE.findall(protected)
+            for j, match in enumerate(sc_matches):
+                placeholder = f"SSx{j}"
+                mapping[placeholder] = match
+                protected = protected.replace(match, placeholder, 1)
+
+            fmt_mappings.append(mapping)
+            protected_texts.append(protected)
+
+        # Protect glossary terms
+        gloss_mappings: list[dict[str, str]] | None = None
+        if gloss and protected_texts:
+            protected_texts, gloss_mappings = gloss.protect_batch(protected_texts)  # type: ignore[union-attr]
+
+        # Protect target-language words
+        lang_mappings: list[dict[str, str]] | None = None
+        if protected_texts:
+            from modtranslator.translation.target_protect import protect_target_batch
+            protected_texts, lang_mappings = protect_target_batch(protected_texts, lang)
+
+        # ── Phase 2: Translate ──
+
+        translated: list[str] = []
+        if protected_texts:
+            _check_cancel(cancel_event)
+            translated, chunk_errors = _translate_chunks(
+                protected_texts, backend, lang,
+                on_progress=on_progress, cancel_event=cancel_event,
+            )
+            for err in chunk_errors:
+                result.errors.append(("batch", err))
+
+            # Restore target-language words
+            if lang_mappings is not None:
+                from modtranslator.translation.target_protect import restore_target_batch
+                translated = restore_target_batch(translated, lang_mappings)
+
+            # Restore glossary terms
+            if gloss and gloss_mappings:
+                translated = gloss.restore_batch(translated, gloss_mappings)  # type: ignore[union-attr]
+
+        # Restore format specifiers and color codes
+        restored: list[str] = []
+        for text, mapping in zip(translated, fmt_mappings, strict=True):
+            for placeholder, original in mapping.items():
+                text = text.replace(placeholder, original)
+            restored.append(text)
+        translated = restored
+
+        # Validate: if format specifier count doesn't match, keep original
+        validated: list[str] = []
+        for orig, trans in zip(to_translate_texts, translated, strict=True):
+            orig_fmts = FORMAT_SPEC_RE.findall(orig)
+            trans_fmts = FORMAT_SPEC_RE.findall(trans)
+            if len(orig_fmts) != len(trans_fmts):
+                validated.append(orig)  # fallback to original
+            else:
+                validated.append(trans)
+        translated = validated
+
+        # Build translation map
+        translations: dict[str, str] = dict(cached)
+        for orig, trans in zip(to_translate_texts, translated, strict=True):
+            translations[orig] = trans
+
+        # Cache new translations
+        if cache is not None:
+            try:
+                if translated:
+                    cache_entries = [
+                        (orig, lang, orig, translations[orig])
+                        for orig in to_translate_texts
+                        if orig in translations
+                    ]
+                    if cache_entries:
+                        cache.put_batch(cache_entries, backend=backend_label)
+            except Exception as exc:
+                warnings.warn(
+                    f"Failed to write translation cache: {exc}",
+                    stacklevel=1,
+                )
+            finally:
+                cache.close()
+
+        # ── Phase 3: Write JARs ──
+
+        total_jars = len(jar_entries)
+        for i, (jar_path, out_path, mod_entries) in enumerate(jar_entries):
+            _check_cancel(cancel_event)
+            try:
+                new_files: dict[str, bytes] = {}
+
+                for (
+                    _en_us_path, target_zip, en_entries, existing,
+                    to_translate_keys, fmt, indent,
+                ) in mod_entries:
+                    # Build translations for this mod's keys
+                    mod_translations = {
+                        k: translations[v]
+                        for k, v in to_translate_keys.items()
+                        if v in translations
+                    }
+
+                    # Merge with existing translations
+                    merged = merge_translations(en_entries, existing, mod_translations)
+
+                    # Serialize
+                    if fmt == "json":
+                        content = dump_json_lang(merged, indent)
+                    else:
+                        content = dump_legacy_lang(merged)
+
+                    new_files[target_zip] = content.encode("utf-8")
+
+                if new_files:
+                    rebuild_jar_with_lang(jar_path, new_files, output_path=out_path)
+                    result.success_count += 1
+
+            except PermissionError:
+                result.error_count += 1
+                result.errors.append((
+                    jar_path.name,
+                    "Permission denied — close Minecraft/launcher and retry",
+                ))
+            except Exception as e:
+                result.error_count += 1
+                result.errors.append((jar_path.name, str(e)))
+
+            if on_progress:
+                on_progress("write", i + 1, total_jars, jar_path.name)
+
+    except CancelledError:
+        result.errors.append(("", "Cancelled by user"))
+
+    result.elapsed_seconds = _time.monotonic() - t0
+    return result
+
+
+# ═══════════════════════════════════════════════════════════════════
 # Public API: Auto-detect and translate everything
 # ═══════════════════════════════════════════════════════════════════
 
@@ -785,6 +1120,8 @@ def batch_translate_all(
             found_parts.append(f"{len(scan.pex_files)} PEX")
         if scan.has_mcm:
             found_parts.append("MCM")
+        if scan.mc_files:
+            found_parts.append(f"{len(scan.mc_files)} MC JARs")
         if found_parts:
             msg = _msg(lang, "found") + ": " + ", ".join(found_parts)
         else:
@@ -842,8 +1179,25 @@ def batch_translate_all(
             result.elapsed_seconds = _time.monotonic() - t0
             return result
 
+    # Minecraft JARs
+    if scan.mc_files:
+        if on_progress:
+            on_progress("scan", 0, 0, _msg(lang, "translating_mc", n=len(scan.mc_files)))
+        try:
+            _check_cancel(cancel_event)
+            result.mc_result = batch_translate_mc(
+                scan.mc_files,
+                lang=lang, backend=backend, backend_label=backend_label,
+                glossary=glossary, skip_translated=skip_translated,
+                output_dir=output_dir, no_cache=no_cache,
+                on_progress=on_progress, cancel_event=cancel_event,
+            )
+        except CancelledError:
+            result.elapsed_seconds = _time.monotonic() - t0
+            return result
+
     # Aggregate
-    for r in (result.esp_result, result.pex_result, result.mcm_result):
+    for r in (result.esp_result, result.pex_result, result.mcm_result, result.mc_result):
         if r:
             result.total_success += r.success_count
             result.total_errors += r.error_count

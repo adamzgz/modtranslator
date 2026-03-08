@@ -1,6 +1,6 @@
 """modtranslator: Automatic translator for Bethesda ESP/ESM mod files."""
 
-from importlib.metadata import version, PackageNotFoundError
+from importlib.metadata import PackageNotFoundError, version
 
 try:
     __version__ = version("modtranslator")

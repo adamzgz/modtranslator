@@ -23,6 +23,7 @@ class GameChoice(str, Enum):
     fnv = "fnv"
     fo4 = "fo4"
     skyrim = "skyrim"
+    minecraft = "minecraft"
 
 
 # Pipeline progress messages per language
@@ -34,6 +35,7 @@ _PIPELINE_MESSAGES: dict[str, dict[str, str]] = {
         "translating_esp": "Translating {n} ESP/ESM files...",
         "translating_pex": "Translating {n} PEX files...",
         "translating_mcm": "Translating MCM files...",
+        "translating_mc": "Translating {n} Minecraft JARs...",
     },
     "ES": {
         "files_scanned": "Archivos escaneados",
@@ -42,6 +44,7 @@ _PIPELINE_MESSAGES: dict[str, dict[str, str]] = {
         "translating_esp": "Traduciendo {n} archivos ESP/ESM...",
         "translating_pex": "Traduciendo {n} archivos PEX...",
         "translating_mcm": "Traduciendo archivos MCM...",
+        "translating_mc": "Traduciendo {n} JARs de Minecraft...",
     },
     "FR": {
         "files_scanned": "Fichiers analysés",
@@ -50,6 +53,7 @@ _PIPELINE_MESSAGES: dict[str, dict[str, str]] = {
         "translating_esp": "Traduction de {n} fichiers ESP/ESM...",
         "translating_pex": "Traduction de {n} fichiers PEX...",
         "translating_mcm": "Traduction des fichiers MCM...",
+        "translating_mc": "Traduction de {n} JARs Minecraft...",
     },
     "DE": {
         "files_scanned": "Dateien gescannt",
@@ -58,6 +62,7 @@ _PIPELINE_MESSAGES: dict[str, dict[str, str]] = {
         "translating_esp": "Übersetze {n} ESP/ESM-Dateien...",
         "translating_pex": "Übersetze {n} PEX-Dateien...",
         "translating_mcm": "Übersetze MCM-Dateien...",
+        "translating_mc": "Übersetze {n} Minecraft-JARs...",
     },
     "IT": {
         "files_scanned": "File analizzati",
@@ -66,6 +71,7 @@ _PIPELINE_MESSAGES: dict[str, dict[str, str]] = {
         "translating_esp": "Traduzione di {n} file ESP/ESM...",
         "translating_pex": "Traduzione di {n} file PEX...",
         "translating_mcm": "Traduzione dei file MCM...",
+        "translating_mc": "Traduzione di {n} JAR Minecraft...",
     },
     "PT": {
         "files_scanned": "Arquivos analisados",
@@ -74,6 +80,7 @@ _PIPELINE_MESSAGES: dict[str, dict[str, str]] = {
         "translating_esp": "Traduzindo {n} arquivos ESP/ESM...",
         "translating_pex": "Traduzindo {n} arquivos PEX...",
         "translating_mcm": "Traduzindo arquivos MCM...",
+        "translating_mc": "Traduzindo {n} JARs Minecraft...",
     },
     "RU": {
         "files_scanned": "Файлы просканированы",
@@ -82,6 +89,7 @@ _PIPELINE_MESSAGES: dict[str, dict[str, str]] = {
         "translating_esp": "Перевод {n} файлов ESP/ESM...",
         "translating_pex": "Перевод {n} файлов PEX...",
         "translating_mcm": "Перевод файлов MCM...",
+        "translating_mc": "Перевод {n} JAR-файлов Minecraft...",
     },
     "PL": {
         "files_scanned": "Pliki przeskanowane",
@@ -90,6 +98,7 @@ _PIPELINE_MESSAGES: dict[str, dict[str, str]] = {
         "translating_esp": "Tłumaczenie {n} plików ESP/ESM...",
         "translating_pex": "Tłumaczenie {n} plików PEX...",
         "translating_mcm": "Tłumaczenie plików MCM...",
+        "translating_mc": "Tłumaczenie {n} plików JAR Minecraft...",
     },
 }
 
@@ -155,6 +164,7 @@ class ScanResult:
     pex_files: list[Path] = field(default_factory=list)
     has_mcm: bool = False
     mcm_directory: Path | None = None
+    mc_files: list[Path] = field(default_factory=list)
 
 
 @dataclass
@@ -163,6 +173,7 @@ class BatchAllResult:
     esp_result: BatchResult | None = None
     pex_result: BatchResult | None = None
     mcm_result: BatchResult | None = None
+    mc_result: BatchResult | None = None
     total_success: int = 0
     total_errors: int = 0
     elapsed_seconds: float = 0.0
