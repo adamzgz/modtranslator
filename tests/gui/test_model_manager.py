@@ -39,8 +39,8 @@ class TestOpusModelId:
 
     @patch("modtranslator.gui.model_manager._check_model_exists", return_value=False)
     def test_base_only_languages(self, mock_exists: object) -> None:
-        """DE/RU/PL only have base models."""
-        for lang in ("DE", "RU", "PL"):
+        """DE/RU only have base models (PL has no Opus-MT on HuggingFace)."""
+        for lang in ("DE", "RU"):
             model_id = _opus_model_id(lang)
             assert model_id is not None
             assert "tc-big" not in model_id
@@ -121,7 +121,7 @@ class TestGetModelStatus:
     @patch("modtranslator.gui.model_manager._check_model_exists", return_value=False)
     def test_each_lang_gets_correct_model(self, mock_exists: object) -> None:
         """Every supported language should get its own Opus-MT model ID."""
-        for lang in ("ES", "FR", "DE", "IT", "PT", "RU", "PL"):
+        for lang in ("ES", "FR", "DE", "IT", "PT", "RU"):
             models = get_model_status(lang=lang)
             opus = [m for m in models if "Opus-MT" in m.name]
             assert len(opus) == 1, f"Expected 1 Opus-MT model for {lang}"

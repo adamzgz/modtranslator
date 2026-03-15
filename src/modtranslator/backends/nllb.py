@@ -2,17 +2,23 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 import shutil
+import subprocess
 import sys
+import warnings
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from pathlib import Path
 
 from modtranslator.backends.base import TranslationBackend
 
 MAX_BATCH_SIZE = 256
-_GPU_MAX_BATCH_SIZE = 32  # NLLB 1.3B float16 ~2.6GB; 256 overflows 8GB VRAM
+_GPU_BATCH_SIZE_DEFAULT = 32  # NLLB 1.3B float16 ~2.6GB; 256 overflows 8GB VRAM
+_NLLB_MODEL_VRAM_MB = 2600  # Approximate VRAM used by NLLB 1.3B model itself
 DEFAULT_BEAM_SIZE = 2
 MAX_TOKENS = 900  # NLLB supports 1024 positions; leave margin
 CHAR_HEURISTIC_THRESHOLD = int(MAX_TOKENS * 2.5)  # ~2250 chars
@@ -85,6 +91,38 @@ _MODEL_VARIANTS = {
 
 _DEFAULT_MODELS_DIR = Path.home() / ".modtranslator" / "models"
 
+log = logging.getLogger(__name__)
+
+
+def _detect_vram_mb() -> int | None:
+    """Detect total GPU VRAM in MB via nvidia-smi.
+
+    Returns None if nvidia-smi is unavailable or parsing fails.
+    """
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode != 0:
+            return None
+        # Take first GPU's VRAM
+        line = result.stdout.strip().splitlines()[0].strip()
+        return int(line)
+    except (OSError, ValueError, IndexError, subprocess.TimeoutExpired):
+        return None
+
+
+def _compute_gpu_batch_size(vram_mb: int) -> int:
+    """Compute GPU batch size scaled to available VRAM.
+
+    Linear scaling: each ~80MB of free VRAM (after model) supports ~1 batch item.
+    Clamped to [16, 128]. 8GB → 32 (maintains current default).
+    """
+    return min(128, max(16, (vram_mb - _NLLB_MODEL_VRAM_MB) // 80))
+
 
 def _delete_hf_cache(hf_model_name: str) -> None:
     """Delete the HuggingFace hub cache for a model after CT2 conversion.
@@ -104,8 +142,11 @@ def _delete_hf_cache(hf_model_name: str) -> None:
     # HF_HOME points to the huggingface dir; the hub subdir holds model caches
     hub_dir = hf_home if hf_home.name == "hub" else hf_home / "hub"
     cache_dir = hub_dir / ("models--" + hf_model_name.replace("/", "--"))
-    if cache_dir.exists():
-        shutil.rmtree(cache_dir)
+    try:
+        if cache_dir.exists():
+            shutil.rmtree(cache_dir)
+    except OSError:
+        pass  # Best-effort cleanup; don't crash if cache can't be deleted
 
 
 class NLLBBackend(TranslationBackend):
@@ -149,6 +190,17 @@ class NLLBBackend(TranslationBackend):
 
         self._device = self._resolve_device(device)
         self._compute_type = self._resolve_compute_type(self._device)
+
+        # Auto-scale GPU batch size based on VRAM
+        if self._device == "cuda":
+            vram = _detect_vram_mb()
+            if vram is not None:
+                self._gpu_batch_size = _compute_gpu_batch_size(vram)
+                log.info("Detected %d MB VRAM → GPU batch size %d", vram, self._gpu_batch_size)
+            else:
+                self._gpu_batch_size = _GPU_BATCH_SIZE_DEFAULT
+        else:
+            self._gpu_batch_size = _GPU_BATCH_SIZE_DEFAULT
 
         # Single translator + tokenizer (multilingual model)
         self._translator: object | None = None
@@ -240,9 +292,23 @@ class NLLBBackend(TranslationBackend):
 
         try:
             return self._translate_chunk(texts, translator, tokenizer, tgt_flores, target_lang)
-        except RuntimeError:
+        except RuntimeError as exc:
             if self._device == "cpu":
                 raise
+            # OOM retry: halve batch size once before falling back to CPU
+            if "out of memory" in str(exc).lower() and self._gpu_batch_size > 16:
+                old_size = self._gpu_batch_size
+                self._gpu_batch_size = max(16, self._gpu_batch_size // 2)
+                log.warning(
+                    "CUDA OOM with batch size %d, retrying with %d",
+                    old_size, self._gpu_batch_size,
+                )
+                try:
+                    return self._translate_chunk(
+                        texts, translator, tokenizer, tgt_flores, target_lang,
+                    )
+                except RuntimeError:
+                    pass  # Fall through to CPU fallback
             translator = self._fallback_to_cpu()
             return self._translate_chunk(texts, translator, tokenizer, tgt_flores, target_lang)
 
@@ -250,6 +316,13 @@ class NLLBBackend(TranslationBackend):
         """Rebuild translator on CPU after CUDA failure."""
         import ctranslate2
 
+        warnings.warn(
+            "CUDA error during translation — falling back to CPU. "
+            "Translation will be significantly slower.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        self._translator = None
         self._device = "cpu"
         self._compute_type = "int8"
         self._ensure_model()
@@ -318,7 +391,7 @@ class NLLBBackend(TranslationBackend):
         # --- Phase 4: Translate with target_prefix + batch decode ---
         target_prefix = [[tgt_flores]] * len(tokenized)
 
-        batch_size = _GPU_MAX_BATCH_SIZE if self._device == "cuda" else MAX_BATCH_SIZE
+        batch_size = self._gpu_batch_size if self._device == "cuda" else MAX_BATCH_SIZE
         results = translator.translate_batch(  # type: ignore[union-attr]
             tokenized,
             target_prefix=target_prefix,
@@ -672,30 +745,34 @@ class NLLBBackend(TranslationBackend):
             # this attribute during get_vocabulary(). For NLLB, all language
             # tokens are already within the main vocab range, so an empty list
             # is safe — no tokens are missed.
-            self._patch_tokenizer_compat()
+            with self._patch_tokenizer_compat():
+                from ctranslate2.converters.transformers import TransformersConverter
 
-            from ctranslate2.converters.transformers import TransformersConverter
-
-            converter = TransformersConverter(
-                self._hf_model_name, low_cpu_mem_usage=True,
-            )
-            converter.convert(
-                str(output_dir),
-                quantization=self._compute_type,
-                force=True,
-            )
+                converter = TransformersConverter(
+                    self._hf_model_name, low_cpu_mem_usage=True,
+                )
+                converter.convert(
+                    str(output_dir),
+                    quantization=self._compute_type,
+                    force=True,
+                )
         except Exception as e:
-            if output_dir.exists():
-                shutil.rmtree(output_dir)
+            # Clean up partial conversion; swallow cleanup errors to preserve original
+            try:
+                if output_dir.exists():
+                    shutil.rmtree(output_dir)
+            except OSError:
+                pass
             raise RuntimeError(
                 f"Failed to convert model {self._hf_model_name}: {e}"
             ) from e
-
-        _delete_hf_cache(self._hf_model_name)
+        finally:
+            _delete_hf_cache(self._hf_model_name)
 
     @staticmethod
-    def _patch_tokenizer_compat() -> None:
-        """Patch transformers 5.0+ tokenizer for CTranslate2 converter compat.
+    @contextmanager
+    def _patch_tokenizer_compat() -> Iterator[None]:
+        """Temporarily patch transformers 5.0+ tokenizer for CT2 converter compat.
 
         transformers 5.0 replaced tokenizer classes with TokenizersBackend
         which lacks additional_special_tokens. The __getattr__ that raises
@@ -703,13 +780,13 @@ class NLLBBackend(TranslationBackend):
         We patch it to return [] for that specific attribute so the CT2
         converter's get_vocabulary() doesn't crash. All NLLB language tokens
         are already in the main vocab range, so nothing is lost.
+
+        The patch is scoped to the context manager and reverted on exit.
         """
         try:
             from transformers.tokenization_utils_base import PreTrainedTokenizerBase
         except ImportError:
-            return
-
-        if hasattr(PreTrainedTokenizerBase, "_modtranslator_patched"):
+            yield
             return
 
         original_getattr = PreTrainedTokenizerBase.__getattr__
@@ -720,4 +797,7 @@ class NLLBBackend(TranslationBackend):
             return original_getattr(self, key)  # type: ignore[arg-type]
 
         PreTrainedTokenizerBase.__getattr__ = _patched_getattr  # type: ignore[assignment]
-        PreTrainedTokenizerBase._modtranslator_patched = True  # type: ignore[attr-defined]
+        try:
+            yield
+        finally:
+            PreTrainedTokenizerBase.__getattr__ = original_getattr  # type: ignore[assignment]

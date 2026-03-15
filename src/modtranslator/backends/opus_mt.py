@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 import shutil
 import sys
+import warnings
+from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -16,6 +18,7 @@ MAX_TOKENS = 480  # Marian models support max 512 positions; leave margin
 CHAR_HEURISTIC_THRESHOLD = int(MAX_TOKENS * 2.5)  # ~1200 chars; below this, no token check needed
 _NUM_TOKENIZER_WORKERS = 4
 _INTER_THREADS = min(4, os.cpu_count() or 1)  # CTranslate2 workers; >4 doesn't help CT2
+_MAX_CACHED_PAIRS = 3  # Max language pairs kept in memory (~500MB each)
 
 _MODEL_VARIANTS = {
     "base": None,       # Dynamic: opus-mt-{src}-{tgt}
@@ -63,8 +66,11 @@ def _delete_hf_cache(hf_model_name: str) -> None:
     )
     hub_dir = hf_home if hf_home.name == "hub" else hf_home / "hub"
     cache_dir = hub_dir / ("models--" + hf_model_name.replace("/", "--"))
-    if cache_dir.exists():
-        shutil.rmtree(cache_dir)
+    try:
+        if cache_dir.exists():
+            shutil.rmtree(cache_dir)
+    except OSError:
+        pass  # Best-effort cleanup; don't crash if cache can't be deleted
 
 
 class OpusMTBackend(TranslationBackend):
@@ -121,9 +127,10 @@ class OpusMTBackend(TranslationBackend):
         self._device = self._resolve_device(device)
         self._compute_type = self._resolve_compute_type(self._device)
 
-        # Caches for loaded translators and tokenizers, keyed by (source, target)
-        self._translators: dict[tuple[str, str], object] = {}
-        self._tokenizers: dict[tuple[str, str], object] = {}
+        # LRU caches for loaded translators and tokenizers, keyed by (source, target).
+        # Each pair holds ~500MB; cap at _MAX_CACHED_PAIRS to bound memory.
+        self._translators: OrderedDict[tuple[str, str], object] = OrderedDict()
+        self._tokenizers: OrderedDict[tuple[str, str], object] = OrderedDict()
 
     @staticmethod
     def _register_nvidia_dll_dirs() -> None:
@@ -244,9 +251,16 @@ class OpusMTBackend(TranslationBackend):
         """Rebuild translator on CPU after CUDA failure."""
         import ctranslate2
 
+        warnings.warn(
+            "CUDA error during translation — falling back to CPU. "
+            "Translation will be significantly slower.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        key = (source, target)
+        self._translators.pop(key, None)
         self._device = "cpu"
         self._compute_type = "int8"
-        key = (source, target)
         self._ensure_model(source, target)
         model_name = self._model_name(source, target)
         ct2_dir = str(self._get_ct2_dir(model_name))
@@ -428,7 +442,16 @@ class OpusMTBackend(TranslationBackend):
         self, source: str, target: str
     ) -> tuple[object, object]:
         key = (source, target)
-        if key not in self._translators:
+        if key in self._translators:
+            # Move to end (most recently used)
+            self._translators.move_to_end(key)
+            self._tokenizers.move_to_end(key)
+        else:
+            # Evict oldest entries if at capacity
+            while len(self._translators) >= _MAX_CACHED_PAIRS:
+                self._translators.popitem(last=False)
+                self._tokenizers.popitem(last=False)
+
             self._ensure_model(source, target)
             import ctranslate2
             from transformers import AutoTokenizer
@@ -513,11 +536,14 @@ class OpusMTBackend(TranslationBackend):
                 force=True,
             )
         except Exception as e:
-            # Clean up partial conversion
-            if output_dir.exists():
-                shutil.rmtree(output_dir)
+            # Clean up partial conversion; swallow cleanup errors to preserve original
+            try:
+                if output_dir.exists():
+                    shutil.rmtree(output_dir)
+            except OSError:
+                pass
             raise RuntimeError(
                 f"Failed to convert model {model_name}: {e}"
             ) from e
-
-        _delete_hf_cache(model_name)
+        finally:
+            _delete_hf_cache(model_name)

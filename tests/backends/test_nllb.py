@@ -688,3 +688,194 @@ class TestMultilangPostProcessing:
         assert NLLBBackend._cap_single_word_output(
             "Стимулятор боевой единицы армии", "Stimpak", "RU"
         ) == "Стимулятор"
+
+
+class TestDetectVram:
+    """Tests for _detect_vram_mb() VRAM detection."""
+
+    def test_detect_vram_success(self):
+        from modtranslator.backends.nllb import _detect_vram_mb
+
+        with patch("modtranslator.backends.nllb.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0, stdout="8192\n")
+            assert _detect_vram_mb() == 8192
+
+    def test_detect_vram_multi_gpu_takes_first(self):
+        from modtranslator.backends.nllb import _detect_vram_mb
+
+        with patch("modtranslator.backends.nllb.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0, stdout="24576\n12288\n")
+            assert _detect_vram_mb() == 24576
+
+    def test_detect_vram_nvidia_smi_not_found(self):
+        from modtranslator.backends.nllb import _detect_vram_mb
+
+        with patch("modtranslator.backends.nllb.subprocess.run") as mock_run:
+            mock_run.side_effect = OSError("not found")
+            assert _detect_vram_mb() is None
+
+    def test_detect_vram_nonzero_returncode(self):
+        from modtranslator.backends.nllb import _detect_vram_mb
+
+        with patch("modtranslator.backends.nllb.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=1, stdout="")
+            assert _detect_vram_mb() is None
+
+    def test_detect_vram_timeout(self):
+        import subprocess as sp
+
+        from modtranslator.backends.nllb import _detect_vram_mb
+
+        with patch("modtranslator.backends.nllb.subprocess.run") as mock_run:
+            mock_run.side_effect = sp.TimeoutExpired("nvidia-smi", 5)
+            assert _detect_vram_mb() is None
+
+
+class TestComputeGpuBatchSize:
+    """Tests for _compute_gpu_batch_size() scaling function."""
+
+    def test_6gb_vram(self):
+        from modtranslator.backends.nllb import _compute_gpu_batch_size
+
+        result = _compute_gpu_batch_size(6144)
+        assert result == 44  # (6144 - 2600) // 80 = 44
+
+    def test_8gb_vram(self):
+        from modtranslator.backends.nllb import _compute_gpu_batch_size
+
+        # 8192 MB → (8192 - 2600) // 80 = 69
+        result = _compute_gpu_batch_size(8192)
+        assert result == 69
+
+    def test_12gb_vram(self):
+        from modtranslator.backends.nllb import _compute_gpu_batch_size
+
+        result = _compute_gpu_batch_size(12288)
+        assert result == 121
+
+    def test_24gb_vram_capped_at_128(self):
+        from modtranslator.backends.nllb import _compute_gpu_batch_size
+
+        result = _compute_gpu_batch_size(24576)
+        assert result == 128
+
+    def test_4gb_vram_floor_at_16(self):
+        from modtranslator.backends.nllb import _compute_gpu_batch_size
+
+        result = _compute_gpu_batch_size(4096)
+        assert result == 18  # (4096 - 2600) // 80 = 18
+
+    def test_very_low_vram_floor_at_16(self):
+        from modtranslator.backends.nllb import _compute_gpu_batch_size
+
+        result = _compute_gpu_batch_size(3000)
+        assert result == 16  # clamped to min
+
+
+class TestOomRetry:
+    """Tests for OOM retry logic in translate_batch."""
+
+    def test_oom_retries_with_half_batch(self, mock_nllb_env):
+        """On CUDA OOM, batch size is halved and translation retried."""
+        backend = mock_nllb_env.NLLBBackend(
+            device="cuda", models_dir=mock_nllb_env.models_dir
+        )
+        backend._gpu_batch_size = 64
+
+        call_count = 0
+
+        def _translate_batch_oom(tokenized, target_prefix=None, beam_size=2,
+                                 max_batch_size=256, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise RuntimeError("CUDA out of memory. Tried to allocate 2.00 GiB")
+            return [_make_hypothesis([f"out{i}" for i in range(3)]) for _ in tokenized]
+
+        mock_nllb_env.translator.translate_batch.side_effect = _translate_batch_oom
+
+        result = backend.translate_batch(["Hello"], "ES")
+        assert len(result) == 1
+        assert backend._gpu_batch_size == 32  # halved from 64
+
+    def test_oom_falls_to_cpu_after_retry_fails(self, mock_nllb_env):
+        """If retry also OOMs, falls back to CPU."""
+        backend = mock_nllb_env.NLLBBackend(
+            device="cuda", models_dir=mock_nllb_env.models_dir
+        )
+        backend._gpu_batch_size = 64
+
+        def _always_oom(tokenized, target_prefix=None, beam_size=2,
+                        max_batch_size=256, **kwargs):
+            raise RuntimeError("CUDA out of memory")
+
+        mock_nllb_env.translator.translate_batch.side_effect = _always_oom
+
+        # After both GPU attempts fail, _fallback_to_cpu is called.
+        # The CPU translator mock returns normal results.
+        cpu_translator = MagicMock()
+        cpu_translator.translate_batch.side_effect = lambda tokenized, **kw: [
+            _make_hypothesis(["ok"]) for _ in tokenized
+        ]
+
+        with patch.object(backend, "_fallback_to_cpu", return_value=cpu_translator):
+            result = backend.translate_batch(["Hello"], "ES")
+            assert len(result) == 1
+            assert backend._gpu_batch_size == 32  # halved
+
+    def test_non_oom_runtime_error_falls_to_cpu_directly(self, mock_nllb_env):
+        """Non-OOM RuntimeError skips retry and goes straight to CPU fallback."""
+        backend = mock_nllb_env.NLLBBackend(
+            device="cuda", models_dir=mock_nllb_env.models_dir
+        )
+        backend._gpu_batch_size = 64
+
+        def _other_error(tokenized, target_prefix=None, beam_size=2,
+                         max_batch_size=256, **kwargs):
+            raise RuntimeError("some other CUDA error")
+
+        mock_nllb_env.translator.translate_batch.side_effect = _other_error
+
+        cpu_translator = MagicMock()
+        cpu_translator.translate_batch.side_effect = lambda tokenized, **kw: [
+            _make_hypothesis(["ok"]) for _ in tokenized
+        ]
+
+        with patch.object(backend, "_fallback_to_cpu", return_value=cpu_translator):
+            result = backend.translate_batch(["Hello"], "ES")
+            assert len(result) == 1
+            assert backend._gpu_batch_size == 64  # unchanged, no OOM retry
+
+
+class TestNLLBEdgeCases:
+    def test_unsupported_source_language(self, mock_nllb_env):
+        """Unsupported source language raises ValueError."""
+        backend = mock_nllb_env.NLLBBackend(
+            device="cpu", models_dir=mock_nllb_env.models_dir,
+        )
+
+        with pytest.raises(ValueError, match="Unsupported source language"):
+            backend.translate_batch(["Hello"], "ES", source_lang="XX")
+
+    def test_unsupported_target_language(self, mock_nllb_env):
+        """Unsupported target language raises ValueError."""
+        backend = mock_nllb_env.NLLBBackend(
+            device="cpu", models_dir=mock_nllb_env.models_dir,
+        )
+
+        with pytest.raises(ValueError, match="Unsupported target language"):
+            backend.translate_batch(["Hello"], "XX")
+
+    def test_compute_gpu_batch_size_zero_vram(self):
+        """_compute_gpu_batch_size with VRAM=0 clamps to 16."""
+        from modtranslator.backends.nllb import _compute_gpu_batch_size
+
+        result = _compute_gpu_batch_size(0)
+        assert result == 16
+
+    def test_compute_gpu_batch_size_at_model_size(self):
+        """_compute_gpu_batch_size with VRAM exactly at model size clamps to 16."""
+        from modtranslator.backends.nllb import _NLLB_MODEL_VRAM_MB, _compute_gpu_batch_size
+
+        result = _compute_gpu_batch_size(_NLLB_MODEL_VRAM_MB)
+        assert result == 16

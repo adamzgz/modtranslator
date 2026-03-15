@@ -106,3 +106,79 @@ class TestMalformedCompressedData:
         assert len(plugin.groups) == 1
         rec = plugin.groups[0].children[0]
         assert rec.subrecords == []
+
+
+class TestCompressedRecordTooSmall:
+    def test_compressed_data_size_less_than_4(self):
+        """Compressed record with data_size < 4 → struct.error wrapped in ValueError."""
+        tes4 = _make_tes4_header()
+
+        rec_type = b"WEAP"
+        # Only 2 bytes of payload — not enough for the 4-byte decompressed_size
+        tiny_payload = b"\xFF\xFF"
+        data_size = len(tiny_payload)
+
+        grup_size = 24 + 24 + data_size
+        grup = b"GRUP" + struct.pack("<I", grup_size) + b"WEAP"
+        grup += struct.pack("<I", 0) + struct.pack("<I", 0) + struct.pack("<I", 0)
+
+        rec_header = rec_type + struct.pack("<I", data_size)
+        rec_header += struct.pack("<I", 0x00040000)  # COMPRESSED flag
+        rec_header += struct.pack("<I", 0x00003000)  # FormID
+        rec_header += struct.pack("<I", 0) + struct.pack("<I", 0)
+
+        data = tes4 + grup + rec_header + tiny_payload
+
+        # struct.unpack for decompressed_size fails before the try/except,
+        # gets caught by group parser and wrapped as ValueError
+        with pytest.raises(ValueError, match="Corrupted or truncated"):
+            parse_plugin(BytesIO(data))
+
+
+class TestTruncatedRecordBody:
+    def test_truncated_record_body(self):
+        """Record header says 100 bytes but only 10 available → ValueError."""
+        tes4 = _make_tes4_header()
+
+        rec_type = b"WEAP"
+        declared_size = 100
+        actual_payload = b"\x00" * 10
+
+        grup_size = 24 + 24 + declared_size
+        grup = b"GRUP" + struct.pack("<I", grup_size) + b"WEAP"
+        grup += struct.pack("<I", 0) + struct.pack("<I", 0) + struct.pack("<I", 0)
+
+        rec_header = rec_type + struct.pack("<I", declared_size)
+        rec_header += struct.pack("<I", 0)  # flags
+        rec_header += struct.pack("<I", 0x00004000)  # FormID
+        rec_header += struct.pack("<I", 0) + struct.pack("<I", 0)
+
+        data = tes4 + grup + rec_header + actual_payload
+
+        with pytest.raises(ValueError, match="Unexpected end of file"):
+            parse_plugin(BytesIO(data))
+
+
+class TestXxxxSubrecordTooSmall:
+    def test_xxxx_sub_size_less_than_4(self):
+        """XXXX subrecord with sub_size < 4 is consumed but doesn't crash."""
+        version = struct.pack("<f", 0.94)
+        hedr_data = version + struct.pack("<I", 0) + struct.pack("<I", 0x000800)
+        hedr_sub = b"HEDR" + struct.pack("<H", len(hedr_data)) + hedr_data
+        # XXXX with size=2 (less than 4, so no uint32 can be read)
+        xxxx_sub = b"XXXX" + struct.pack("<H", 2) + b"\xFF\xFF"
+        # FULL subrecord after — should use its own size, not XXXX (since XXXX was < 4)
+        full_data = b"Hello\x00"
+        full_sub = b"FULL" + struct.pack("<H", len(full_data)) + full_data
+        tes4_data = hedr_sub + xxxx_sub + full_sub
+        tes4_data_size = len(tes4_data)
+
+        header = b"TES4" + struct.pack("<I", tes4_data_size)
+        header += struct.pack("<I", 0) + struct.pack("<I", 0)
+        header += struct.pack("<I", 0) + struct.pack("<I", 0)
+
+        plugin = parse_plugin(BytesIO(header + tes4_data))
+        # XXXX with sub_size < 4 doesn't set xxxx_size, so FULL uses its own size
+        full_subs = [s for s in plugin.header.subrecords if s.type == b"FULL"]
+        assert len(full_subs) == 1
+        assert full_subs[0].decode_string() == "Hello"

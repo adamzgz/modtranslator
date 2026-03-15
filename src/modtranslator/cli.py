@@ -22,6 +22,7 @@ from modtranslator.pipeline import (
     BatchResult,
     GameChoice,
     batch_translate_esp,
+    batch_translate_mc,
     batch_translate_mcm,
     batch_translate_pex,
     clear_cache,
@@ -33,7 +34,7 @@ from modtranslator.pipeline import (
 
 app = typer.Typer(
     name="modtranslator",
-    help="Automatic translator for Bethesda ESP/ESM mod files (FO3, FNV, FO4, Skyrim).",
+    help="Automatic translator for Bethesda and Minecraft mod files.",
     add_completion=False,
 )
 console = Console()
@@ -709,6 +710,89 @@ def batch_mcm_cmd(
         raise typer.Exit()
 
     _print_batch_summary("MCM Batch Summary", result, result.success_count + result.error_count)
+
+
+@app.command(name="batch-mc")
+def batch_mc_cmd(
+    directory: Path = typer.Argument(
+        ..., help="Directory containing Minecraft mod .jar files (or mods/ subfolder).",
+    ),
+    lang: str = typer.Option(
+        "ES", "--lang", "-l", help="Target language code.",
+    ),
+    backend_name: str = typer.Option(
+        "deepl", "--backend", "-b",
+        help="Backend: deepl, opus-mt, nllb, hybrid, dummy.",
+    ),
+    model: str | None = typer.Option(
+        None, "--model", "-m",
+    ),
+    device: str | None = typer.Option(
+        None, "--device",
+    ),
+    api_key: str | None = typer.Option(
+        None, "--api-key", "-k", envvar="DEEPL_API_KEY",
+    ),
+    output_dir: Path | None = typer.Option(
+        None, "--output-dir", "-O",
+        help="Output directory for translated JARs.",
+    ),
+    use_dummy: bool = typer.Option(False, "--dummy"),
+    no_cache: bool = typer.Option(
+        False, "--no-cache", help="Disable translation cache.",
+    ),
+    skip_translated: bool = typer.Option(
+        True, "--skip-translated/--no-skip-translated",
+        help="Skip strings already in target language.",
+    ),
+    glossary: Path | None = typer.Option(
+        None, "--glossary", "-g",
+    ),
+) -> None:
+    """Translate Minecraft mod JAR files in a directory."""
+    if not directory.is_dir():
+        console.print(f"[red]Error:[/red] Not a directory: {directory}")
+        raise typer.Exit(1)
+
+    # Find JARs in directory or mods/ subfolder
+    jar_files = sorted(directory.glob("*.jar"))
+    mods_dir = directory / "mods"
+    if mods_dir.is_dir():
+        jar_files.extend(sorted(mods_dir.glob("*.jar")))
+
+    if not jar_files:
+        console.print(f"[yellow]No .jar files in {directory}[/yellow]")
+        raise typer.Exit()
+
+    if output_dir is not None:
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+    if use_dummy:
+        backend_name = "dummy"
+
+    try:
+        shared_backend, backend_label = create_backend(
+            backend_name, api_key=api_key, model=model, device=device,
+        )
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+    console.print(f"Found [green]{len(jar_files)}[/green] .jar files")
+    _print(f"Backend: [cyan]{backend_label}[/cyan]", verbose_only=True)
+
+    result = batch_translate_mc(
+        jar_files,
+        lang=lang,
+        backend=shared_backend,
+        backend_label=backend_label,
+        glossary=glossary,
+        skip_translated=skip_translated,
+        output_dir=output_dir,
+        no_cache=no_cache,
+    )
+
+    _print_batch_summary("Minecraft Batch Summary", result, len(jar_files))
 
 
 def _print_batch_summary(title: str, result: BatchResult, total_files: int) -> None:

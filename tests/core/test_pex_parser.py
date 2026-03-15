@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import struct
 
+import pytest
+
 from modtranslator.core.pex_parser import (
     PEX_MAGIC,
     PexFile,
     PexHeader,
     _is_translatable_literal,
+    _read_wstring,
     parse_pex,
     serialize_pex,
 )
@@ -395,3 +398,53 @@ class TestGetTranslatableStrings:
         )
         result = pex.get_translatable_strings()
         assert 0 not in result
+
+
+class TestPexParserErrorCases:
+    def test_parse_pex_too_short(self):
+        """parse_pex with less than 4 bytes raises an error."""
+        with pytest.raises((ValueError, struct.error)):
+            parse_pex(b"\xFA\x57")
+
+    def test_parse_pex_empty(self):
+        """parse_pex with empty data raises an error."""
+        with pytest.raises((ValueError, struct.error)):
+            parse_pex(b"")
+
+    def test_parse_pex_valid_magic_truncated_header(self):
+        """Valid magic but truncated header data."""
+        data = struct.pack(">I", PEX_MAGIC) + b"\x03\x02"  # magic + version only
+        with pytest.raises((struct.error, IndexError)):
+            parse_pex(data)
+
+    def test_read_wstring_length_exceeds_data(self):
+        """_read_wstring with length exceeding remaining data returns partial/replacement."""
+        # String claims 100 bytes but only 5 available
+        data = struct.pack(">H", 100) + b"Hello"
+        text, pos = _read_wstring(data, 0, ">")
+        # Should decode whatever is available (with errors="replace")
+        assert len(text) <= 100
+        assert pos == 2 + 100  # pos advances by claimed length
+
+    def test_serialize_pex_long_string(self):
+        """serialize_pex with a very long string (within uint16 range) works."""
+        long_text = "A" * 60000
+        pex = PexFile(
+            header=PexHeader(3, 2, 1, 0, "", "", ""),
+            string_table=[long_text],
+            post_table_data=b"",
+        )
+        rebuilt = serialize_pex(pex)
+        pex2 = parse_pex(rebuilt)
+        assert pex2.string_table[0] == long_text
+
+    def test_serialize_pex_string_exceeds_uint16(self):
+        """serialize_pex with string > 65535 bytes raises struct overflow."""
+        huge_text = "A" * 70000
+        pex = PexFile(
+            header=PexHeader(3, 2, 1, 0, "", "", ""),
+            string_table=[huge_text],
+            post_table_data=b"",
+        )
+        with pytest.raises(struct.error):
+            serialize_pex(pex)

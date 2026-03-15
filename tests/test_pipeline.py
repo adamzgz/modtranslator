@@ -139,17 +139,19 @@ class TestBuildDedupMap:
 class TestTranslateChunks:
     def test_basic_translation(self):
         backend = DummyBackend()
-        result = _translate_chunks(["hello", "world"], backend, "ES")
+        result, errors = _translate_chunks(["hello", "world"], backend, "ES")
         assert result == ["[ES] hello", "[ES] world"]
+        assert errors == []
 
     def test_progress_callback(self):
         backend = DummyBackend()
         calls = []
-        result = _translate_chunks(
+        result, errors = _translate_chunks(
             ["a", "b", "c"], backend, "ES", chunk_size=2,
             on_progress=lambda phase, cur, total, msg: calls.append((phase, cur, total)),
         )
         assert result == ["[ES] a", "[ES] b", "[ES] c"]
+        assert errors == []
         assert len(calls) == 2  # 2 chunks
 
     def test_cancel_between_chunks(self):
@@ -527,3 +529,31 @@ class TestBatchTranslateMcm:
             game=GameChoice.fo4,
         )
         assert result.success_count >= 1
+
+
+class TestLargeFileEviction:
+    def test_large_file_eviction_and_reparse(self, tmp_path):
+        """When file exceeds _LARGE_FILE_THRESHOLD, plugin is evicted and re-parsed."""
+        from unittest.mock import patch
+
+        output_dir = tmp_path / "out"
+        output_dir.mkdir()
+
+        esp_path = tmp_path / "big.esp"
+        _write_esp(esp_path)
+
+        # Patch threshold to 0 so any file triggers eviction
+        with patch("modtranslator.pipeline._LARGE_FILE_THRESHOLD", 0):
+            result = batch_translate_esp(
+                [esp_path],
+                lang="ES",
+                backend=DummyBackend(),
+                backend_label="dummy",
+                skip_translated=False,
+                output_dir=output_dir,
+                no_cache=True,
+            )
+
+        assert result.success_count == 1
+        # Output file should exist
+        assert (output_dir / "big.esp").exists()
