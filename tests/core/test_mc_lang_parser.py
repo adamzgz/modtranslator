@@ -17,7 +17,6 @@ from modtranslator.core.mc_lang_parser import (
     parse_legacy_lang,
 )
 
-
 # ── detect_indent ──
 
 
