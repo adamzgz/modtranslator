@@ -2,9 +2,9 @@
 
 **Traductor automático offline de mods para juegos Bethesda.**
 
-Traduce archivos ESP/ESM, scripts PEX y archivos MCM de forma completamente offline usando modelos de traducción neuronal. Compatible con Fallout 3, Fallout: New Vegas, Fallout 4 y Skyrim (SE/AE). Soporta 6 idiomas de destino: español, francés, alemán, italiano, portugués y ruso.
+Traduce archivos ESP/ESM, scripts PEX, archivos MCM y mods de Minecraft (JAR) de forma completamente offline usando modelos de traducción neuronal. Compatible con Fallout 3, Fallout: New Vegas, Fallout 4, Skyrim (SE/AE) y Minecraft (Java Edition). Soporta 6 idiomas de destino: español, francés, alemán, italiano, portugués y ruso.
 
-> **Probado con los 4 juegos soportados.** Fallout 3 (124 archivos, ~97K strings), Fallout: New Vegas (244 archivos, ~142K strings), Skyrim SE/AE (542 archivos, ~128K strings + 2.302 scripts PEX + MCM) y Fallout 4 (726 archivos + 465 PEX + 60 MCM, ~323K strings) — todos funcionan correctamente con los mods traducidos.
+> **Probado con los 4 juegos Bethesda soportados.** Fallout 3 (124 archivos, ~97K strings), Fallout: New Vegas (244 archivos, ~142K strings), Skyrim SE/AE (542 archivos, ~128K strings + 2.302 scripts PEX + MCM) y Fallout 4 (726 archivos + 465 PEX + 60 MCM, ~323K strings) — todos funcionan correctamente con los mods traducidos. Soporte adicional para mods de Minecraft en formato JAR.
 
 ## Por qué
 
@@ -22,7 +22,7 @@ Yo quería jugar con mods sin tener la mitad de los textos en español y la otra
 | **GUI** | CustomTkinter, threading |
 | **CLI** | Typer |
 | **Build** | PyInstaller (exe Windows), Hatchling |
-| **Testing** | pytest (~79% cobertura, 906 tests), ruff, mypy strict |
+| **Testing** | pytest (~79% cobertura, 1086 tests), ruff, mypy strict |
 | **GPU** | NVIDIA CUDA (opcional) |
 
 ## Resultados
@@ -41,7 +41,8 @@ Yo quería jugar con mods sin tener la mitad de los textos en español y la otra
 - **Restaurar backup** — un click para volver a los archivos originales
 - **GUI incluida** — interfaz gráfica con CustomTkinter, sin necesidad de terminal
 - **CLI completa** — para usuarios avanzados y automatización
-- **3 tipos de archivo** — ESP/ESM (plugins), PEX (scripts de Papyrus), MCM (menús de configuración)
+- **4 tipos de archivo** — ESP/ESM (plugins), PEX (scripts de Papyrus), MCM (menús de configuración), JAR (mods de Minecraft)
+- **5 juegos** — Fallout 3, Fallout: New Vegas, Skyrim SE/AE, Fallout 4, Minecraft (Java Edition)
 - **4 backends de traducción** — 3 modelos offline (CTranslate2) y API cloud (DeepL)
 - **6 idiomas de destino** — ES, FR, DE, IT, PT, RU
 - **GUI multilingüe** — la interfaz se adapta al idioma de destino seleccionado
@@ -62,7 +63,7 @@ La GUI hace backup automático de los archivos que va a modificar. Si algo sale 
 
 ### Ejecutable (Windows)
 
-Descarga el ZIP de la sección Releases — no necesita Python ni dependencias.
+Descarga el ZIP de la sección Releases — no necesita Python ni dependencias. Los modelos de traducción se descargan automáticamente la primera vez que traduzcas (~1.6 GB).
 
 ### Desde código
 
@@ -111,6 +112,9 @@ modtranslator batch-pex "C:\Games\Skyrim\Data" --backend opus-mt
 
 # Traducir archivos MCM de Skyrim
 modtranslator batch-mcm "C:\Games\Skyrim\Data" --backend opus-mt
+
+# Traducir mods de Minecraft (JAR)
+modtranslator batch-mc "C:\Games\Minecraft\mods" --backend hybrid --lang ES
 ```
 
 ## Backends de Traducción
@@ -224,6 +228,27 @@ Archivo de traducción MCM (UTF-16-LE con BOM, tab-separated)
 3. ESCRIBIR ───────── Reescribir manteniendo BOM, encoding UTF-16-LE y tabulaciones
 ```
 
+### Minecraft (mods JAR)
+
+```
+Archivo JAR del mod (archivo ZIP con assets/modid/lang/*.json o *.lang)
+    │
+    ▼
+1. ESCANEAR ────────── Buscar archivos de idioma en_us.json / en_us.lang dentro del JAR
+    │                   Detectar formato (JSON key-value o .lang key=value)
+    ▼
+2. EXTRAER ─────────── Parsear strings traducibles, detectar y proteger placeholders
+    │                   Proteger códigos de formato (%s, %d, %1$s) → FMx placeholders
+    │                   Proteger códigos de estilo (§a, §l, §r) → SCx placeholders
+    ▼
+3. TRADUCIR ────────── Pipeline estándar sobre los valores
+    │
+    ▼
+4. ESCRIBIR ────────── Generar archivo de idioma del destino (es_es.json / es_es.lang)
+    │                   Reconstruir JAR completo preservando estructura original
+    │                   Escritura atómica para evitar corrupción
+```
+
 ### Pipeline Batch
 
 El comando `batch` ejecuta tres fases secuenciales para traducir carpetas enteras:
@@ -280,6 +305,8 @@ src/modtranslator/
 │   ├── records.py            Dataclasses: Subrecord, Record, GroupRecord, PluginFile
 │   ├── string_table.py       String tables externas de Skyrim (.STRINGS/.DLSTRINGS/.ILSTRINGS)
 │   ├── pex_parser.py         Parser de scripts PEX de Papyrus
+│   ├── mc_lang_parser.py     Parser de archivos de idioma de Minecraft (.json/.lang)
+│   ├── mc_jar.py             Escáner y reconstrucción de JARs de Minecraft
 │   └── plugin.py             Fachada: load_plugin / save_plugin
 ├── backends/               Backends de traducción (TranslationBackend ABC)
 │   ├── opus_mt.py            Helsinki-NLP + CTranslate2 (base + tc-big)
@@ -305,7 +332,7 @@ src/modtranslator/
 └── data/                   Diccionarios por idioma (ES, FR, DE, IT, PT, RU)
 
 glossaries/                 Archivos TOML de terminología por juego e idioma (30 archivos)
-tests/                      906 tests, ~79% cobertura
+tests/                      1086 tests, ~79% cobertura
 ```
 
 ### Formato Binario TES4
@@ -354,9 +381,9 @@ Este proyecto está bajo la licencia MIT.
 
 **Automatic offline translator for Bethesda game mods.**
 
-Translates ESP/ESM files, PEX scripts, and MCM files completely offline using neural machine translation models. Compatible with Fallout 3, Fallout: New Vegas, Fallout 4, and Skyrim (SE/AE). Supports 6 target languages: Spanish, French, German, Italian, Portuguese, and Russian.
+Translates ESP/ESM files, PEX scripts, MCM files, and Minecraft mod JARs completely offline using neural machine translation models. Compatible with Fallout 3, Fallout: New Vegas, Fallout 4, Skyrim (SE/AE), and Minecraft (Java Edition). Supports 6 target languages: Spanish, French, German, Italian, Portuguese, and Russian.
 
-> **Tested on all 4 supported games.** Fallout 3 (124 files, ~97K strings), Fallout: New Vegas (244 files, ~142K strings), Skyrim SE/AE (542 files, ~128K strings + 2,302 PEX scripts + MCM) and Fallout 4 (726 files + 465 PEX + 60 MCM, ~323K strings) — all games work correctly with translated mods.
+> **Tested on all 4 Bethesda games.** Fallout 3 (124 files, ~97K strings), Fallout: New Vegas (244 files, ~142K strings), Skyrim SE/AE (542 files, ~128K strings + 2,302 PEX scripts + MCM) and Fallout 4 (726 files + 465 PEX + 60 MCM, ~323K strings) — all games work correctly with translated mods. Additional support for Minecraft Java Edition mod JARs.
 
 ## Why
 
@@ -374,7 +401,7 @@ I wanted to play modded games without half the text in Spanish and the other hal
 | **GUI** | CustomTkinter, threading |
 | **CLI** | Typer |
 | **Build** | PyInstaller (Windows exe), Hatchling |
-| **Testing** | pytest (~79% coverage, 906 tests), ruff, mypy strict |
+| **Testing** | pytest (~79% coverage, 1086 tests), ruff, mypy strict |
 | **GPU** | NVIDIA CUDA (optional) |
 
 ## Results
@@ -393,7 +420,8 @@ I wanted to play modded games without half the text in Spanish and the other hal
 - **Restore backup** — one click to revert to original files
 - **GUI included** — graphical interface with CustomTkinter, no terminal needed
 - **Full CLI** — for advanced users and automation
-- **3 file types** — ESP/ESM (plugins), PEX (Papyrus scripts), MCM (configuration menus)
+- **4 file types** — ESP/ESM (plugins), PEX (Papyrus scripts), MCM (configuration menus), JAR (Minecraft mods)
+- **5 games** — Fallout 3, Fallout: New Vegas, Skyrim SE/AE, Fallout 4, Minecraft (Java Edition)
 - **4 translation backends** — 3 offline models (CTranslate2) and cloud API (DeepL)
 - **6 target languages** — ES, FR, DE, IT, PT, RU
 - **Multilingual GUI** — interface language follows the selected target language
@@ -414,7 +442,7 @@ The GUI automatically backs up files before modifying them. If anything goes wro
 
 ### Executable (Windows)
 
-Download the ZIP from Releases — no Python or dependencies needed.
+Download the ZIP from Releases — no Python or dependencies needed. Translation models are downloaded automatically on first use (~1.6 GB).
 
 ### From source
 
@@ -463,6 +491,9 @@ modtranslator batch-pex "C:\Games\Skyrim\Data" --backend opus-mt
 
 # Translate Skyrim MCM files
 modtranslator batch-mcm "C:\Games\Skyrim\Data" --backend opus-mt
+
+# Translate Minecraft mod JARs
+modtranslator batch-mc "C:\Games\Minecraft\mods" --backend hybrid --lang ES
 ```
 
 ## Translation Backends
@@ -576,6 +607,27 @@ MCM translation file (UTF-16-LE with BOM, tab-separated)
 3. WRITE ─────────── Rewrite preserving BOM, UTF-16-LE encoding, and tabs
 ```
 
+### Minecraft (mod JARs)
+
+```
+Mod JAR file (ZIP archive with assets/modid/lang/*.json or *.lang)
+    │
+    ▼
+1. SCAN ──────────── Find language files en_us.json / en_us.lang inside JAR
+    │                 Detect format (JSON key-value or .lang key=value)
+    ▼
+2. EXTRACT ───────── Parse translatable strings, detect and protect placeholders
+    │                 Protect format codes (%s, %d, %1$s) → FMx placeholders
+    │                 Protect style codes (§a, §l, §r) → SCx placeholders
+    ▼
+3. TRANSLATE ─────── Standard pipeline on values
+    │
+    ▼
+4. WRITE ─────────── Generate target language file (es_es.json / es_es.lang)
+    │                 Rebuild full JAR preserving original structure
+    │                 Atomic write to prevent corruption
+```
+
 ### Batch Pipeline
 
 The `batch` command runs three sequential phases to translate entire game folders:
@@ -632,6 +684,8 @@ src/modtranslator/
 │   ├── records.py            Dataclasses: Subrecord, Record, GroupRecord, PluginFile
 │   ├── string_table.py       Skyrim external string tables (.STRINGS/.DLSTRINGS/.ILSTRINGS)
 │   ├── pex_parser.py         Papyrus PEX script parser
+│   ├── mc_lang_parser.py     Minecraft language file parser (.json/.lang)
+│   ├── mc_jar.py             Minecraft JAR scanner and rebuilder
 │   └── plugin.py             Facade: load_plugin / save_plugin
 ├── backends/               Translation backends (TranslationBackend ABC)
 │   ├── opus_mt.py            Helsinki-NLP + CTranslate2 (base + tc-big)
@@ -657,7 +711,7 @@ src/modtranslator/
 └── data/                   Per-language word dictionaries (ES, FR, DE, IT, PT, RU)
 
 glossaries/                 Per-game, per-language TOML terminology files (30 files)
-tests/                      906 tests, ~79% coverage
+tests/                      1086 tests, ~79% coverage
 ```
 
 ### TES4 Binary Format

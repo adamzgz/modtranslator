@@ -76,6 +76,8 @@ excludes = [
     "pandas",
     "pytest",
     "sphinx",
+    "pyarrow",
+    "yt_dlp",
 ]
 
 # ── Analysis ──────────────────────────────────────────────────────────────────

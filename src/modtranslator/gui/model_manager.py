@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import shutil
 import subprocess
 import sys
@@ -9,6 +10,8 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -133,19 +136,80 @@ def get_model_status(lang: str = "ES") -> list[ModelInfo]:
     return models
 
 
-def download_model(
-    model_id: str, on_progress: object = None,
-) -> tuple[bool, str]:
-    """Download and convert a model to CTranslate2 format.
+# Pre-converted CT2 int8 models available on HuggingFace.
+# NLLB uses a dedicated repo (OpenNMT); Opus-MT models use a shared repo with subdirs.
+_OPUS_CT2_HF_REPO = "adamzgz/modtranslator-models"
+
+# Map from original HF model_id → (hf_repo, subdir_or_None).
+# subdir=None means the repo IS the model (files at root).
+# subdir=str means files are under repo/{subdir}/.
+_CT2_SOURCES: dict[str, tuple[str, str | None]] = {
+    "Helsinki-NLP/opus-mt-tc-big-en-es": (_OPUS_CT2_HF_REPO, "opus-mt-tc-big-en-es-ct2-int8"),
+    "Helsinki-NLP/opus-mt-tc-big-en-fr": (_OPUS_CT2_HF_REPO, "opus-mt-tc-big-en-fr-ct2-int8"),
+    "Helsinki-NLP/opus-mt-tc-big-en-it": (_OPUS_CT2_HF_REPO, "opus-mt-tc-big-en-it-ct2-int8"),
+    "Helsinki-NLP/opus-mt-tc-big-en-pt": (_OPUS_CT2_HF_REPO, "opus-mt-tc-big-en-pt-ct2-int8"),
+    "Helsinki-NLP/opus-mt-en-de": (_OPUS_CT2_HF_REPO, "opus-mt-en-de-ct2-int8"),
+    "Helsinki-NLP/opus-mt-en-ru": (_OPUS_CT2_HF_REPO, "opus-mt-en-ru-ct2-int8"),
+    "facebook/nllb-200-distilled-1.3B": ("OpenNMT/nllb-200-distilled-1.3B-ct2-int8", None),
+}
+
+
+def _ensure_stdio() -> None:
+    """Ensure sys.stdout/stderr are not None (PyInstaller console=False sets them to None)."""
+    import os
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, "w")  # noqa: SIM115
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, "w")  # noqa: SIM115
+
+
+def _download_preconverted(model_id: str, ct2_dir: Path) -> tuple[bool, str]:
+    """Download pre-converted CT2 int8 model from HuggingFace.
 
     Returns (success, error_message).
     """
-    try:
-        import ctranslate2  # noqa: F401
-        from ctranslate2.converters.transformers import TransformersConverter
-    except ImportError:
-        return False, "ctranslate2 not installed"
+    source = _CT2_SOURCES.get(model_id)
+    if source is None:
+        return False, f"No pre-converted model available for {model_id}"
 
+    hf_repo, subdir = source
+
+    try:
+        from huggingface_hub import snapshot_download
+    except ImportError:
+        return False, "huggingface_hub not installed"
+
+    _ensure_stdio()
+
+    try:
+        if subdir is None:
+            # Model files are at the repo root → download directly into ct2_dir
+            snapshot_download(hf_repo, local_dir=str(ct2_dir))
+        else:
+            # Model files are under a subdirectory in a shared repo
+            snapshot_download(
+                hf_repo,
+                allow_patterns=[f"{subdir}/*"],
+                local_dir=str(ct2_dir.parent),  # ~/.modtranslator/models/
+            )
+
+        if not (ct2_dir / "model.bin").exists():
+            return False, f"Downloaded files missing model.bin in {ct2_dir}"
+        return True, ""
+    except Exception as e:
+        # Clean up partial download
+        if ct2_dir.exists():
+            shutil.rmtree(ct2_dir, ignore_errors=True)
+        return False, str(e)
+
+
+def download_model(
+    model_id: str, on_progress: object = None,
+) -> tuple[bool, str]:
+    """Download a pre-converted CT2 model, or convert from HuggingFace if torch is available.
+
+    Returns (success, error_message).
+    """
     models_dir = Path.home() / ".modtranslator" / "models"
     models_dir.mkdir(parents=True, exist_ok=True)
     short_name = model_id.split("/")[-1]
@@ -153,6 +217,32 @@ def download_model(
 
     if (ct2_dir / "model.bin").exists():
         return True, ""
+
+    # Strategy 1: Download pre-converted CT2 model (no torch needed)
+    ok, err = _download_preconverted(model_id, ct2_dir)
+    if ok:
+        log.info("Downloaded pre-converted CT2 model for %s", model_id)
+        return True, ""
+    log.info("Pre-converted download failed (%s), trying local conversion...", err)
+
+    # Strategy 2: Convert locally with TransformersConverter (needs torch)
+    try:
+        import ctranslate2  # noqa: F401
+        from ctranslate2.converters.transformers import TransformersConverter
+    except ImportError:
+        return False, (
+            "Could not download pre-converted model and ctranslate2 is not available. "
+            f"Pre-converted error: {err}"
+        )
+
+    try:
+        import torch  # noqa: F401
+    except ImportError:
+        return False, (
+            "Could not download pre-converted model and torch is not installed "
+            "(needed for local conversion). "
+            f"Pre-converted error: {err}"
+        )
 
     try:
         if "nllb" in model_id.lower():
