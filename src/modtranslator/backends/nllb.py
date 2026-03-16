@@ -343,37 +343,37 @@ class NLLBBackend(TranslationBackend):
     ) -> list[str]:
         # --- Phase 1: Classify by character length ---
         flat_segments: list[str] = []
-        segment_map: list[tuple[int, int]] = []
+        segment_map: list[tuple[int, int, str]] = []  # (start_idx, count, joiner)
         long_candidates: list[tuple[int, str]] = []
 
         for idx, text in enumerate(texts):
             if len(text) >= CHAR_HEURISTIC_THRESHOLD:
                 long_candidates.append((idx, text))
             else:
-                segment_map.append((len(flat_segments), 1))
+                segment_map.append((len(flat_segments), 1, " "))
                 flat_segments.append(text)
 
         # --- Phase 2: Encode only long candidates to check token count ---
         if long_candidates:
             flat_segments_new: list[str] = []
-            segment_map_new: list[tuple[int, int]] = []
-            long_map: dict[int, list[str]] = {}
+            segment_map_new: list[tuple[int, int, str]] = []
+            long_map: dict[int, tuple[list[str], str]] = {}
 
             for orig_idx, text in long_candidates:
                 ids = tokenizer.encode(text)  # type: ignore[union-attr]
                 if len(ids) > MAX_TOKENS:
                     long_map[orig_idx] = self._split_long_text(text, tokenizer)
                 else:
-                    long_map[orig_idx] = [text]
+                    long_map[orig_idx] = ([text], " ")
 
             short_pos = 0
             for idx in range(len(texts)):
                 if idx in long_map:
-                    parts = long_map[idx]
-                    segment_map_new.append((len(flat_segments_new), len(parts)))
+                    parts, joiner = long_map[idx]
+                    segment_map_new.append((len(flat_segments_new), len(parts), joiner))
                     flat_segments_new.extend(parts)
                 else:
-                    segment_map_new.append((len(flat_segments_new), 1))
+                    segment_map_new.append((len(flat_segments_new), 1, " "))
                     flat_segments_new.append(flat_segments[short_pos])
                     short_pos += 1
 
@@ -446,23 +446,30 @@ class NLLBBackend(TranslationBackend):
 
         # Reassemble segmented texts
         translated: list[str] = []
-        for start, count in segment_map:
+        for start, count, joiner in segment_map:
             if count == 1:
                 translated.append(decoded[start])
             else:
-                translated.append(" ".join(decoded[start : start + count]))
+                translated.append(joiner.join(decoded[start : start + count]))
 
         return translated
 
     @staticmethod
-    def _split_long_text(text: str, tokenizer: object) -> list[str]:
-        """Split text into segments that fit within MAX_TOKENS."""
+    def _split_long_text(text: str, tokenizer: object) -> tuple[list[str], str]:
+        """Split text into segments that fit within MAX_TOKENS.
+
+        Returns (segments, joiner) where joiner is the string used to
+        reassemble translated segments (" " for sentence splits, "\\n"
+        for newline splits).
+        """
         import re
 
+        joiner = " "
         sentences = re.split(r'(?<=[.!?…])\s+', text)
 
         if len(sentences) == 1 and "\n" in text:
             sentences = [s for s in text.split("\n") if s.strip()]
+            joiner = "\n"
 
         segments: list[str] = []
         current: list[str] = []
@@ -491,7 +498,7 @@ class NLLBBackend(TranslationBackend):
         if current:
             segments.append(" ".join(current))
 
-        return segments if segments else [text]
+        return (segments, joiner) if segments else ([text], joiner)
 
     @staticmethod
     def _split_by_words(text: str, tokenizer: object) -> list[str]:

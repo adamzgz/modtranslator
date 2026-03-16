@@ -65,7 +65,12 @@ def _looks_like_editor_id(text: str) -> bool:
         return True
     if "_" in stripped:
         return True
-    return bool(len(stripped) > 8 and stripped.isalnum() and not stripped.isalpha())
+    # Long alphanumeric strings with digits (e.g. "M03Endstopplayerfiringtrigger")
+    if len(stripped) > 8 and stripped.isalnum() and not stripped.isalpha():
+        return True
+    # Very long single-word all-alpha strings are almost certainly editor IDs
+    # (e.g. "Vertibirdtrairtrigger"). Real display names have spaces.
+    return bool(len(stripped) > 18 and stripped.isalpha())
 
 
 def extract_strings(plugin: PluginFile) -> list[TranslatableString]:

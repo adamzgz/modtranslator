@@ -879,3 +879,77 @@ class TestNLLBEdgeCases:
 
         result = _compute_gpu_batch_size(_NLLB_MODEL_VRAM_MB)
         assert result == 16
+
+
+class TestSplitLongTextNewlineJoiner:
+    """Tests for _split_long_text preserving newline separators."""
+
+    def test_split_by_newlines_returns_newline_joiner(self, mock_nllb_env):
+        """When text has no sentence boundaries and splits by \\n, joiner is \\n."""
+        cls = mock_nllb_env.NLLBBackend
+        tokenizer = mock_nllb_env.tokenizer
+
+        # Each word = 1 token in our mock. MAX_TOKENS=900 for NLLB.
+        # Build 2 lines that together exceed MAX_TOKENS.
+        line1 = " ".join(f"word{i}" for i in range(500))
+        line2 = " ".join(f"word{i}" for i in range(500, 1000))
+        text = f"{line1}\n{line2}"
+
+        segments, joiner = cls._split_long_text(text, tokenizer)
+        assert joiner == "\n"
+        assert len(segments) >= 2
+
+    def test_split_by_sentences_returns_space_joiner(self, mock_nllb_env):
+        """When text splits by sentence boundaries, joiner is space."""
+        cls = mock_nllb_env.NLLBBackend
+        tokenizer = mock_nllb_env.tokenizer
+
+        line1 = " ".join(f"word{i}" for i in range(500))
+        line2 = " ".join(f"word{i}" for i in range(500, 1000))
+        text = f"{line1}. {line2}."
+
+        segments, joiner = cls._split_long_text(text, tokenizer)
+        assert joiner == " "
+        assert len(segments) >= 2
+
+    def test_no_split_needed_returns_original(self, mock_nllb_env):
+        """Short text that doesn't need splitting returns as-is."""
+        cls = mock_nllb_env.NLLBBackend
+        tokenizer = mock_nllb_env.tokenizer
+
+        text = "Short text here"
+        segments, joiner = cls._split_long_text(text, tokenizer)
+        assert segments == ["Short text here"]
+
+    def test_end_to_end_newline_preserved(self, mock_nllb_env):
+        """Full translate_batch preserves \\n when reassembling split segments."""
+        from modtranslator.backends.nllb import CHAR_HEURISTIC_THRESHOLD
+
+        backend = mock_nllb_env.NLLBBackend(
+            device="cpu", models_dir=mock_nllb_env.models_dir
+        )
+
+        # Build text that exceeds CHAR_HEURISTIC_THRESHOLD and MAX_TOKENS
+        # Each word = 1 token. We need >900 tokens and >2250 chars.
+        line1 = " ".join(f"longword{i:04d}" for i in range(500))
+        line2 = " ".join(f"longword{i:04d}" for i in range(500, 1000))
+        long_text = f"{line1}\n{line2}"
+
+        assert len(long_text) >= CHAR_HEURISTIC_THRESHOLD
+
+        # Mock batch_decode to return distinguishable translations per segment
+        call_count = [0]
+
+        def _batch_decode(ids_list, **kw):
+            results = []
+            for _ in ids_list:
+                call_count[0] += 1
+                results.append(f"translated_segment_{call_count[0]}")
+            return results
+
+        mock_nllb_env.tokenizer.batch_decode.side_effect = _batch_decode
+
+        result = backend.translate_batch([long_text], "ES")
+        assert len(result) == 1
+        # The segments should be joined with \n, not space
+        assert "\n" in result[0]
