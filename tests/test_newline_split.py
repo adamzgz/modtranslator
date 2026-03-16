@@ -1,7 +1,5 @@
 """Tests for newline splitting/rejoining in _translate_chunks."""
 
-import pytest
-
 from modtranslator._pipeline_helpers import (
     _rejoin_newlines,
     _split_newlines,
