@@ -280,14 +280,14 @@ class OpusMTBackend(TranslationBackend):
         # Texts shorter than CHAR_HEURISTIC_THRESHOLD cannot exceed MAX_TOKENS
         # (Marian averages ~2.5-3 chars/token), so we skip the expensive encode.
         flat_segments: list[str] = []
-        segment_map: list[tuple[int, int]] = []  # (start_idx, count) per original text
+        segment_map: list[tuple[int, int, str]] = []  # (start_idx, count, joiner)
         long_candidates: list[tuple[int, str]] = []  # (original_index, text)
 
         for idx, text in enumerate(texts):
             if len(text) >= CHAR_HEURISTIC_THRESHOLD:
                 long_candidates.append((idx, text))
             else:
-                segment_map.append((len(flat_segments), 1))
+                segment_map.append((len(flat_segments), 1, " "))
                 flat_segments.append(text)
 
         # --- Phase 2: Encode only long candidates to check token count ---
@@ -295,8 +295,8 @@ class OpusMTBackend(TranslationBackend):
             # Build segments for long texts, inserting at correct positions
             # We need to rebuild segment_map with correct ordering
             flat_segments_new: list[str] = []
-            segment_map_new: list[tuple[int, int]] = []
-            long_map: dict[int, list[str]] = {}
+            segment_map_new: list[tuple[int, int, str]] = []
+            long_map: dict[int, tuple[list[str], str]] = {}
 
             # Encode long candidates (potentially in parallel, but these are rare)
             for orig_idx, text in long_candidates:
@@ -304,17 +304,17 @@ class OpusMTBackend(TranslationBackend):
                 if len(ids) > MAX_TOKENS:
                     long_map[orig_idx] = self._split_long_text(text, tokenizer)
                 else:
-                    long_map[orig_idx] = [text]
+                    long_map[orig_idx] = ([text], " ")
 
             # Rebuild in original order
             short_pos = 0
             for idx in range(len(texts)):
                 if idx in long_map:
-                    parts = long_map[idx]
-                    segment_map_new.append((len(flat_segments_new), len(parts)))
+                    parts, joiner = long_map[idx]
+                    segment_map_new.append((len(flat_segments_new), len(parts), joiner))
                     flat_segments_new.extend(parts)
                 else:
-                    segment_map_new.append((len(flat_segments_new), 1))
+                    segment_map_new.append((len(flat_segments_new), 1, " "))
                     flat_segments_new.append(flat_segments[short_pos])
                     short_pos += 1
 
@@ -365,25 +365,32 @@ class OpusMTBackend(TranslationBackend):
 
         # Reassemble: join segments that belonged to the same original text
         translated: list[str] = []
-        for start, count in segment_map:
+        for start, count, joiner in segment_map:
             if count == 1:
                 translated.append(decoded[start])
             else:
-                translated.append(" ".join(decoded[start : start + count]))
+                translated.append(joiner.join(decoded[start : start + count]))
 
         return translated
 
     @staticmethod
-    def _split_long_text(text: str, tokenizer: object) -> list[str]:
-        """Split text into segments that fit within MAX_TOKENS."""
+    def _split_long_text(text: str, tokenizer: object) -> tuple[list[str], str]:
+        """Split text into segments that fit within MAX_TOKENS.
+
+        Returns (segments, joiner) where joiner is the string used to
+        reassemble translated segments (" " for sentence splits, "\\n"
+        for newline splits).
+        """
         import re
 
+        joiner = " "
         # Split by sentence boundaries, keeping the delimiter attached
         sentences = re.split(r'(?<=[.!?…])\s+', text)
 
         # If no sentence boundaries found, split by newlines
         if len(sentences) == 1 and "\n" in text:
             sentences = [s for s in text.split("\n") if s.strip()]
+            joiner = "\n"
 
         # Group sentences into segments that fit within the token limit
         segments: list[str] = []
@@ -414,7 +421,7 @@ class OpusMTBackend(TranslationBackend):
         if current:
             segments.append(" ".join(current))
 
-        return segments if segments else [text]
+        return (segments, joiner) if segments else ([text], joiner)
 
     @staticmethod
     def _split_by_words(text: str, tokenizer: object) -> list[str]:
