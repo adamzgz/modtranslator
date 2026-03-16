@@ -45,6 +45,16 @@ class TestLooksLikeEditorId:
     def test_long_alphanumeric(self, text):
         assert _looks_like_editor_id(text) is True
 
+    @pytest.mark.parametrize("text", [
+        "Vertibirdtrairtrigger",
+        "vertibirdtrairtrigger",
+        "ModVertibirdTrailerActivator",
+        "endstopplayerfiringtriggername",
+    ])
+    def test_very_long_single_word_alpha(self, text):
+        """Single-word all-alpha strings >18 chars are editor IDs."""
+        assert _looks_like_editor_id(text) is True
+
     # --- Should NOT be detected (real translatable text) ---
 
     @pytest.mark.parametrize("text", [

@@ -279,6 +279,64 @@ def _writeback_file(
     return ctx
 
 
+# ── Newline splitting helpers ──
+
+
+def _split_newlines(
+    texts: list[str],
+) -> tuple[list[str], list[tuple[str, list[tuple[str, int | str]]]]]:
+    """Split multi-line texts into individual lines for translation.
+
+    Neural MT models strip newlines, so each line must be translated
+    independently and reassembled afterwards.
+
+    Returns (flat_texts, reassembly_map) where:
+    - flat_texts: list of individual non-empty lines to translate
+    - reassembly_map: per-original-text entries, each being either
+      ("single", [(idx, flat_index)]) for single-line texts, or
+      ("multi", [(action, data), ...]) for multi-line texts where
+      action is "translate" (data=flat_index) or "keep" (data=original_line)
+    """
+    flat: list[str] = []
+    rmap: list[tuple[str, list[tuple[str, int | str]]]] = []
+    for text in texts:
+        if "\n" not in text:
+            rmap.append(("single", [("translate", len(flat))]))
+            flat.append(text)
+        else:
+            lines = text.split("\n")
+            entries: list[tuple[str, int | str]] = []
+            for line in lines:
+                if line.strip():
+                    entries.append(("translate", len(flat)))
+                    flat.append(line)
+                else:
+                    entries.append(("keep", line))
+            rmap.append(("multi", entries))
+    return flat, rmap
+
+
+def _rejoin_newlines(
+    translated_flat: list[str],
+    rmap: list[tuple[str, list[tuple[str, int | str]]]],
+) -> list[str]:
+    """Reassemble multi-line texts from translated individual lines."""
+    result: list[str] = []
+    for kind, entries in rmap:
+        if kind == "single":
+            _, flat_idx = entries[0]
+            result.append(translated_flat[flat_idx])  # type: ignore[index]
+        else:
+            lines: list[str] = []
+            for action, data in entries:
+                if action == "translate":
+                    lines.append(translated_flat[data])  # type: ignore[index]
+                else:
+                    lines.append(data)  # type: ignore[arg-type]
+            result.append("\n".join(lines))
+    return result
+
+
 # ── Shared translate-in-chunks helper ──
 
 
@@ -293,25 +351,39 @@ def _translate_chunks(
 ) -> tuple[list[str], list[str]]:
     """Translate texts in chunks with progress and cancellation.
 
+    Multi-line texts are split into individual lines before translation
+    to prevent neural MT from stripping newlines.
+
     Returns (translated_texts, chunk_errors).
     """
-    translated: list[str] = []
+    # Split multi-line texts so each line is translated independently
+    flat_texts, rmap = _split_newlines(texts)
+
+    translated_flat: list[str] = []
     chunk_errors: list[str] = []
     total = len(texts)
-    for chunk_start in range(0, total, chunk_size):
+    flat_total = len(flat_texts)
+    for chunk_start in range(0, flat_total, chunk_size):
         _check_cancel(cancel_event)
-        chunk = texts[chunk_start:chunk_start + chunk_size]
+        chunk = flat_texts[chunk_start:chunk_start + chunk_size]
         try:
-            translated.extend(backend.translate_batch(chunk, lang))
+            translated_flat.extend(backend.translate_batch(chunk, lang))
         except CancelledError:
             raise
         except Exception as e:
             chunk_errors.append(
                 f"Chunk {chunk_start // chunk_size + 1}: {e}"
             )
-            translated.extend(chunk)  # fallback: original text
+            translated_flat.extend(chunk)  # fallback: original text
         if on_progress:
-            on_progress(phase_name, len(translated), total, "")
+            # Map flat progress back to original text count
+            progress = min(
+                int(len(translated_flat) / max(flat_total, 1) * total), total,
+            )
+            on_progress(phase_name, progress, total, "")
+
+    # Reassemble multi-line texts
+    translated = _rejoin_newlines(translated_flat, rmap)
     return translated, chunk_errors
 
 
