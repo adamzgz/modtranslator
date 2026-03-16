@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "modtranslator"
-version = "0.3.0"
+version = "0.3.1"
 description = "Offline translator for Bethesda & Minecraft mod files (ESP/ESM/PEX/MCM/JAR) — Fallout 3, FNV, Skyrim, Fallout 4, Minecraft"
 readme = "README.md"
 license = "MIT"
