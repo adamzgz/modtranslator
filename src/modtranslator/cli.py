@@ -304,8 +304,9 @@ def _translate_file(
     if texts:
         import time as _time
 
-        chunk_size = 500
-        translated: list[str] = []
+        from modtranslator._pipeline_helpers import _translate_chunks
+
+        _t0 = _time.monotonic()
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -319,12 +320,18 @@ def _translate_file(
             transient=True,
         ) as progress:
             task = progress.add_task("Translating", total=len(texts))
-            _t0 = _time.monotonic()
+
+            def _progress_cb(
+                phase: str, current: int, total: int, detail: str,
+            ) -> None:
+                progress.update(task, completed=current)
+
             try:
-                for chunk_start in range(0, len(texts), chunk_size):
-                    chunk = texts[chunk_start:chunk_start + chunk_size]
-                    translated.extend(backend.translate_batch(chunk, lang))
-                    progress.advance(task, len(chunk))
+                translated, chunk_errors = _translate_chunks(
+                    texts, backend, lang, on_progress=_progress_cb,
+                )
+                for err in chunk_errors:
+                    rpt.errors.append(err)
                 _elapsed = _time.monotonic() - _t0
                 rpt.strings_translated = len(translated)
             except Exception as e:
