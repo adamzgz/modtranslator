@@ -155,6 +155,7 @@ class _FileContext:
     patched_count: int = 0
     status: str = "pending"
     error_message: str = ""
+    scpt_data: list = field(default_factory=list)  # list[ScptRecord] for SCPT patching
 
 
 @dataclass

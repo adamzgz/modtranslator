@@ -139,7 +139,11 @@ def _prepare_file(
 ) -> _FileContext:
     """Phase 1: parse, extract, filter, protect."""
     from modtranslator.core.plugin import load_plugin
-    from modtranslator.translation.extractor import extract_strings
+    from modtranslator.translation.extractor import (
+        extract_scpt_data,
+        extract_strings,
+        scpt_to_translatable,
+    )
 
     ctx = _FileContext(file_path=file_path, output_path=output_path)
 
@@ -151,6 +155,14 @@ def _prepare_file(
         file_stem = file_path.stem
         for s in strings:
             s.source_file = file_stem
+
+        # Also extract SCPT bytecode strings
+        scpt_records = extract_scpt_data(plugin)
+        if scpt_records:
+            ctx.scpt_data = scpt_records
+            scpt_strings = scpt_to_translatable(scpt_records, file_stem)
+            strings.extend(scpt_strings)
+
         ctx.all_strings = strings
 
         if not strings:
@@ -222,7 +234,11 @@ def _writeback_file(
 ) -> _FileContext:
     """Phase 3: restore placeholders, patch, save."""
     from modtranslator.core.plugin import load_plugin, save_plugin
-    from modtranslator.translation.extractor import extract_strings
+    from modtranslator.translation.extractor import (
+        extract_scpt_data,
+        extract_strings,
+        scpt_to_translatable,
+    )
     from modtranslator.translation.patcher import apply_translations
 
     try:
@@ -251,14 +267,40 @@ def _writeback_file(
             file_stem = ctx.file_path.stem
             for s in ctx.all_strings:
                 s.source_file = file_stem
+            # Re-extract SCPT data for the reloaded plugin
+            scpt_records = extract_scpt_data(ctx.plugin)
+            if scpt_records:
+                ctx.scpt_data = scpt_records
+                scpt_strings = scpt_to_translatable(scpt_records, file_stem)
+                ctx.all_strings.extend(scpt_strings)
 
         from modtranslator.core.constants import encoding_for_lang
         st = getattr(ctx.plugin, "string_tables", None)
+
+        # Separate SCPT strings from normal strings for different patching paths
+        normal_strings = [s for s in ctx.all_strings if s.record_type != b"SCPT"]
         patched = apply_translations(
-            ctx.all_strings, translations,
+            normal_strings, translations,
             encoding=encoding_for_lang(lang),
             string_tables=st,
         )
+
+        # Patch SCPT bytecode strings
+        if ctx.scpt_data:
+            from modtranslator.core.scpt_parser import patch_scpt_record
+
+            for sr in ctx.scpt_data:
+                scpt_translations: dict[int, str] = {}
+                for ss in sr.strings:
+                    ts_key = (
+                        f"{ctx.file_path.stem}:"
+                        f"{sr.record.form_id:08X}:SCTX:{ss.scda_offset}"
+                    )
+                    if ts_key in translations:
+                        scpt_translations[ss.scda_offset] = translations[ts_key]
+                if scpt_translations:
+                    patched += patch_scpt_record(sr.record, scpt_translations)
+
         ctx.patched_count = patched
 
         from modtranslator.core.string_table import ISO_TO_FULL_LANGUAGE
