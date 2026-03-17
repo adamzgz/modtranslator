@@ -222,10 +222,22 @@ def _translate_file(
     _print(f"Game detected: [cyan]{plugin.game.name}[/cyan]")
 
     with console.status("Extracting strings..."):
+        from modtranslator.translation.extractor import (
+            extract_scpt_data,
+            scpt_to_translatable,
+        )
+
         strings = extract_strings(plugin)
         file_stem = file.stem
         for s in strings:
             s.source_file = file_stem
+
+        # Also extract SCPT bytecode strings
+        scpt_records = extract_scpt_data(plugin)
+        if scpt_records:
+            scpt_strings = scpt_to_translatable(scpt_records, file_stem)
+            strings.extend(scpt_strings)
+
         rpt.total_strings_found = len(strings)
 
     _print(f"Found [green]{len(strings)}[/green] translatable strings")
@@ -372,10 +384,38 @@ def _translate_file(
                 strings = extract_strings(plugin)
                 for s in strings:
                     s.source_file = file_stem
+                scpt_records = extract_scpt_data(plugin)
+                if scpt_records:
+                    scpt_strings = scpt_to_translatable(scpt_records, file_stem)
+                    strings.extend(scpt_strings)
 
         with console.status("Patching plugin..."):
+            # Separate SCPT strings from normal strings
+            normal_strings = [s for s in strings if s.record_type != b"SCPT"]
             st = getattr(plugin, "string_tables", None)
-            patched = apply_translations(strings, translations, string_tables=st)
+            patched = apply_translations(normal_strings, translations, string_tables=st)
+
+            # Patch SCPT bytecode strings
+            if scpt_records:
+                from modtranslator.core.scpt_parser import patch_scpt_record
+
+                for sr in scpt_records:
+                    scpt_translations: dict[int, str] = {}
+                    for ss in sr.strings:
+                        ts_key = f"{file_stem}:{sr.record.form_id:08X}:SCTX:{ss.scda_offset}"
+                        if ts_key in translations:
+                            translated_text = translations[ts_key]
+                            original = ss.text
+                            if original.startswith("|") and not translated_text.startswith("|"):
+                                translated_text = "|" + translated_text
+                            if original.startswith("^") and not translated_text.startswith("^"):
+                                translated_text = "^" + translated_text
+                            if original.endswith("^") and not translated_text.endswith("^"):
+                                translated_text = translated_text + "^"
+                            scpt_translations[ss.scda_offset] = translated_text
+                    if scpt_translations:
+                        patched += patch_scpt_record(sr.record, scpt_translations)
+
             rpt.strings_patched = patched
 
         _print(f"Patched [green]{patched}[/green] strings")

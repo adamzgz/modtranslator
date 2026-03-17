@@ -442,8 +442,15 @@ def extract_scpt_strings(record: Record) -> ScptRecord:
     if parsed is None:
         return result  # Unparseable — skip safely
 
-    # Build a set of SCTX strings for cross-reference
+    # Build a set of SCTX strings for cross-reference.
+    # SCTX uses escape sequences (%r for newline, \n, \t) while SCDA has
+    # the actual bytes (0x0A, 0x09).  Add unescaped variants so cross-ref matches.
     sctx_set = set(quoted_strings)
+    sctx_set |= {
+        s.replace("%r", "\n").replace("\\n", "\n").replace("\\t", "\t")
+        for s in quoted_strings
+        if "%r" in s or "\\n" in s or "\\t" in s
+    }
 
     # Map parsed strings to ScptString objects
     used_texts: dict[str, int] = {}  # Track occurrences for dedup

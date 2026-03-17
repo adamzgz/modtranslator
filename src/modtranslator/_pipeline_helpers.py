@@ -297,7 +297,19 @@ def _writeback_file(
                         f"{sr.record.form_id:08X}:SCTX:{ss.scda_offset}"
                     )
                     if ts_key in translations:
-                        scpt_translations[ss.scda_offset] = translations[ts_key]
+                        translated = translations[ts_key]
+                        # Restore FO3/FNV MessageBox formatting markers
+                        # that neural MT strips during translation:
+                        # | = button/menu option prefix
+                        # ^ = centered text wrapper
+                        original = ss.text
+                        if original.startswith("|") and not translated.startswith("|"):
+                            translated = "|" + translated
+                        if original.startswith("^") and not translated.startswith("^"):
+                            translated = "^" + translated
+                        if original.endswith("^") and not translated.endswith("^"):
+                            translated = translated + "^"
+                        scpt_translations[ss.scda_offset] = translated
                 if scpt_translations:
                     patched += patch_scpt_record(sr.record, scpt_translations)
 
