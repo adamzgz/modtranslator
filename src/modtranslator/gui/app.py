@@ -232,6 +232,7 @@ class ModTranslatorApp(ctk.CTk):
             "Híbrido (Recomendado con GPU Nvidia)": "Hybrid",
             "Opus-MT (sin GPU)": "Opus-MT",
             "DeepL (necesita API key)": "DeepL",
+            "Híbrido NLLB+DeepL (GPU + API key)": "Hybrid-DeepL",
         }
         self._backend_value_to_display = {v: k for k, v in self._backend_display_to_value.items()}
         saved_backend = self.settings.get("backend", "Opus-MT")
@@ -377,6 +378,8 @@ class ModTranslatorApp(ctk.CTk):
             new_options[self._t("backend_hybrid")] = "Hybrid"
         new_options[self._t("backend_opus")] = "Opus-MT"
         new_options[self._t("backend_deepl")] = "DeepL"
+        if self._has_hybrid:
+            new_options[self._t("backend_hybrid_deepl")] = "Hybrid-DeepL"
 
         self._backend_display_to_value = new_options
         self._backend_value_to_display = {v: k for k, v in new_options.items()}
@@ -474,6 +477,7 @@ class ModTranslatorApp(ctk.CTk):
             "Hybrid": "hybrid",
             "Opus-MT": "opus-mt",
             "DeepL": "deepl",
+            "Hybrid-DeepL": "hybrid-deepl",
         }.get(internal, "hybrid")
 
     def _validate(self) -> bool:
@@ -509,7 +513,8 @@ class ModTranslatorApp(ctk.CTk):
             return False
 
         backend_name = self._get_backend_name()
-        if backend_name == "deepl" and not self.settings.get("deepl_api_key", "").strip():
+        needs_deepl_key = backend_name in ("deepl", "hybrid-deepl")
+        if needs_deepl_key and not self.settings.get("deepl_api_key", "").strip():
             messagebox.showerror("Error", "Introduce la API key de DeepL en Ajustes.")
             return False
 
