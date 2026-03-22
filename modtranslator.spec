@@ -15,6 +15,7 @@ datas += collect_data_files("modtranslator")          # spanish_words.txt via im
 datas += [("glossaries", "glossaries")]               # TOML glossaries
 
 # ── Hidden imports ────────────────────────────────────────────────────────────
+# collect_submodules ensures entire packages are bundled (not just top-level)
 hiddenimports = [
     # GUI
     "customtkinter",
@@ -42,19 +43,30 @@ hiddenimports = [
     "tqdm",
     "tqdm.auto",
     "regex",
-    "requests",
     "packaging",
     "packaging.version",
     "safetensors",
+    "hf_xet",
     # modtranslator internals (dynamic imports in pipeline/backends)
     "modtranslator.backends.opus_mt",
     "modtranslator.backends.nllb",
     "modtranslator.backends.hybrid",
     "modtranslator.backends.deepl",
+    "modtranslator.backends.hybrid_deepl",
     "modtranslator.backends.dummy",
     "modtranslator.gui.worker",
     "modtranslator.gui.model_manager",
 ]
+
+# Packages that PyInstaller misses because they're only imported dynamically
+# or are transitive dependencies not reachable from static analysis.
+# collect_submodules pulls all submodules so the full package lands in the bundle.
+_force_collect = [
+    "requests", "urllib3", "charset_normalizer", "certifi", "idna",
+    "httpx", "httpcore", "h11", "anyio", "darkdetect", "deepl",
+]
+for _pkg in _force_collect:
+    hiddenimports += collect_submodules(_pkg)
 
 # ── Excludes (not needed at runtime) ─────────────────────────────────────────
 excludes = [

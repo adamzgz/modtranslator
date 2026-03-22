@@ -369,6 +369,20 @@ def check_backend_ready(backend_name: str, lang: str = "ES") -> tuple[bool, str]
             return False, "NLLB model not downloaded"
         return True, "Ready"
 
+    if backend_name == "hybrid-deepl":
+        try:
+            import ctranslate2  # noqa: F401
+            import sentencepiece  # noqa: F401
+        except ImportError:
+            return False, "Missing packages: pip install ctranslate2 sentencepiece transformers"
+        try:
+            import deepl  # noqa: F401
+        except ImportError:
+            return False, "Missing package: pip install deepl"
+        if not _check_model_exists("facebook/nllb-200-distilled-1.3B"):
+            return False, "NLLB model not downloaded"
+        return True, "Ready"
+
     return False, f"Unknown backend: {backend_name}"
 
 
@@ -394,4 +408,6 @@ def get_missing_model_ids(backend_name: str, lang: str = "ES") -> list[tuple[str
             missing.append(opus_entry)
         if not _check_model_exists(nllb[1]):
             missing.append(nllb)
+    elif backend_name == "hybrid-deepl" and not _check_model_exists(nllb[1]):
+        missing.append(nllb)
     return missing
