@@ -35,10 +35,12 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "backend_hybrid": "Hybrid (Recommended with Nvidia GPU)",
         "backend_opus": "Opus-MT (no GPU)",
         "backend_deepl": "DeepL (needs API key)",
+        "backend_hybrid_deepl": "Hybrid NLLB+DeepL (GPU + API key)",
         "tooltip_backend": (
             "Hybrid: Opus-MT + NLLB via CTranslate2 (Nvidia GPU/CUDA).\n"
             "Opus-MT: CTranslate2 model, works well without GPU.\n"
-            "DeepL: high-quality online service (needs API key)."
+            "DeepL: high-quality online service (needs API key).\n"
+            "Hybrid NLLB+DeepL: NLLB for long texts, DeepL for short (GPU + API key)."
         ),
         "tooltip_cache": (
             "Saves translations to disk to avoid\n"
@@ -116,10 +118,12 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "backend_hybrid": "Híbrido (Recomendado con GPU Nvidia)",
         "backend_opus": "Opus-MT (sin GPU)",
         "backend_deepl": "DeepL (necesita API key)",
+        "backend_hybrid_deepl": "Híbrido NLLB+DeepL (GPU + API key)",
         "tooltip_backend": (
             "Híbrido: Opus-MT + NLLB via CTranslate2 (GPU Nvidia/CUDA).\n"
             "Opus-MT: un modelo CTranslate2, funciona bien sin GPU.\n"
-            "DeepL: servicio online de alta calidad (necesita API key)."
+            "DeepL: servicio online de alta calidad (necesita API key).\n"
+            "Híbrido NLLB+DeepL: NLLB para textos largos, DeepL para cortos (GPU + API key)."
         ),
         "tooltip_cache": (
             "Guarda las traducciones en disco para no volver\n"
@@ -200,10 +204,12 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "backend_hybrid": "Hybride (Recommandé avec GPU Nvidia)",
         "backend_opus": "Opus-MT (sans GPU)",
         "backend_deepl": "DeepL (nécessite une clé API)",
+        "backend_hybrid_deepl": "Hybride NLLB+DeepL (GPU + clé API)",
         "tooltip_backend": (
             "Hybride : Opus-MT + NLLB via CTranslate2 (GPU Nvidia/CUDA).\n"
             "Opus-MT : modèle CTranslate2, fonctionne sans GPU.\n"
-            "DeepL : service en ligne haute qualité (clé API requise)."
+            "DeepL : service en ligne haute qualité (clé API requise).\n"
+            "Hybride NLLB+DeepL : NLLB pour textes longs, DeepL pour courts (GPU + clé API)."
         ),
         "tooltip_cache": (
             "Enregistre les traductions sur disque pour ne pas\n"
@@ -284,10 +290,12 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "backend_hybrid": "Hybrid (Empfohlen mit Nvidia GPU)",
         "backend_opus": "Opus-MT (ohne GPU)",
         "backend_deepl": "DeepL (braucht API-Schlüssel)",
+        "backend_hybrid_deepl": "Hybrid NLLB+DeepL (GPU + API-Schlüssel)",
         "tooltip_backend": (
             "Hybrid: Opus-MT + NLLB via CTranslate2 (Nvidia GPU/CUDA).\n"
             "Opus-MT: CTranslate2-Modell, funktioniert ohne GPU.\n"
-            "DeepL: Online-Dienst hoher Qualität (API-Schlüssel erforderlich)."
+            "DeepL: Online-Dienst hoher Qualität (API-Schlüssel erforderlich).\n"
+            "Hybrid NLLB+DeepL: NLLB für lange Texte, DeepL für kurze (GPU + API-Schlüssel)."
         ),
         "tooltip_cache": (
             "Speichert Übersetzungen auf Disk, damit dieselben Texte\n"
@@ -371,10 +379,12 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "backend_hybrid": "Ibrido (Consigliato con GPU Nvidia)",
         "backend_opus": "Opus-MT (senza GPU)",
         "backend_deepl": "DeepL (richiede chiave API)",
+        "backend_hybrid_deepl": "Ibrido NLLB+DeepL (GPU + chiave API)",
         "tooltip_backend": (
             "Ibrido: Opus-MT + NLLB via CTranslate2 (GPU Nvidia/CUDA).\n"
             "Opus-MT: modello CTranslate2, funziona senza GPU.\n"
-            "DeepL: servizio online di alta qualità (richiede chiave API)."
+            "DeepL: servizio online di alta qualità (richiede chiave API).\n"
+            "Ibrido NLLB+DeepL: NLLB per testi lunghi, DeepL per corti (GPU + chiave API)."
         ),
         "tooltip_cache": (
             "Salva le traduzioni su disco per non ritradurre\n"
@@ -455,10 +465,12 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "backend_hybrid": "Híbrido (Recomendado com GPU Nvidia)",
         "backend_opus": "Opus-MT (sem GPU)",
         "backend_deepl": "DeepL (precisa de chave API)",
+        "backend_hybrid_deepl": "Híbrido NLLB+DeepL (GPU + chave API)",
         "tooltip_backend": (
             "Híbrido: Opus-MT + NLLB via CTranslate2 (GPU Nvidia/CUDA).\n"
             "Opus-MT: modelo CTranslate2, funciona sem GPU.\n"
-            "DeepL: serviço online de alta qualidade (requer chave API)."
+            "DeepL: serviço online de alta qualidade (requer chave API).\n"
+            "Híbrido NLLB+DeepL: NLLB para textos longos, DeepL para curtos (GPU + chave API)."
         ),
         "tooltip_cache": (
             "Salva traduções em disco para não traduzir\n"
@@ -539,10 +551,12 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "backend_hybrid": "Гибрид (рек. с GPU Nvidia)",
         "backend_opus": "Opus-MT (без GPU)",
         "backend_deepl": "DeepL (нужен API ключ)",
+        "backend_hybrid_deepl": "Гибрид NLLB+DeepL (GPU + API ключ)",
         "tooltip_backend": (
             "Гибрид: Opus-MT + NLLB через CTranslate2 (GPU Nvidia/CUDA).\n"
             "Opus-MT: модель CTranslate2, работает без GPU.\n"
-            "DeepL: онлайн-сервис высокого качества (нужен API ключ)."
+            "DeepL: онлайн-сервис высокого качества (нужен API ключ).\n"
+            "Гибрид NLLB+DeepL: NLLB для длинных текстов, DeepL для коротких (GPU + API ключ)."
         ),
         "tooltip_cache": (
             "Сохраняет переводы на диске, чтобы не переводить\n"
@@ -623,10 +637,12 @@ _UI_STRINGS: dict[str, dict[str, str]] = {
         "backend_hybrid": "Hybrydowy (z GPU Nvidia)",
         "backend_opus": "Opus-MT (bez GPU)",
         "backend_deepl": "DeepL (wymaga klucza API)",
+        "backend_hybrid_deepl": "Hybrydowy NLLB+DeepL (GPU + klucz API)",
         "tooltip_backend": (
             "Hybrydowy: Opus-MT + NLLB przez CTranslate2 (GPU Nvidia/CUDA).\n"
             "Opus-MT: model CTranslate2, działa bez GPU.\n"
-            "DeepL: usługa online wysokiej jakości (wymagany klucz API)."
+            "DeepL: usługa online wysokiej jakości (wymagany klucz API).\n"
+            "Hybrydowy NLLB+DeepL: NLLB dla długich tekstów, DeepL dla krótkich (GPU + klucz API)."
         ),
         "tooltip_cache": (
             "Zapisuje tłumaczenia na dysk, aby nie tłumaczyć\n"

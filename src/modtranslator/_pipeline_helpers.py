@@ -118,6 +118,14 @@ def create_backend(
         from modtranslator.backends.hybrid import HybridBackend
         effective_device = device or "auto"
         return HybridBackend(device=effective_device), "hybrid:tc-big+nllb"
+    elif backend_name == "hybrid-deepl":
+        from modtranslator.backends.hybrid_deepl import HybridDeepLBackend
+        if not api_key:
+            raise ValueError(
+                "DeepL API key required for hybrid-deepl. Use --api-key or set DEEPL_API_KEY."
+            )
+        effective_device = device or "auto"
+        return HybridDeepLBackend(api_key=api_key, device=effective_device), "hybrid:nllb+deepl"
     else:
         # Default: deepl
         if not api_key:
