@@ -124,6 +124,9 @@ def batch_translate_esp(
                 if ctx.cached:
                     ctx.to_translate = [s for s in ctx.all_strings if s.key not in ctx.cached]
                     texts = [s.original_text for s in ctx.to_translate]
+                    # Protect [bracket] game-mechanic tags first
+                    from modtranslator._pipeline_helpers import _protect_brackets_batch
+                    texts, ctx.bracket_mappings = _protect_brackets_batch(texts)
                     if gloss and texts:
                         texts, ctx.gloss_mappings = gloss.protect_batch(texts)  # type: ignore[union-attr]
                     else:

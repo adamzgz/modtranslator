@@ -5,6 +5,7 @@ Extracted from pipeline.py for maintainability.
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 from threading import Event
@@ -193,6 +194,9 @@ def _prepare_file(
         ctx.to_translate = list(strings)
         texts = [s.original_text for s in ctx.to_translate]
 
+        # Protect [bracket] game-mechanic tags before any other protection
+        texts, ctx.bracket_mappings = _protect_brackets_batch(texts)
+
         if gloss and texts:
             texts, ctx.gloss_mappings = gloss.protect_batch(texts)  # type: ignore[attr-defined]
 
@@ -262,6 +266,10 @@ def _writeback_file(
 
         if gloss and translated:
             translated = gloss.restore_batch(translated, ctx.gloss_mappings)  # type: ignore[attr-defined]
+
+        # Restore [bracket] game-mechanic tags (last, since they were protected first)
+        if ctx.bracket_mappings is not None and translated:
+            translated = _restore_brackets_batch(translated, ctx.bracket_mappings)
 
         translations: dict[str, str] = dict(ctx.cached)
         for key, t in zip(ctx.to_translate_keys, translated, strict=True):
@@ -447,6 +455,60 @@ def _translate_chunks(
     # Reassemble multi-line texts
     translated = _rejoin_newlines(translated_flat, rmap)
     return translated, chunk_errors
+
+
+# ── Bracket protection ──
+
+# Matches game mechanic indicators in square brackets, e.g.
+# [+10 Karma], [-50 Caps], [-%g Stimpak], [Confident: +1 Charisma, 5 min]
+_RE_BRACKET = re.compile(r"\[([^\[\]]+)\]")
+
+
+def _protect_brackets_batch(
+    texts: list[str],
+) -> tuple[list[str], list[dict[str, str]]]:
+    """Replace [bracket] game-mechanic tags with Qx{i} placeholders.
+
+    Returns (protected_texts, per-text mappings for restoration).
+    """
+    protected: list[str] = []
+    all_mappings: list[dict[str, str]] = []
+    for text in texts:
+        matches = list(_RE_BRACKET.finditer(text))
+        if not matches:
+            protected.append(text)
+            all_mappings.append({})
+            continue
+        mapping: dict[str, str] = {}
+        result = text
+        for i, m in enumerate(reversed(matches)):
+            placeholder = f"Qx{len(matches) - 1 - i}"
+            mapping[placeholder] = m.group(0)
+            result = result[: m.start()] + placeholder + result[m.end() :]
+        protected.append(result)
+        all_mappings.append(mapping)
+    return protected, all_mappings
+
+
+def _restore_brackets_batch(
+    texts: list[str],
+    all_mappings: list[dict[str, str]],
+) -> list[str]:
+    """Restore Qx{i} placeholders back to original [bracket] content."""
+    restored: list[str] = []
+    for text, mapping in zip(texts, all_mappings, strict=True):
+        if not mapping:
+            restored.append(text)
+            continue
+        result = text
+        for placeholder, original in mapping.items():
+            result = result.replace(placeholder, original)
+        # If neural MT dropped ALL placeholders, append lost brackets at end
+        for _placeholder, original in mapping.items():
+            if original not in result:
+                result = result.rstrip() + " " + original
+        restored.append(result)
+    return restored
 
 
 # ── Setup glossary helper ──

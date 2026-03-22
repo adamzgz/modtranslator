@@ -150,6 +150,7 @@ class _FileContext:
     protected_texts: list[str] = field(default_factory=list)
     gloss_mappings: list[dict[str, str]] | None = None
     lang_mappings: list[dict[str, str]] | None = None
+    bracket_mappings: list[dict[str, str]] | None = None
     dedup_indices: list[int] = field(default_factory=list)
     translations: dict[str, str] = field(default_factory=dict)
     patched_count: int = 0

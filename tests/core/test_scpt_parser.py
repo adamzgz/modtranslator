@@ -118,6 +118,58 @@ class TestExtractQuotedStrings:
     def test_empty_sctx(self):
         assert _extract_quoted_strings("scn TestScript\nbegin gamemode\nend") == []
 
+    def test_skips_printd_lines(self):
+        sctx = 'printd "Debug message here"\nMessageBoxEx "Player text"'
+        assert _extract_quoted_strings(sctx) == ["Player text"]
+
+    def test_skips_printc_lines(self):
+        sctx = 'printc "Console output"\nMessageBoxEx "Visible text"'
+        assert _extract_quoted_strings(sctx) == ["Visible text"]
+
+    def test_skips_auxvar_lines(self):
+        sctx = 'Player.AuxVarSetFlt "*iChance" (GetINIFloat_Cached "Main:iChance" "Lime/Enc.ini")'
+        assert _extract_quoted_strings(sctx) == []
+
+    def test_skips_getini_lines(self):
+        sctx = 'GetINIFloat_Cached "Debug:bDebug" "Lime/Encounters.ini"'
+        assert _extract_quoted_strings(sctx) == []
+
+    def test_skips_console_lines(self):
+        sctx = 'Console ("Player.DamageAv Health " + $val)'
+        assert _extract_quoted_strings(sctx) == []
+
+    def test_skips_sv_construct_lines(self):
+        sctx = 'Sv_Construct "Check%g" iBtn'
+        assert _extract_quoted_strings(sctx) == []
+
+    def test_skips_sv_find_lines(self):
+        sctx = 'if Sv_Find "damageav health" sOutcome > -1'
+        assert _extract_quoted_strings(sctx) == []
+
+    def test_skips_is_plugin_installed(self):
+        sctx = 'if IsPluginInstalled "JIP NVSE Plugin"'
+        assert _extract_quoted_strings(sctx) == []
+
+    def test_skips_read_from_json(self):
+        sctx = 'Let aEvent := ReadFromJson "data\\config\\file.json"'
+        assert _extract_quoted_strings(sctx) == []
+
+    def test_skips_comment_lines(self):
+        sctx = '; "This is a comment with quotes"\nMessageBoxEx "Real text"'
+        assert _extract_quoted_strings(sctx) == ["Real text"]
+
+    def test_keeps_messagebox_strings(self):
+        sctx = 'MessageBoxEx "You find some items."\nMessageBoxExAlt ScriptRef "^Title^Body|Ok"'
+        assert _extract_quoted_strings(sctx) == ["You find some items.", "^Title^Body|Ok"]
+
+    def test_keeps_let_assignments(self):
+        sctx = 'let Game := "Dice Roll"'
+        assert _extract_quoted_strings(sctx) == ["Dice Roll"]
+
+    def test_skips_clearfilecache(self):
+        sctx = 'ClearFileCacheShowOff "Lime/Encounters.ini" 0'
+        assert _extract_quoted_strings(sctx) == []
+
 
 # ── Tests: _parse_scda ──
 
@@ -172,8 +224,11 @@ class TestParseSCDA:
         # First instruction (messageboxex) should have all 3 strings
         assert len(instrs[0].strings) == 3
 
-    def test_returns_none_for_garbage(self):
-        assert _parse_scda(b"\x00\x01\x02\x03") is None
+    def test_stub_scda_returns_empty(self):
+        """4-byte SCDA (header only, no blocks) is a valid stub script."""
+        result = _parse_scda(b"\x00\x01\x02\x03")
+        assert result is not None
+        assert len(result.blocks) == 0
 
     def test_returns_none_for_too_short(self):
         assert _parse_scda(b"\x00\x01") is None

@@ -26,27 +26,58 @@ _RE_FORMID_REF = re.compile(r"^[A-Za-z0-9_ ]+\.(esm|esp):[A-Fa-f0-9]+$", re.IGNO
 _RE_SEPARATOR = re.compile(r"^[=\-\^~_]{3,}$")
 _RE_NUMBER = re.compile(r"^[\d.]+$")
 
+# Lines starting with debug print commands — never player-facing
+_RE_SKIP_LINE_START = re.compile(r"^\s*(?:printd|printc)\b", re.IGNORECASE)
+
+# Lines containing these function calls have non-translatable string args:
+# config vars, INI access, file ops, plugin checks, string construction/search,
+# console commands, JSON reads
+_RE_SKIP_LINE_CONTAINS = re.compile(
+    r"\b(?:AuxVar(?:Set|Get)Flt|GetINIFloat(?:_Cached)?|SetINI\w*|"
+    r"ClearFileCache\w*|IsPluginInstalled|"
+    r"Sv_(?:Construct|Find|ToLower|Compare)|"
+    r"ReadFromJson|WriteToJson|Console)\b",
+    re.IGNORECASE,
+)
+
 
 def _extract_quoted_strings(sctx: str) -> list[str]:
-    """Extract quoted string literals from SCTX source that look like player text."""
-    strings = _RE_QUOTED.findall(sctx)
+    """Extract quoted string literals from SCTX source that look like player text.
+
+    Uses line-by-line context analysis to skip strings from debug prints,
+    config/INI access, console commands, and string construction functions.
+    Only strings from player-facing commands (MessageBox, variable assignments,
+    etc.) pass through.
+    """
     result: list[str] = []
-    for s in strings:
-        if len(s) < 3:
+    for line in sctx.split("\n"):
+        stripped = line.strip()
+        # Skip comments
+        if stripped.startswith(";"):
             continue
-        if s.startswith("\\") or s.startswith("/"):
+        # Skip debug output lines
+        if _RE_SKIP_LINE_START.match(stripped):
             continue
-        if _RE_IDENTIFIER.match(s):
+        # Skip lines with non-translatable function calls
+        if _RE_SKIP_LINE_CONTAINS.search(stripped):
             continue
-        if _RE_FORMID_REF.match(s):
-            continue
-        if _RE_SEPARATOR.match(s):
-            continue
-        if _RE_NUMBER.match(s):
-            continue
-        if s.startswith(".") and len(s) <= 5:
-            continue
-        result.append(s)
+
+        for s in _RE_QUOTED.findall(line):
+            if len(s) < 3:
+                continue
+            if s.startswith("\\") or s.startswith("/"):
+                continue
+            if _RE_IDENTIFIER.match(s):
+                continue
+            if _RE_FORMID_REF.match(s):
+                continue
+            if _RE_SEPARATOR.match(s):
+                continue
+            if _RE_NUMBER.match(s):
+                continue
+            if s.startswith(".") and len(s) <= 5:
+                continue
+            result.append(s)
     return result
 
 
@@ -137,9 +168,14 @@ def _parse_scda(scda: bytes) -> ParsedSCDA | None:
     """Forward-parse SCDA bytecode into a structural map.
 
     Returns None if the bytecode cannot be parsed (malformed data).
+    SCDA with only a 4-byte header (stub/NVSE-compiled scripts) returns
+    a valid empty ParsedSCDA with no blocks.
     """
-    if len(scda) < 8:
+    if len(scda) < 4:
         return None
+    # Stub scripts: only the 4-byte header, no Begin/End blocks
+    if len(scda) < 8:
+        return ParsedSCDA()
 
     parsed = ParsedSCDA()
     pos = 4  # Skip 4-byte script header

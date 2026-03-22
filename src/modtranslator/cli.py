@@ -292,6 +292,12 @@ def _translate_file(
     to_translate = [s for s in strings if s.key not in cached]
     texts = [s.original_text for s in to_translate]
 
+    # Protect [bracket] game-mechanic tags before glossary/target protection
+    from modtranslator._pipeline_helpers import _protect_brackets_batch
+
+    bracket_mappings: list[dict[str, str]] | None = None
+    texts, bracket_mappings = _protect_brackets_batch(texts)
+
     gloss_mappings: list[dict[str, str]] | None = None
     if gloss and texts:
         texts, gloss_mappings = gloss.protect_batch(texts)
@@ -368,6 +374,12 @@ def _translate_file(
 
         if gloss:
             translated = gloss.restore_batch(translated, gloss_mappings)
+
+        # Restore [bracket] game-mechanic tags
+        if bracket_mappings is not None:
+            from modtranslator._pipeline_helpers import _restore_brackets_batch
+
+            translated = _restore_brackets_batch(translated, bracket_mappings)
 
         cache_entries = []
         for key, orig, t in zip(to_translate_keys, to_translate_originals, translated, strict=True):
