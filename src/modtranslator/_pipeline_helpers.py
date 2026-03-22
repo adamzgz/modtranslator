@@ -352,6 +352,7 @@ def _translate_chunks(
     texts: list[str],
     backend: TranslationBackend,
     lang: str,
+    source_lang: str = "EN",
     chunk_size: int = 500,
     on_progress: ProgressCallback | None = None,
     cancel_event: Event | None = None,
@@ -375,7 +376,7 @@ def _translate_chunks(
         _check_cancel(cancel_event)
         chunk = flat_texts[chunk_start:chunk_start + chunk_size]
         try:
-            translated_flat.extend(backend.translate_batch(chunk, lang))
+            translated_flat.extend(backend.translate_batch(chunk, lang, source_lang))
         except CancelledError:
             raise
         except Exception as e:
