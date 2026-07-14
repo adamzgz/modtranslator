@@ -177,6 +177,76 @@ class TestExtractor:
         assert len(strings) == 0
 
 
+class TestRegionMapName:
+    def test_regn_rdmp_extracted(self):
+        """RDMP in REGN records is the region map name, visible on the map."""
+        plugin = make_plugin([
+            ("REGN", 0x100, [
+                make_subrecord("EDID", "CapitalWasteland"),
+                make_subrecord("RDMP", "The Capital Wasteland"),
+            ]),
+        ])
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+        assert strings[0].original_text == "The Capital Wasteland"
+        assert strings[0].subrecord_type == b"RDMP"
+
+
+class TestMagicEffectDescription:
+    def test_mgef_dnam_extracted(self):
+        """DNAM in MGEF records is the magic effect description (Skyrim/FO4)."""
+        plugin = make_skyrim_plugin(
+            records=[("MGEF", 0x100, [
+                make_subrecord("EDID", "TestEffect"),
+                make_subrecord("FULL", "Frostbite"),
+                make_subrecord("DNAM", "Freezes the target for <mag> points."),
+            ])],
+        )
+        strings = extract_strings(plugin)
+        texts = {s.original_text for s in strings}
+        assert "Frostbite" in texts
+        assert "Freezes the target for <mag> points." in texts
+
+
+class TestGmstDataValue:
+    def test_gmst_string_value_extracted(self):
+        """GMST DATA is translatable only when the EDID starts with 's'."""
+        plugin = make_plugin([
+            ("GMST", 0x100, [
+                make_subrecord("EDID", "sQuitGameMessage"),
+                make_subrecord("DATA", "Are you sure you want to quit?"),
+            ]),
+        ])
+        strings = extract_strings(plugin)
+        assert len(strings) == 1
+        assert strings[0].original_text == "Are you sure you want to quit?"
+        assert strings[0].subrecord_type == b"DATA"
+
+    def test_gmst_int_value_not_extracted(self):
+        """GMST DATA with an 'i' EDID is a 32-bit int, not a string."""
+        import struct
+        plugin = make_plugin([
+            ("GMST", 0x100, [
+                make_subrecord("EDID", "iMaxCharacterLevel"),
+                make_subrecord("DATA", struct.pack("<i", 50)),
+            ]),
+        ])
+        strings = extract_strings(plugin)
+        assert len(strings) == 0
+
+    def test_gmst_float_value_not_extracted(self):
+        """GMST DATA with an 'f' EDID is a float, not a string."""
+        import struct
+        plugin = make_plugin([
+            ("GMST", 0x100, [
+                make_subrecord("EDID", "fJumpHeightMin"),
+                make_subrecord("DATA", struct.pack("<f", 76.0)),
+            ]),
+        ])
+        strings = extract_strings(plugin)
+        assert len(strings) == 0
+
+
 class TestSkyrimExtractor:
     def test_skyrim_inline_extraction(self):
         """Skyrim plugin without LOCALIZED flag extracts strings inline (like FO3)."""

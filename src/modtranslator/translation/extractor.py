@@ -180,7 +180,19 @@ def _extract_from_record(
     sub_type_counter: dict[bytes, int] = {}
 
     for sub in record.subrecords:
-        if not is_translatable(record.type, sub.type):
+        translatable = is_translatable(record.type, sub.type)
+        # Special case: GMST DATA is a union whose type is decided by the EDID's
+        # first character ('s'=string, 'i'=int, 'f'=float, 'b'=bool).  Only the
+        # 's' variant holds a translatable string; the registry can't see the
+        # EDID so this is handled here (source: xEdit wbGMSTUnionDecider).
+        if (
+            not translatable
+            and record.type == b"GMST"
+            and sub.type == b"DATA"
+            and editor_id[:1] == "s"
+        ):
+            translatable = True
+        if not translatable:
             continue
 
         # Skip empty or binary-only subrecords
