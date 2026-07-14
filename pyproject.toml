@@ -36,6 +36,12 @@ gui = [
 deepl = [
     "deepl>=1.16.0",
 ]
+claude = [
+    "anthropic>=0.40.0",
+]
+bsa = [
+    "lz4>=4.0",
+]
 opus-mt = [
     "ctranslate2>=4.0.0",
     "transformers>=4.35.0",
