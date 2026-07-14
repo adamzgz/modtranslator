@@ -150,11 +150,13 @@ class _FileContext:
     protected_texts: list[str] = field(default_factory=list)
     gloss_mappings: list[dict[str, str]] | None = None
     lang_mappings: list[dict[str, str]] | None = None
+    bracket_mappings: list[dict[str, str]] | None = None
     dedup_indices: list[int] = field(default_factory=list)
     translations: dict[str, str] = field(default_factory=dict)
     patched_count: int = 0
     status: str = "pending"
     error_message: str = ""
+    scpt_data: list = field(default_factory=list)  # list[ScptRecord] for SCPT patching
 
 
 @dataclass
@@ -165,6 +167,9 @@ class ScanResult:
     has_mcm: bool = False
     mcm_directory: Path | None = None
     mc_files: list[Path] = field(default_factory=list)
+    kubejs_lang_files: list[Path] = field(default_factory=list)
+    ftbq_quests_dir: Path | None = None
+    archives: list[Path] = field(default_factory=list)
 
 
 @dataclass
@@ -174,6 +179,7 @@ class BatchAllResult:
     pex_result: BatchResult | None = None
     mcm_result: BatchResult | None = None
     mc_result: BatchResult | None = None
+    ftbq_result: BatchResult | None = None
     total_success: int = 0
     total_errors: int = 0
     elapsed_seconds: float = 0.0

@@ -87,6 +87,66 @@ def extract_strings(plugin: PluginFile) -> list[TranslatableString]:
     return results
 
 
+def extract_scpt_data(plugin: PluginFile) -> list:
+    """Extract translatable SCPT strings from compiled script bytecode.
+
+    Returns a list of ScptRecord objects (one per SCPT record with strings).
+    SCPT strings are also converted to TranslatableString objects via
+    scpt_to_translatable() for integration with the translation pipeline.
+    """
+    from modtranslator.core.scpt_parser import ScptRecord, extract_scpt_strings
+
+    scpt_records: list[ScptRecord] = []
+
+    def _walk(records: list) -> None:
+        for r in records:
+            if hasattr(r, "children"):
+                _walk(r.children)
+            elif r.type == b"SCPT":
+                result = extract_scpt_strings(r)
+                if result.strings:
+                    scpt_records.append(result)
+
+    for group in plugin.groups:
+        _walk(group.children)
+
+    return scpt_records
+
+
+def scpt_to_translatable(
+    scpt_records: list,
+    source_file: str = "",
+) -> list[TranslatableString]:
+    """Convert ScptRecord objects to TranslatableString for the pipeline.
+
+    Uses sub_index to encode the scda_offset (needed for patching).
+    """
+    results: list[TranslatableString] = []
+    for sr in scpt_records:
+        sctx_sub = None
+        for sub in sr.record.subrecords:
+            if sub.type == b"SCTX":
+                sctx_sub = sub
+                break
+        if sctx_sub is None:
+            continue
+
+        for ss in sr.strings:
+            results.append(
+                TranslatableString(
+                    record_type=b"SCPT",
+                    subrecord_type=b"SCTX",
+                    form_id=sr.record.form_id,
+                    original_text=ss.text,
+                    subrecord=sctx_sub,
+                    editor_id=sr.editor_id,
+                    sub_index=ss.scda_offset,
+                    source_file=source_file,
+                )
+            )
+    return results
+
+
 def _extract_from_group(
     group: GroupRecord,
     results: list[TranslatableString],
@@ -120,7 +180,19 @@ def _extract_from_record(
     sub_type_counter: dict[bytes, int] = {}
 
     for sub in record.subrecords:
-        if not is_translatable(record.type, sub.type):
+        translatable = is_translatable(record.type, sub.type)
+        # Special case: GMST DATA is a union whose type is decided by the EDID's
+        # first character ('s'=string, 'i'=int, 'f'=float, 'b'=bool).  Only the
+        # 's' variant holds a translatable string; the registry can't see the
+        # EDID so this is handled here (source: xEdit wbGMSTUnionDecider).
+        if (
+            not translatable
+            and record.type == b"GMST"
+            and sub.type == b"DATA"
+            and editor_id[:1] == "s"
+        ):
+            translatable = True
+        if not translatable:
             continue
 
         # Skip empty or binary-only subrecords

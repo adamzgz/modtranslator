@@ -5,9 +5,11 @@ Extracted from pipeline.py for maintainability.
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 from threading import Event
+from typing import Any
 
 from modtranslator._pipeline_types import (
     CancelledError,
@@ -126,6 +128,10 @@ def create_backend(
             )
         effective_device = device or "auto"
         return HybridDeepLBackend(api_key=api_key, device=effective_device), "hybrid:nllb+deepl"
+    elif backend_name == "claude":
+        from modtranslator.backends.claude import ClaudeBackend
+        effective_model = model or "claude-sonnet-4-6"
+        return ClaudeBackend(api_key=api_key, model=effective_model), f"claude:{effective_model}"
     else:
         # Default: deepl
         if not api_key:
@@ -147,7 +153,11 @@ def _prepare_file(
 ) -> _FileContext:
     """Phase 1: parse, extract, filter, protect."""
     from modtranslator.core.plugin import load_plugin
-    from modtranslator.translation.extractor import extract_strings
+    from modtranslator.translation.extractor import (
+        extract_scpt_data,
+        extract_strings,
+        scpt_to_translatable,
+    )
 
     ctx = _FileContext(file_path=file_path, output_path=output_path)
 
@@ -159,6 +169,14 @@ def _prepare_file(
         file_stem = file_path.stem
         for s in strings:
             s.source_file = file_stem
+
+        # Also extract SCPT bytecode strings
+        scpt_records = extract_scpt_data(plugin)
+        if scpt_records:
+            ctx.scpt_data = scpt_records
+            scpt_strings = scpt_to_translatable(scpt_records, file_stem)
+            strings.extend(scpt_strings)
+
         ctx.all_strings = strings
 
         if not strings:
@@ -180,6 +198,9 @@ def _prepare_file(
         ctx.all_strings = strings
         ctx.to_translate = list(strings)
         texts = [s.original_text for s in ctx.to_translate]
+
+        # Protect [bracket] game-mechanic tags before any other protection
+        texts, ctx.bracket_mappings = _protect_brackets_batch(texts)
 
         if gloss and texts:
             texts, ctx.gloss_mappings = gloss.protect_batch(texts)  # type: ignore[attr-defined]
@@ -221,6 +242,37 @@ def _build_dedup_map(
     return unique_texts, text_to_index
 
 
+def patch_scpt_translations(
+    scpt_data: list[Any],
+    translations: dict[str, str],
+    file_stem: str,
+) -> int:
+    """Patch SCPT bytecode strings; restores |/^ MessageBox markers. Returns patched count."""
+    from modtranslator.core.scpt_parser import patch_scpt_record
+
+    patched = 0
+    for sr in scpt_data:
+        scpt_translations: dict[int, str] = {}
+        for ss in sr.strings:
+            ts_key = f"{file_stem}:{sr.record.form_id:08X}:SCTX:{ss.scda_offset}"
+            if ts_key in translations:
+                translated = translations[ts_key]
+                # Restore FO3/FNV MessageBox formatting markers that neural MT
+                # strips during translation: | = button/menu option prefix,
+                # ^ = centered text wrapper.
+                original = ss.text
+                if original.startswith("|") and not translated.startswith("|"):
+                    translated = "|" + translated
+                if original.startswith("^") and not translated.startswith("^"):
+                    translated = "^" + translated
+                if original.endswith("^") and not translated.endswith("^"):
+                    translated = translated + "^"
+                scpt_translations[ss.scda_offset] = translated
+        if scpt_translations:
+            patched += patch_scpt_record(sr.record, scpt_translations)
+    return patched
+
+
 def _writeback_file(
     ctx: _FileContext,
     translated_unique: list[str],
@@ -230,7 +282,11 @@ def _writeback_file(
 ) -> _FileContext:
     """Phase 3: restore placeholders, patch, save."""
     from modtranslator.core.plugin import load_plugin, save_plugin
-    from modtranslator.translation.extractor import extract_strings
+    from modtranslator.translation.extractor import (
+        extract_scpt_data,
+        extract_strings,
+        scpt_to_translatable,
+    )
     from modtranslator.translation.patcher import apply_translations
 
     try:
@@ -247,6 +303,10 @@ def _writeback_file(
         if gloss and translated:
             translated = gloss.restore_batch(translated, ctx.gloss_mappings)  # type: ignore[attr-defined]
 
+        # Restore [bracket] game-mechanic tags (last, since they were protected first)
+        if ctx.bracket_mappings is not None and translated:
+            translated = _restore_brackets_batch(translated, ctx.bracket_mappings)
+
         translations: dict[str, str] = dict(ctx.cached)
         for key, t in zip(ctx.to_translate_keys, translated, strict=True):
             translations[key] = t
@@ -259,14 +319,30 @@ def _writeback_file(
             file_stem = ctx.file_path.stem
             for s in ctx.all_strings:
                 s.source_file = file_stem
+            # Re-extract SCPT data for the reloaded plugin
+            scpt_records = extract_scpt_data(ctx.plugin)
+            if scpt_records:
+                ctx.scpt_data = scpt_records
+                scpt_strings = scpt_to_translatable(scpt_records, file_stem)
+                ctx.all_strings.extend(scpt_strings)
 
         from modtranslator.core.constants import encoding_for_lang
         st = getattr(ctx.plugin, "string_tables", None)
+
+        # Separate SCPT strings from normal strings for different patching paths
+        normal_strings = [s for s in ctx.all_strings if s.record_type != b"SCPT"]
         patched = apply_translations(
-            ctx.all_strings, translations,
+            normal_strings, translations,
             encoding=encoding_for_lang(lang),
             string_tables=st,
         )
+
+        # Patch SCPT bytecode strings
+        if ctx.scpt_data:
+            patched += patch_scpt_translations(
+                ctx.scpt_data, translations, ctx.file_path.stem
+            )
+
         ctx.patched_count = patched
 
         from modtranslator.core.string_table import ISO_TO_FULL_LANGUAGE
@@ -396,6 +472,60 @@ def _translate_chunks(
     return translated, chunk_errors
 
 
+# ── Bracket protection ──
+
+# Matches game mechanic indicators in square brackets, e.g.
+# [+10 Karma], [-50 Caps], [-%g Stimpak], [Confident: +1 Charisma, 5 min]
+_RE_BRACKET = re.compile(r"\[([^\[\]]+)\]")
+
+
+def _protect_brackets_batch(
+    texts: list[str],
+) -> tuple[list[str], list[dict[str, str]]]:
+    """Replace [bracket] game-mechanic tags with Qx{i} placeholders.
+
+    Returns (protected_texts, per-text mappings for restoration).
+    """
+    protected: list[str] = []
+    all_mappings: list[dict[str, str]] = []
+    for text in texts:
+        matches = list(_RE_BRACKET.finditer(text))
+        if not matches:
+            protected.append(text)
+            all_mappings.append({})
+            continue
+        mapping: dict[str, str] = {}
+        result = text
+        for i, m in enumerate(reversed(matches)):
+            placeholder = f"Qx{len(matches) - 1 - i}"
+            mapping[placeholder] = m.group(0)
+            result = result[: m.start()] + placeholder + result[m.end() :]
+        protected.append(result)
+        all_mappings.append(mapping)
+    return protected, all_mappings
+
+
+def _restore_brackets_batch(
+    texts: list[str],
+    all_mappings: list[dict[str, str]],
+) -> list[str]:
+    """Restore Qx{i} placeholders back to original [bracket] content."""
+    restored: list[str] = []
+    for text, mapping in zip(texts, all_mappings, strict=True):
+        if not mapping:
+            restored.append(text)
+            continue
+        result = text
+        for placeholder, original in mapping.items():
+            result = result.replace(placeholder, original)
+        # If neural MT dropped ALL placeholders, append lost brackets at end
+        for _placeholder, original in mapping.items():
+            if original not in result:
+                result = result.rstrip() + " " + original
+        restored.append(result)
+    return restored
+
+
 # ── Setup glossary helper ──
 
 
@@ -466,8 +596,54 @@ def clear_cache() -> int:
     return deleted
 
 
+def find_kubejs_lang_files(directory: Path, source_locale: str = "en_us") -> list[Path]:
+    """Loose KubeJS lang files: ``kubejs/assets/<namespace>/lang/<locale>.json``."""
+    kubejs_assets = directory / "kubejs" / "assets"
+    if not kubejs_assets.is_dir():
+        return []
+    return sorted(kubejs_assets.glob(f"*/lang/{source_locale}.json"))
+
+
+def find_ftbq_quests_dir(directory: Path) -> Path | None:
+    """Locate the FTB Quests ``quests`` directory (the one containing ``lang/``).
+
+    Handles a modpack root (``config/ftbquests/quests``), a ``config/`` dir
+    (``ftbquests/quests``), or the quests dir itself.
+    """
+    candidates = [
+        directory / "config" / "ftbquests" / "quests",
+        directory / "ftbquests" / "quests",
+        directory,
+    ]
+    for c in candidates:
+        if (c / "lang").is_dir():
+            return c
+    return None
+
+
+def ftbq_source_files(quests_dir: Path, source_locale: str = "en_us") -> list[Path]:
+    """Source ``.snbt`` files for a locale: single ``lang/<locale>.snbt`` and/or a folder tree."""
+    from modtranslator.core.ftbq_lang import find_lang_files
+
+    files: list[Path] = []
+    single = quests_dir / "lang" / f"{source_locale}.snbt"
+    if single.is_file():
+        files.append(single)
+    files.extend(find_lang_files(quests_dir, source_locale))
+    return files
+
+
+def ftbq_target_file(source_file: Path, source_locale: str, target_locale: str) -> Path:
+    """Target path for an ftbq source file (handles single-file and folder layouts)."""
+    from modtranslator.core.ftbq_lang import target_path
+
+    if source_file.parent.name == "lang" and source_file.stem == source_locale:
+        return source_file.parent / f"{target_locale}.snbt"
+    return target_path(source_file, source_locale, target_locale)
+
+
 def scan_directory(directory: Path) -> ScanResult:
-    """Scan a directory for translatable content (ESP/ESM, PEX, MCM, Minecraft JARs)."""
+    """Scan a directory for translatable content (ESP/ESM, PEX, MCM, Minecraft)."""
     result = ScanResult()
 
     # ESP/ESM files (direct children)
@@ -491,6 +667,11 @@ def scan_directory(directory: Path) -> ScanResult:
         result.has_mcm = True
         result.mcm_directory = directory
 
+    # MCM: also detect config.json menus under MCM/Config/
+    if (directory / "MCM" / "Config").is_dir():
+        result.has_mcm = True
+        result.mcm_directory = directory
+
     # Minecraft JAR files (direct children or mods/ subdirectory)
     jar_files = list(directory.glob("*.jar"))
     mods_dir = directory / "mods"
@@ -498,4 +679,35 @@ def scan_directory(directory: Path) -> ScanResult:
         jar_files.extend(mods_dir.glob("*.jar"))
     result.mc_files = sorted(jar_files)
 
+    # Loose KubeJS lang files and FTB Quests SNBT lang
+    result.kubejs_lang_files = find_kubejs_lang_files(directory)
+    result.ftbq_quests_dir = find_ftbq_quests_dir(directory)
+
+    # Bethesda archives (.bsa/.ba2) that contain translatable assets
+    archives = sorted(
+        list(directory.glob("*.bsa")) + list(directory.glob("*.ba2"))
+    )
+    result.archives = [a for a in archives if _archive_has_translatable(a)]
+
     return result
+
+
+def _archive_has_translatable(path: Path) -> bool:
+    """True if a .bsa/.ba2 has a translatable .pex or Interface/translations txt.
+
+    Only entry names are inspected (no decompression), so LZ4-compressed v105
+    archives are detected even when the optional lz4 package is missing.
+    """
+    from modtranslator.core.bsa_archive import ArchiveError, BethesdaArchive
+
+    try:
+        with BethesdaArchive(path) as archive:
+            for entry in archive.entries():
+                name = entry.name
+                if name.endswith(".pex") and "scripts/" in name:
+                    return True
+                if name.endswith(".txt") and "interface/translations/" in name:
+                    return True
+    except ArchiveError:
+        return False
+    return False

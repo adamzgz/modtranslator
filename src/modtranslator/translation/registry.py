@@ -81,8 +81,9 @@ _TRANSLATABLE_MAP: dict[bytes, set[bytes]] = {
     b"NNAM": {b"QUST"},  # Quest objective text
     b"ITXT": {b"MESG"},  # Message button text
     b"CNAM": {b"QUST"},  # Quest stage log entry
+    b"RDMP": {b"REGN"},  # Region map name (Pip-Boy/map display)
     # Skyrim-specific subrecords
-    b"DNAM": {b"WOOP"},  # Word of Power text
+    b"DNAM": {b"WOOP", b"MGEF"},  # Word of Power text / Magic Effect description
     b"SHRT": {b"SHOU", b"NPC_"},  # Short name of Shout / NPC short name
 }
 

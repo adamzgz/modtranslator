@@ -74,3 +74,23 @@ gui_error*.log
 
 # Misc
 nul
+
+# One-off ATM10/Minecraft experiment scripts and data (local only)
+PLAN_MINECRAFT.md
+atm10_to_translate.json
+build_resource_pack.py
+claude_err.txt
+count_missing.py
+debug_extract*.py
+extract_all.py
+extract_for_translation.py
+inspect_jar.py
+kubejs_missing.json
+missing_rest.txt
+missing_text.txt
+test_claude_backend.py
+test_claude_p.py
+test_files/
+to_translate_full.json
+translations_es*.py
+upload_models.py

@@ -18,6 +18,7 @@ from rich.progress import (
 from rich.table import Table
 
 from modtranslator import __version__
+from modtranslator.exchange import FormatChoice, apply_path, export_path
 from modtranslator.pipeline import (
     BatchResult,
     GameChoice,
@@ -100,15 +101,15 @@ def translate(
     ),
     api_key: str | None = typer.Option(
         None, "--api-key", "-k",
-        envvar="DEEPL_API_KEY", help="DeepL API key.",
+        envvar="DEEPL_API_KEY", help="DeepL API key (claude backend reads ANTHROPIC_API_KEY).",
     ),
     backend_name: str = typer.Option(
         "deepl", "--backend", "-b",
-        help="Backend: deepl, opus-mt, nllb, hybrid, dummy.",
+        help="Backend: deepl, opus-mt, nllb, hybrid, hybrid-deepl, claude, dummy.",
     ),
     model: str | None = typer.Option(
         None, "--model", "-m",
-        help="Model: base/tc-big (Opus-MT), 600M/1.3B (NLLB).",
+        help="Model: base/tc-big (Opus-MT), 600M/1.3B (NLLB), model id (claude).",
     ),
     device: str | None = typer.Option(
         None, "--device",
@@ -222,10 +223,22 @@ def _translate_file(
     _print(f"Game detected: [cyan]{plugin.game.name}[/cyan]")
 
     with console.status("Extracting strings..."):
+        from modtranslator.translation.extractor import (
+            extract_scpt_data,
+            scpt_to_translatable,
+        )
+
         strings = extract_strings(plugin)
         file_stem = file.stem
         for s in strings:
             s.source_file = file_stem
+
+        # Also extract SCPT bytecode strings
+        scpt_records = extract_scpt_data(plugin)
+        if scpt_records:
+            scpt_strings = scpt_to_translatable(scpt_records, file_stem)
+            strings.extend(scpt_strings)
+
         rpt.total_strings_found = len(strings)
 
     _print(f"Found [green]{len(strings)}[/green] translatable strings")
@@ -279,6 +292,12 @@ def _translate_file(
 
     to_translate = [s for s in strings if s.key not in cached]
     texts = [s.original_text for s in to_translate]
+
+    # Protect [bracket] game-mechanic tags before glossary/target protection
+    from modtranslator._pipeline_helpers import _protect_brackets_batch
+
+    bracket_mappings: list[dict[str, str]] | None = None
+    texts, bracket_mappings = _protect_brackets_batch(texts)
 
     gloss_mappings: list[dict[str, str]] | None = None
     if gloss and texts:
@@ -357,6 +376,12 @@ def _translate_file(
         if gloss:
             translated = gloss.restore_batch(translated, gloss_mappings)
 
+        # Restore [bracket] game-mechanic tags
+        if bracket_mappings is not None:
+            from modtranslator._pipeline_helpers import _restore_brackets_batch
+
+            translated = _restore_brackets_batch(translated, bracket_mappings)
+
         cache_entries = []
         for key, orig, t in zip(to_translate_keys, to_translate_originals, translated, strict=True):
             translations[key] = t
@@ -372,10 +397,38 @@ def _translate_file(
                 strings = extract_strings(plugin)
                 for s in strings:
                     s.source_file = file_stem
+                scpt_records = extract_scpt_data(plugin)
+                if scpt_records:
+                    scpt_strings = scpt_to_translatable(scpt_records, file_stem)
+                    strings.extend(scpt_strings)
 
         with console.status("Patching plugin..."):
+            # Separate SCPT strings from normal strings
+            normal_strings = [s for s in strings if s.record_type != b"SCPT"]
             st = getattr(plugin, "string_tables", None)
-            patched = apply_translations(strings, translations, string_tables=st)
+            patched = apply_translations(normal_strings, translations, string_tables=st)
+
+            # Patch SCPT bytecode strings
+            if scpt_records:
+                from modtranslator.core.scpt_parser import patch_scpt_record
+
+                for sr in scpt_records:
+                    scpt_translations: dict[int, str] = {}
+                    for ss in sr.strings:
+                        ts_key = f"{file_stem}:{sr.record.form_id:08X}:SCTX:{ss.scda_offset}"
+                        if ts_key in translations:
+                            translated_text = translations[ts_key]
+                            original = ss.text
+                            if original.startswith("|") and not translated_text.startswith("|"):
+                                translated_text = "|" + translated_text
+                            if original.startswith("^") and not translated_text.startswith("^"):
+                                translated_text = "^" + translated_text
+                            if original.endswith("^") and not translated_text.endswith("^"):
+                                translated_text = translated_text + "^"
+                            scpt_translations[ss.scda_offset] = translated_text
+                    if scpt_translations:
+                        patched += patch_scpt_record(sr.record, scpt_translations)
+
             rpt.strings_patched = patched
 
         _print(f"Patched [green]{patched}[/green] strings")
@@ -477,11 +530,11 @@ def batch(
     ),
     backend_name: str = typer.Option(
         "deepl", "--backend", "-b",
-        help="Backend: deepl, opus-mt, nllb, hybrid, dummy.",
+        help="Backend: deepl, opus-mt, nllb, hybrid, hybrid-deepl, claude, dummy.",
     ),
     model: str | None = typer.Option(
         None, "--model", "-m",
-        help="Model: base/tc-big (Opus-MT), 600M/1.3B (NLLB).",
+        help="Model: base/tc-big (Opus-MT), 600M/1.3B (NLLB), model id (claude).",
     ),
     device: str | None = typer.Option(
         None, "--device",
@@ -567,11 +620,11 @@ def batch_pex_cmd(
     ),
     backend_name: str = typer.Option(
         "deepl", "--backend", "-b",
-        help="Backend: deepl, opus-mt, nllb, hybrid, dummy.",
+        help="Backend: deepl, opus-mt, nllb, hybrid, hybrid-deepl, claude, dummy.",
     ),
     model: str | None = typer.Option(
         None, "--model", "-m",
-        help="Model: base/tc-big (Opus-MT), 600M/1.3B (NLLB).",
+        help="Model: base/tc-big (Opus-MT), 600M/1.3B (NLLB), model id (claude).",
     ),
     device: str | None = typer.Option(
         None, "--device",
@@ -606,8 +659,9 @@ def batch_pex_cmd(
         raise typer.Exit(1)
 
     files = sorted(directory.glob("*.pex"))
-    if not files:
-        console.print(f"[yellow]No .pex files in {directory}[/yellow]")
+    archives = sorted(directory.glob("*.bsa")) + sorted(directory.glob("*.ba2"))
+    if not files and not archives:
+        console.print(f"[yellow]No .pex or .bsa/.ba2 files in {directory}[/yellow]")
         raise typer.Exit()
 
     if output_dir is not None:
@@ -624,7 +678,10 @@ def batch_pex_cmd(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(1) from e
 
-    console.print(f"Found [green]{len(files)}[/green] .pex files")
+    console.print(
+        f"Found [green]{len(files)}[/green] .pex files, "
+        f"[green]{len(archives)}[/green] archives"
+    )
     _print(f"Backend: [cyan]{backend_label}[/cyan]", verbose_only=True)
 
     result = batch_translate_pex(
@@ -637,9 +694,15 @@ def batch_pex_cmd(
         skip_translated=skip_translated,
         output_dir=output_dir,
         no_cache=no_cache,
+        directory=directory,
+        archives=archives,
     )
 
-    _print_batch_summary("PEX Batch Summary", result, len(files))
+    _print_batch_summary(
+        "PEX Batch Summary",
+        result,
+        result.success_count + result.skip_count + result.error_count,
+    )
 
 
 @app.command(name="batch-mcm")
@@ -652,7 +715,7 @@ def batch_mcm_cmd(
     ),
     backend_name: str = typer.Option(
         "deepl", "--backend", "-b",
-        help="Backend: deepl, opus-mt, nllb, hybrid, dummy.",
+        help="Backend: deepl, opus-mt, nllb, hybrid, hybrid-deepl, claude, dummy.",
     ),
     model: str | None = typer.Option(
         None, "--model", "-m",
@@ -696,6 +759,11 @@ def batch_mcm_cmd(
 
     _print(f"Backend: [cyan]{backend_label}[/cyan]", verbose_only=True)
 
+    archives = (
+        sorted(directory.glob("*.bsa")) + sorted(directory.glob("*.ba2"))
+        if directory.is_dir() else []
+    )
+
     try:
         result = batch_translate_mcm(
             directory,
@@ -707,6 +775,7 @@ def batch_mcm_cmd(
             skip_translated=skip_translated,
             output_dir=output_dir,
             no_cache=no_cache,
+            archives=archives,
         )
     except FileNotFoundError as e:
         console.print(f"[red]Error:[/red] {e}")
@@ -729,7 +798,7 @@ def batch_mc_cmd(
     ),
     backend_name: str = typer.Option(
         "deepl", "--backend", "-b",
-        help="Backend: deepl, opus-mt, nllb, hybrid, dummy.",
+        help="Backend: deepl, opus-mt, nllb, hybrid, hybrid-deepl, claude, dummy.",
     ),
     model: str | None = typer.Option(
         None, "--model", "-m",
@@ -744,6 +813,14 @@ def batch_mc_cmd(
         None, "--output-dir", "-O",
         help="Output directory for translated JARs.",
     ),
+    resource_pack: Path | None = typer.Option(
+        None, "--resource-pack",
+        help="Write a single resource pack zip instead of rewriting JARs.",
+    ),
+    pack_format: int = typer.Option(
+        34, "--pack-format",
+        help="Resource pack pack_format (default 34 = MC 1.21).",
+    ),
     use_dummy: bool = typer.Option(False, "--dummy"),
     no_cache: bool = typer.Option(
         False, "--no-cache", help="Disable translation cache.",
@@ -756,7 +833,7 @@ def batch_mc_cmd(
         None, "--glossary", "-g",
     ),
 ) -> None:
-    """Translate Minecraft mod JAR files in a directory."""
+    """Translate Minecraft mod JAR files (and loose KubeJS lang) in a directory."""
     if not directory.is_dir():
         console.print(f"[red]Error:[/red] Not a directory: {directory}")
         raise typer.Exit(1)
@@ -767,8 +844,12 @@ def batch_mc_cmd(
     if mods_dir.is_dir():
         jar_files.extend(sorted(mods_dir.glob("*.jar")))
 
-    if not jar_files:
-        console.print(f"[yellow]No .jar files in {directory}[/yellow]")
+    # Find loose KubeJS lang files
+    from modtranslator._pipeline_helpers import find_kubejs_lang_files
+    kubejs_files = find_kubejs_lang_files(directory)
+
+    if not jar_files and not kubejs_files:
+        console.print(f"[yellow]No .jar or KubeJS lang files in {directory}[/yellow]")
         raise typer.Exit()
 
     if output_dir is not None:
@@ -785,7 +866,10 @@ def batch_mc_cmd(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(1) from e
 
-    console.print(f"Found [green]{len(jar_files)}[/green] .jar files")
+    console.print(
+        f"Found [green]{len(jar_files)}[/green] .jar files"
+        f", [green]{len(kubejs_files)}[/green] KubeJS lang files"
+    )
     _print(f"Backend: [cyan]{backend_label}[/cyan]", verbose_only=True)
 
     result = batch_translate_mc(
@@ -797,9 +881,158 @@ def batch_mc_cmd(
         skip_translated=skip_translated,
         output_dir=output_dir,
         no_cache=no_cache,
+        kubejs_files=kubejs_files,
+        resource_pack=resource_pack,
+        pack_format=pack_format,
     )
 
-    _print_batch_summary("Minecraft Batch Summary", result, len(jar_files))
+    _print_batch_summary("Minecraft Batch Summary", result, len(jar_files) + len(kubejs_files))
+
+
+@app.command()
+def export(
+    path: Path = typer.Argument(
+        ..., help="File or directory to export translatable strings from.",
+    ),
+    output: Path = typer.Option(
+        Path("strings.json"), "--output", "-o",
+        help="Output JSON path.",
+    ),
+    lang: str = typer.Option(
+        "ES", "--lang", "-l", help="Target language code.",
+    ),
+    game: GameChoice = typer.Option(
+        GameChoice.auto, "--game",
+        help="Game: fo3, fnv, fo4, skyrim, minecraft, auto.",
+    ),
+    fmt: FormatChoice = typer.Option(
+        FormatChoice.auto, "--format", "-f",
+        help="Content format: esp, pex, mcm, mc, ftbq, auto.",
+    ),
+    glossary: Path | None = typer.Option(
+        None, "--glossary", "-g", help="Path to glossary TOML file.",
+    ),
+    no_cache: bool = typer.Option(
+        False, "--no-cache", help="Disable translation cache exclusion.",
+    ),
+    skip_translated: bool = typer.Option(
+        True, "--skip-translated/--no-skip-translated",
+        help="Skip strings already in target language.",
+    ),
+) -> None:
+    """Export raw translatable strings to a JSON file for agent translation."""
+    import json
+
+    if not path.exists():
+        console.print(f"[red]Error:[/red] Path not found: {path}")
+        raise typer.Exit(1)
+
+    result = export_path(
+        path, lang=lang, game=game, fmt=fmt, glossary=glossary,
+        use_cache=not no_cache, skip_translated=skip_translated,
+    )
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(result.doc, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+    console.print(
+        f"Scanned [green]{result.files_scanned}[/green] file(s), "
+        f"[green]{result.total_entries}[/green] entries"
+    )
+    if result.cache_skipped:
+        console.print(f"Cache skipped: [yellow]{result.cache_skipped}[/yellow]")
+    console.print(f"Wrote: [cyan]{output}[/cyan]")
+
+
+@app.command(name="apply")
+def apply_cmd(
+    path: Path = typer.Argument(
+        ..., help="File or directory the translations apply to (same as exported).",
+    ),
+    translations: Path = typer.Option(
+        ..., "--translations", "-t", help="Translations JSON file.",
+    ),
+    output: Path | None = typer.Option(
+        None, "--output", "-o",
+        help="Output file (single file) or directory. Defaults to <stem>_<lang>.",
+    ),
+    lang: str | None = typer.Option(
+        None, "--lang", "-l", help="Override the JSON's lang field.",
+    ),
+    game: GameChoice = typer.Option(
+        GameChoice.auto, "--game",
+        help="Game: fo3, fnv, fo4, skyrim, minecraft, auto.",
+    ),
+    fmt: FormatChoice = typer.Option(
+        FormatChoice.auto, "--format", "-f",
+        help="Content format: esp, pex, mcm, mc, ftbq, auto.",
+    ),
+    no_cache: bool = typer.Option(
+        False, "--no-cache", help="Disable writing applied translations to cache.",
+    ),
+    backend_label: str = typer.Option(
+        "claude-agent", "--backend-label",
+        help="Backend label recorded in the cache.",
+    ),
+    resource_pack: Path | None = typer.Option(
+        None, "--resource-pack",
+        help="For mc format: write a resource pack zip instead of rewriting JARs.",
+    ),
+    pack_format: int = typer.Option(
+        34, "--pack-format",
+        help="Resource pack pack_format (default 34 = MC 1.21).",
+    ),
+) -> None:
+    """Apply a translations JSON back into the source files."""
+    import json
+
+    if not path.exists():
+        console.print(f"[red]Error:[/red] Path not found: {path}")
+        raise typer.Exit(1)
+    if not translations.exists():
+        console.print(f"[red]Error:[/red] Translations file not found: {translations}")
+        raise typer.Exit(1)
+
+    try:
+        doc = json.loads(translations.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as e:
+        console.print(f"[red]Error:[/red] Could not parse translations JSON: {e}")
+        raise typer.Exit(1) from e
+
+    effective_lang = lang or doc.get("lang", "ES")
+    trans_map = doc.get("translations", {})
+
+    result = apply_path(
+        path, trans_map, lang=effective_lang, game=game, fmt=fmt,
+        output=output, use_cache=not no_cache, backend_label=backend_label,
+        resource_pack=resource_pack, pack_format=pack_format,
+    )
+
+    summary = Table(title="Apply Summary")
+    summary.add_column("Metric", style="bold")
+    summary.add_column("Count", justify="right")
+    summary.add_row("Applied", f"[green]{result.strings_applied}[/green]")
+    summary.add_row("Files written", str(result.files_written))
+    summary.add_row("Unmatched", f"[yellow]{len(result.unmatched_keys)}[/yellow]")
+    summary.add_row("Spec rejected", f"[red]{len(result.spec_rejected)}[/red]")
+    console.print(summary)
+
+    if result.unmatched_keys:
+        console.print("[yellow]Unmatched keys:[/yellow]")
+        for k in result.unmatched_keys[:10]:
+            console.print(f"  {k}")
+        if len(result.unmatched_keys) > 10:
+            console.print(f"  ... y {len(result.unmatched_keys) - 10} más")
+
+    if result.spec_rejected:
+        console.print("[red]Spec rejected keys:[/red]")
+        for k in result.spec_rejected[:10]:
+            console.print(f"  {k}")
+        if len(result.spec_rejected) > 10:
+            console.print(f"  ... y {len(result.spec_rejected) - 10} más")
 
 
 def _print_batch_summary(title: str, result: BatchResult, total_files: int) -> None:

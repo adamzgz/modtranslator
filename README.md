@@ -2,7 +2,7 @@
 
 **Traductor automático offline de mods para juegos Bethesda.**
 
-Traduce archivos ESP/ESM, scripts PEX, archivos MCM y mods de Minecraft (JAR) de forma completamente offline usando modelos de traducción neuronal. Compatible con Fallout 3, Fallout: New Vegas, Fallout 4, Skyrim (SE/AE) y Minecraft (Java Edition). Soporta 6 idiomas de destino: español, francés, alemán, italiano, portugués y ruso.
+Traduce archivos ESP/ESM (incluidos los scripts compilados SCPT de FO3/FNV), scripts PEX, archivos MCM y mods de Minecraft (JAR) de forma completamente offline usando modelos de traducción neuronal. Compatible con Fallout 3, Fallout: New Vegas, Fallout 4, Skyrim (SE/AE) y Minecraft (Java Edition). Soporta 7 idiomas de destino: español, francés, alemán, italiano, portugués, ruso y polaco.
 
 > **Probado con los 4 juegos Bethesda soportados.** Fallout 3 (124 archivos, ~97K strings), Fallout: New Vegas (244 archivos, ~142K strings), Skyrim SE/AE (542 archivos, ~128K strings + 2.302 scripts PEX + MCM) y Fallout 4 (726 archivos + 465 PEX + 60 MCM, ~323K strings) — todos funcionan correctamente con los mods traducidos. Soporte adicional para mods de Minecraft en formato JAR.
 
@@ -41,13 +41,16 @@ Yo quería jugar con mods sin tener la mitad de los textos en español y la otra
 - **Restaurar backup** — un click para volver a los archivos originales
 - **GUI incluida** — interfaz gráfica con CustomTkinter, sin necesidad de terminal
 - **CLI completa** — para usuarios avanzados y automatización
-- **4 tipos de archivo** — ESP/ESM (plugins), PEX (scripts de Papyrus), MCM (menús de configuración), JAR (mods de Minecraft)
+- **4 tipos de archivo** — ESP/ESM (plugins, incluidos scripts compilados SCPT de FO3/FNV), PEX (scripts de Papyrus), MCM (menús de configuración), JAR (mods de Minecraft)
 - **5 juegos** — Fallout 3, Fallout: New Vegas, Skyrim SE/AE, Fallout 4, Minecraft (Java Edition)
-- **4 backends de traducción** — 3 modelos offline (CTranslate2) y API cloud (DeepL)
-- **6 idiomas de destino** — ES, FR, DE, IT, PT, RU
+- **6 backends de traducción** — modelos offline (CTranslate2: Opus-MT, NLLB, híbrido) y APIs cloud (DeepL, híbrido-DeepL, Claude)
+- **7 idiomas de destino** — ES, FR, DE, IT, PT, RU, PL
 - **GUI multilingüe** — la interfaz se adapta al idioma de destino seleccionado
 - **Cache de traducciones** — no retraduce strings ya procesados
-- **Glosarios por juego e idioma** — protege terminología oficial en los 6 idiomas (Refugio, Estimulante, Sanguinario...)
+- **Glosarios por juego e idioma** — protege terminología oficial en los 7 idiomas (Refugio, Estimulante, Sanguinario...)
+- **Modpacks de Minecraft** — FTB Quests (SNBT lang de MC 1.21+), lang sueltos de KubeJS, y salida como resource pack (`--resource-pack`, incluye JARs firmados)
+- **MCM de Fallout 4** — menús `MCM/Config/<mod>/config.json` (campos `text`/`help`/`displayName`/`pageDisplayName`)
+- **Archivos BSA/BA2** — lee scripts .pex y traducciones MCM empaquetados y escribe el resultado como archivo suelto (prioridad en el juego)
 
 ## GUI
 
@@ -126,10 +129,24 @@ modtranslator batch-mc "C:\Games\Minecraft\mods" --backend hybrid --lang ES
 | Opus-MT base | 188–291 str/s | Gratis | Buena | Sí |
 | NLLB 1.3B | 32–71 str/s | Gratis | Excelente (texto largo) | Sí |
 | DeepL | Online | API key | Muy buena | No |
+| Híbrido-DeepL (DeepL+NLLB) | Online | API key | Muy buena | Parcial |
+| Claude (experimental) | Online | API key | Excelente (con contexto) | No |
 
 Los backends offline usan **CTranslate2** y son recomendados con GPU NVIDIA para máxima velocidad.
 
-El backend **híbrido** enruta strings cortos (1–3 palabras) a Opus-MT tc-big y strings largos (4+ palabras) a NLLB 1.3B — combinando la velocidad de tc-big con la fluidez de NLLB en oraciones complejas.
+El backend **híbrido** enruta strings cortos (1–3 palabras) a Opus-MT tc-big y strings largos (4+ palabras) a NLLB 1.3B — combinando la velocidad de tc-big con la fluidez de NLLB en oraciones complejas. La variante **híbrido-DeepL** (`--backend hybrid-deepl`) usa DeepL para los strings cortos y NLLB para los largos.
+
+El backend **Claude** (`--backend claude`, requiere `pip install -e ".[claude]"` y `ANTHROPIC_API_KEY`) traduce vía la API de Anthropic con un prompt que preserva códigos de formato y placeholders. Es experimental y su prompt está optimizado para strings de mods de Minecraft.
+
+### Traducción con agentes de Claude Code
+
+Además del pipeline neuronal, `modtranslator export` vuelca los strings traducibles crudos a un JSON que traducen agentes de Claude Code (Sonnet para texto corto/UI, Opus para libros, notas, diálogos y lore) y `modtranslator apply` los reescribe de vuelta en los archivos. Los agentes reciben el contexto del juego y el glosario oficial, lo que da mejor calidad que la MT neuronal en strings cortos ambiguos. Funciona con ESP/ESM (con SCPT), PEX, MCM (incluido `config.json` de FO4), Minecraft JAR, lang sueltos de KubeJS y FTB Quests SNBT (`--format ftbq`), además de scripts y traducciones MCM dentro de archivos BSA/BA2. Para modpacks, `apply` puede escribir un resource pack con `--resource-pack`. Las traducciones aplicadas alimentan el caché para futuros runs del pipeline neuronal. El flujo lo orquesta el skill `/traducir` en Claude Code.
+
+```bash
+modtranslator export "C:\...\MyMod.esp" -o strings.json --lang ES --game fnv
+# → traducir strings.json con agentes (skill /traducir en Claude Code)
+modtranslator apply "C:\...\MyMod.esp" -t strings_es.json
+```
 
 ## Cómo Funciona
 
@@ -274,7 +291,7 @@ Para archivos de más de 150 MB (como Fallout3.esm con ~280 MB), se usa una estr
 
 ## Glosarios por Juego
 
-30 glosarios TOML que protegen la terminología oficial de Bethesda en los 6 idiomas soportados (`{lang}` = `es`, `fr`, `de`, `it`, `pt`, `ru`):
+35 glosarios TOML que protegen la terminología oficial de Bethesda en los 7 idiomas soportados (`{lang}` = `es`, `fr`, `de`, `it`, `pt`, `ru`, `pl`):
 
 ```toml
 [terms]
@@ -291,7 +308,6 @@ Para archivos de más de 150 MB (como Fallout3.esm con ~280 MB), se usa una estr
 | `falloutnv_{lang}.toml` | Mojave Wasteland — NCR, Mr. House, Yes Man |
 | `fallout4_{lang}.toml` | Commonwealth — Institute, Brotherhood, Minutemen |
 | `skyrim_base_{lang}.toml` | Compartido Skyrim — razas, magia, Guilds |
-| `skyrim_{lang}.toml` | Skyrim — Dovahkiin, ciudades, facciones |
 
 ## Arquitectura
 
@@ -305,6 +321,7 @@ src/modtranslator/
 │   ├── records.py            Dataclasses: Subrecord, Record, GroupRecord, PluginFile
 │   ├── string_table.py       String tables externas de Skyrim (.STRINGS/.DLSTRINGS/.ILSTRINGS)
 │   ├── pex_parser.py         Parser de scripts PEX de Papyrus
+│   ├── scpt_parser.py        Extracción de strings de scripts compilados SCPT (FO3/FNV)
 │   ├── mc_lang_parser.py     Parser de archivos de idioma de Minecraft (.json/.lang)
 │   ├── mc_jar.py             Escáner y reconstrucción de JARs de Minecraft
 │   └── plugin.py             Fachada: load_plugin / save_plugin
@@ -312,7 +329,9 @@ src/modtranslator/
 │   ├── opus_mt.py            Helsinki-NLP + CTranslate2 (base + tc-big)
 │   ├── nllb.py               Meta NLLB-200 + CTranslate2 (600M/1.3B)
 │   ├── hybrid.py             tc-big (corto) + NLLB (largo)
+│   ├── hybrid_deepl.py       DeepL (corto) + NLLB (largo)
 │   ├── deepl.py              API de DeepL
+│   ├── claude.py             API de Anthropic Claude (experimental)
 │   └── dummy.py              Backend de test: prefija [XX]
 ├── translation/            Extracción, filtrado y parcheo de strings
 │   ├── extractor.py          árbol → list[TranslatableString]
@@ -329,9 +348,9 @@ src/modtranslator/
 ├── reporting/              TranslationReport con estadísticas; salida JSON/Markdown/CSV
 │   ├── report.py
 │   └── formatters.py
-└── data/                   Diccionarios por idioma (ES, FR, DE, IT, PT, RU)
+└── data/                   Diccionarios por idioma (ES, FR, DE, IT, PT, RU, PL)
 
-glossaries/                 Archivos TOML de terminología por juego e idioma (30 archivos)
+glossaries/                 Archivos TOML de terminología por juego e idioma (35 archivos)
 tests/                      1086 tests, ~79% cobertura
 ```
 
@@ -381,7 +400,7 @@ Este proyecto está bajo la licencia MIT.
 
 **Automatic offline translator for Bethesda game mods.**
 
-Translates ESP/ESM files, PEX scripts, MCM files, and Minecraft mod JARs completely offline using neural machine translation models. Compatible with Fallout 3, Fallout: New Vegas, Fallout 4, Skyrim (SE/AE), and Minecraft (Java Edition). Supports 6 target languages: Spanish, French, German, Italian, Portuguese, and Russian.
+Translates ESP/ESM files (including FO3/FNV SCPT compiled script strings), PEX scripts, MCM files, and Minecraft mod JARs completely offline using neural machine translation models. Compatible with Fallout 3, Fallout: New Vegas, Fallout 4, Skyrim (SE/AE), and Minecraft (Java Edition). Supports 7 target languages: Spanish, French, German, Italian, Portuguese, Russian, and Polish.
 
 > **Tested on all 4 Bethesda games.** Fallout 3 (124 files, ~97K strings), Fallout: New Vegas (244 files, ~142K strings), Skyrim SE/AE (542 files, ~128K strings + 2,302 PEX scripts + MCM) and Fallout 4 (726 files + 465 PEX + 60 MCM, ~323K strings) — all games work correctly with translated mods. Additional support for Minecraft Java Edition mod JARs.
 
@@ -420,13 +439,16 @@ I wanted to play modded games without half the text in Spanish and the other hal
 - **Restore backup** — one click to revert to original files
 - **GUI included** — graphical interface with CustomTkinter, no terminal needed
 - **Full CLI** — for advanced users and automation
-- **4 file types** — ESP/ESM (plugins), PEX (Papyrus scripts), MCM (configuration menus), JAR (Minecraft mods)
+- **4 file types** — ESP/ESM (plugins, including FO3/FNV SCPT compiled scripts), PEX (Papyrus scripts), MCM (configuration menus), JAR (Minecraft mods)
 - **5 games** — Fallout 3, Fallout: New Vegas, Skyrim SE/AE, Fallout 4, Minecraft (Java Edition)
-- **4 translation backends** — 3 offline models (CTranslate2) and cloud API (DeepL)
-- **6 target languages** — ES, FR, DE, IT, PT, RU
+- **6 translation backends** — offline models (CTranslate2: Opus-MT, NLLB, hybrid) and cloud APIs (DeepL, hybrid-DeepL, Claude)
+- **7 target languages** — ES, FR, DE, IT, PT, RU, PL
 - **Multilingual GUI** — interface language follows the selected target language
 - **Translation cache** — skips previously translated strings
-- **Per-game, per-language glossaries** — protects official terminology across all 6 languages
+- **Per-game, per-language glossaries** — protects official terminology across all 7 languages
+- **Minecraft modpacks** — FTB Quests (MC 1.21+ SNBT lang), loose KubeJS lang, and resource pack output (`--resource-pack`, includes signed JARs)
+- **Fallout 4 MCM** — `MCM/Config/<mod>/config.json` menus (`text`/`help`/`displayName`/`pageDisplayName` fields)
+- **BSA/BA2 archives** — reads packed .pex scripts and MCM translations and writes the result as a loose file (in-game priority)
 
 ## GUI
 
@@ -505,10 +527,24 @@ modtranslator batch-mc "C:\Games\Minecraft\mods" --backend hybrid --lang ES
 | Opus-MT base | 188–291 str/s | Free | Good | Yes |
 | NLLB 1.3B | 32–71 str/s | Free | Excellent (long text) | Yes |
 | DeepL | Online | API key | Very good | No |
+| Hybrid-DeepL (DeepL+NLLB) | Online | API key | Very good | Partial |
+| Claude (experimental) | Online | API key | Excellent (context-aware) | No |
 
 Offline backends use **CTranslate2** and are recommended with NVIDIA GPUs for maximum speed.
 
-The **hybrid** backend routes short strings (1–3 words) to Opus-MT tc-big and longer strings (4+ words) to NLLB 1.3B — combining tc-big's speed with NLLB's fluency on complex sentences.
+The **hybrid** backend routes short strings (1–3 words) to Opus-MT tc-big and longer strings (4+ words) to NLLB 1.3B — combining tc-big's speed with NLLB's fluency on complex sentences. The **hybrid-DeepL** variant (`--backend hybrid-deepl`) uses DeepL for short strings and NLLB for long ones.
+
+The **Claude** backend (`--backend claude`, requires `pip install -e ".[claude]"` and `ANTHROPIC_API_KEY`) translates via the Anthropic API with a prompt that preserves format codes and placeholders. It is experimental and its prompt is tuned for Minecraft mod strings.
+
+### Translating with Claude Code agents
+
+Beyond the neural pipeline, `modtranslator export` dumps raw translatable strings to a JSON that Claude Code agents translate (Sonnet for short/UI text, Opus for books, notes, dialogue and lore) and `modtranslator apply` writes back into the files. The agents receive the game context and official glossary, giving better quality than neural MT on short ambiguous strings. It works with ESP/ESM (with SCPT), PEX, MCM (including FO4 `config.json`), Minecraft JARs, loose KubeJS lang and FTB Quests SNBT (`--format ftbq`), plus scripts and MCM translations packed inside BSA/BA2 archives. For modpacks, `apply` can write a resource pack with `--resource-pack`. Applied translations feed the cache for future neural-pipeline runs. The flow is orchestrated by the `/traducir` skill in Claude Code.
+
+```bash
+modtranslator export "C:\...\MyMod.esp" -o strings.json --lang ES --game fnv
+# → translate strings.json with agents (/traducir skill in Claude Code)
+modtranslator apply "C:\...\MyMod.esp" -t strings_es.json
+```
 
 ## How It Works
 
@@ -653,7 +689,7 @@ For files over 150 MB (like Fallout3.esm at ~280 MB), the pipeline uses a double
 
 ## Per-Game Glossaries
 
-30 TOML glossaries protect official Bethesda terminology from machine translation across all 6 supported languages (`{lang}` = `es`, `fr`, `de`, `it`, `pt`, `ru`):
+35 TOML glossaries protect official Bethesda terminology from machine translation across all 7 supported languages (`{lang}` = `es`, `fr`, `de`, `it`, `pt`, `ru`, `pl`):
 
 ```toml
 [terms]
@@ -670,7 +706,6 @@ For files over 150 MB (like Fallout3.esm at ~280 MB), the pipeline uses a double
 | `falloutnv_{lang}.toml` | Mojave Wasteland — NCR, Mr. House, Yes Man |
 | `fallout4_{lang}.toml` | Commonwealth — Institute, Brotherhood, Minutemen |
 | `skyrim_base_{lang}.toml` | Shared Skyrim — races, magic, Guilds |
-| `skyrim_{lang}.toml` | Skyrim — Dovahkiin, cities, factions |
 
 ## Architecture
 
@@ -684,6 +719,7 @@ src/modtranslator/
 │   ├── records.py            Dataclasses: Subrecord, Record, GroupRecord, PluginFile
 │   ├── string_table.py       Skyrim external string tables (.STRINGS/.DLSTRINGS/.ILSTRINGS)
 │   ├── pex_parser.py         Papyrus PEX script parser
+│   ├── scpt_parser.py        SCPT compiled script string extraction (FO3/FNV)
 │   ├── mc_lang_parser.py     Minecraft language file parser (.json/.lang)
 │   ├── mc_jar.py             Minecraft JAR scanner and rebuilder
 │   └── plugin.py             Facade: load_plugin / save_plugin
@@ -691,7 +727,9 @@ src/modtranslator/
 │   ├── opus_mt.py            Helsinki-NLP + CTranslate2 (base + tc-big)
 │   ├── nllb.py               Meta NLLB-200 + CTranslate2 (600M/1.3B)
 │   ├── hybrid.py             tc-big (short) + NLLB (long) routing
+│   ├── hybrid_deepl.py       DeepL (short) + NLLB (long) routing
 │   ├── deepl.py              DeepL API
+│   ├── claude.py             Anthropic Claude API (experimental)
 │   └── dummy.py              Test backend: prefixes [XX]
 ├── translation/            String extraction, filtering, and patching
 │   ├── extractor.py          Record tree → list[TranslatableString]
@@ -708,9 +746,9 @@ src/modtranslator/
 ├── reporting/              TranslationReport with stats; JSON/Markdown/CSV output
 │   ├── report.py
 │   └── formatters.py
-└── data/                   Per-language word dictionaries (ES, FR, DE, IT, PT, RU)
+└── data/                   Per-language word dictionaries (ES, FR, DE, IT, PT, RU, PL)
 
-glossaries/                 Per-game, per-language TOML terminology files (30 files)
+glossaries/                 Per-game, per-language TOML terminology files (35 files)
 tests/                      1086 tests, ~79% coverage
 ```
 

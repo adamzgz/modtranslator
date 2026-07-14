@@ -53,6 +53,32 @@ class TestIsTranslatable:
         assert is_translatable(b"ACTI", b"RNAM")
 
 
+class TestRegionMapName:
+    def test_regn_rdmp(self):
+        """REGN+RDMP is the region map name — translatable in all games."""
+        assert is_translatable(b"REGN", b"RDMP")
+
+    def test_rdmp_only_in_regn(self):
+        """RDMP appears only in REGN; not translatable elsewhere."""
+        assert not is_translatable(b"WEAP", b"RDMP")
+        assert not is_translatable(b"CELL", b"RDMP")
+
+
+class TestMagicEffectDescription:
+    def test_mgef_dnam(self):
+        """MGEF+DNAM is the magic effect description (Skyrim/FO4)."""
+        assert is_translatable(b"MGEF", b"DNAM")
+
+    def test_woop_dnam_still_translatable(self):
+        """Adding MGEF must not break the existing WOOP+DNAM mapping."""
+        assert is_translatable(b"WOOP", b"DNAM")
+
+    def test_dnam_not_translatable_elsewhere(self):
+        """DNAM is dual-purpose; only WOOP and MGEF are text."""
+        assert not is_translatable(b"TXST", b"DNAM")
+        assert not is_translatable(b"WEAP", b"DNAM")
+
+
 class TestSkyrimSpecificCombos:
     def test_woop_dnam(self):
         assert is_translatable(b"WOOP", b"DNAM")
