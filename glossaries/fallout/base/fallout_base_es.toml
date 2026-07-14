@@ -213,8 +213,18 @@
 "Power Armor" = "Servoarmadura"
 "Nuka-World" = "Nuka-World"
 "Caravan" = "Caravana"
-"Wastelander" = "Habitante del yermo"
+"Wastelander" = "Yermense"
+"Mainframe" = "Servidor principal"
+"Prospector" = "Carroñero"
+"Slaver" = "Esclavista"
+"Demon" = "Necrófago"
 "Scavenger" = "Chatarrero"
+
+# ═══════════════════════════════════════════════════════════════
+# ESTADOS DE MISIÓN
+# ═══════════════════════════════════════════════════════════════
+"[SUCCEEDED]" = "[SUPERADO]"
+"[FAILED]" = "[NO SUPERADO]"
 
 # ═══════════════════════════════════════════════════════════════
 # ROPA Y ARMADURA
@@ -309,6 +319,11 @@
 "Chapas" = "Chapas"
 "Cuernolargo" = "Cuernolargo"
 "Caravanero" = "Caravanero"
+"Yermense" = "Yermense"
+"Páramo" = "Yermo"
+"Gorras" = "Chapas"
+"Negrero" = "Esclavista"
+"Carroñero" = "Carroñero"
 "Lanzamisiles" = "Lanzamisiles"
 "Lanzallamas" = "Lanzallamas"
 "Preguerra" = "Preguerra"

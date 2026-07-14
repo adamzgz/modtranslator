@@ -16,6 +16,17 @@ RATE_LIMIT_RETRY_SECONDS = 1.0
 MAX_RETRIES = 3
 
 
+# DeepL requires specific language codes for some languages.
+# Our internal codes are ISO 639-1; DeepL needs variants for PT and EN.
+_DEEPL_TARGET_CODES: dict[str, str] = {
+    "PT": "PT-BR",
+    "EN": "EN-US",
+}
+_DEEPL_SOURCE_CODES: dict[str, str] = {
+    "EN": "EN",  # source accepts plain "EN", unlike target
+}
+
+
 class DeepLBackend(TranslationBackend):
     """Translation backend using the DeepL API."""
 
@@ -40,11 +51,19 @@ class DeepLBackend(TranslationBackend):
         if not texts:
             return []
 
+        # Map to DeepL-specific language codes
+        deepl_target = _DEEPL_TARGET_CODES.get(target_lang.upper(), target_lang)
+        deepl_source = (
+            _DEEPL_SOURCE_CODES.get(source_lang.upper(), source_lang)
+            if source_lang
+            else None
+        )
+
         results: list[str] = []
 
         for i in range(0, len(texts), MAX_BATCH_SIZE):
             batch = texts[i : i + MAX_BATCH_SIZE]
-            translated = self._translate_with_retry(batch, target_lang, source_lang)
+            translated = self._translate_with_retry(batch, deepl_target, deepl_source)
             results.extend(translated)
 
         return results
