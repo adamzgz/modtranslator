@@ -1,5 +1,7 @@
 """Integration tests for the CLI using Typer's CliRunner."""
 
+import json
+import shutil
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -678,3 +680,176 @@ class TestCLIBatchMcm:
             "--game", "fo4",
         ])
         assert result.exit_code == 0 or result.exit_code is None
+
+
+class TestCLIExport:
+    def test_export_esp(self, tmp_path):
+        esp = tmp_path / "minimal_fo3.esp"
+        shutil.copy(FIXTURES / "minimal_fo3.esp", esp)
+        out = tmp_path / "strings.json"
+        result = runner.invoke(app, [
+            "export", str(esp), "-o", str(out), "--no-cache",
+        ])
+        assert result.exit_code == 0
+        assert out.exists()
+        doc = json.loads(out.read_text(encoding="utf-8"))
+        assert doc["files"][0]["entries"][0]["text"] == "Iron Sword"
+
+    def test_export_nonexistent_path(self):
+        result = runner.invoke(app, ["export", "nonexistent.esp", "-o", "s.json"])
+        assert result.exit_code == 1
+
+
+class TestCLIApply:
+    def _write_translations(self, tmp_path, mapping):
+        tpath = tmp_path / "translations.json"
+        tpath.write_text(
+            json.dumps({"version": 1, "lang": "ES", "translations": mapping}),
+            encoding="utf-8",
+        )
+        return tpath
+
+    def test_apply_esp(self, tmp_path):
+        esp = tmp_path / "minimal_fo3.esp"
+        shutil.copy(FIXTURES / "minimal_fo3.esp", esp)
+        tpath = self._write_translations(
+            tmp_path, {"minimal_fo3:00001000:FULL:0": "Espada de hierro"}
+        )
+        out = tmp_path / "out.esp"
+        result = runner.invoke(app, [
+            "apply", str(esp), "-t", str(tpath), "-o", str(out), "--no-cache",
+        ])
+        assert result.exit_code == 0
+        assert "Applied" in result.output
+        assert out.exists()
+
+        scan = runner.invoke(app, ["scan", str(out)])
+        assert "Espada de hierro" in scan.output
+
+    def test_apply_malformed_json(self, tmp_path):
+        esp = tmp_path / "minimal_fo3.esp"
+        shutil.copy(FIXTURES / "minimal_fo3.esp", esp)
+        tpath = tmp_path / "bad.json"
+        tpath.write_text("{ not valid json", encoding="utf-8")
+        result = runner.invoke(app, [
+            "apply", str(esp), "-t", str(tpath), "--no-cache",
+        ])
+        assert result.exit_code == 1
+
+    def test_apply_nonexistent_path(self, tmp_path):
+        tpath = self._write_translations(tmp_path, {"k": "v"})
+        result = runner.invoke(app, [
+            "apply", "nonexistent.esp", "-t", str(tpath), "--no-cache",
+        ])
+        assert result.exit_code == 1
+
+    def test_apply_missing_translations_file(self, tmp_path):
+        esp = tmp_path / "minimal_fo3.esp"
+        shutil.copy(FIXTURES / "minimal_fo3.esp", esp)
+        result = runner.invoke(app, [
+            "apply", str(esp), "-t", str(tmp_path / "missing.json"), "--no-cache",
+        ])
+        assert result.exit_code == 1
+
+
+def _make_jar(tmp_path, name, files):
+    import zipfile
+    jar_path = tmp_path / name
+    with zipfile.ZipFile(jar_path, "w") as zf:
+        for path, content in files.items():
+            if isinstance(content, str):
+                content = content.encode("utf-8")
+            zf.writestr(path, content)
+    return jar_path
+
+
+def _make_kubejs(tmp_path, namespace, entries):
+    lang_dir = tmp_path / "kubejs" / "assets" / namespace / "lang"
+    lang_dir.mkdir(parents=True)
+    en_us = lang_dir / "en_us.json"
+    en_us.write_text(json.dumps(entries), encoding="utf-8")
+    return en_us
+
+
+class TestCLIBatchMcExtras:
+    def test_batch_mc_kubejs_only(self, tmp_path):
+        _make_kubejs(tmp_path, "mymod", {"a": "Hello"})
+        result = runner.invoke(app, [
+            "batch-mc", str(tmp_path), "--dummy", "--no-cache",
+        ])
+        assert result.exit_code == 0
+        es = tmp_path / "kubejs" / "assets" / "mymod" / "lang" / "es_es.json"
+        assert es.exists()
+
+    def test_batch_mc_resource_pack(self, tmp_path):
+        _make_jar(tmp_path, "mod.jar", {
+            "assets/mod/lang/en_us.json": json.dumps({"a": "Hello"}),
+        })
+        rp = tmp_path / "pack.zip"
+        result = runner.invoke(app, [
+            "batch-mc", str(tmp_path), "--dummy", "--no-cache",
+            "--resource-pack", str(rp), "--pack-format", "42",
+        ])
+        assert result.exit_code == 0
+        assert rp.exists()
+        import zipfile
+        with zipfile.ZipFile(rp) as zf:
+            assert "pack.mcmeta" in zf.namelist()
+            assert "assets/mod/lang/es_es.json" in zf.namelist()
+            assert json.loads(zf.read("pack.mcmeta"))["pack"]["pack_format"] == 42
+
+    def test_batch_mc_no_files(self, tmp_path):
+        result = runner.invoke(app, [
+            "batch-mc", str(tmp_path), "--dummy", "--no-cache",
+        ])
+        assert result.exit_code == 0
+        assert "No .jar or KubeJS" in result.output
+
+
+class TestCLIApplyExtras:
+    def test_apply_ftbq(self, tmp_path):
+        lang_dir = tmp_path / "config" / "ftbquests" / "quests" / "lang"
+        lang_dir.mkdir(parents=True)
+        (lang_dir / "en_us.snbt").write_text(
+            '{\n    q.a: "&7Hello there"\n}\n', encoding="utf-8"
+        )
+        tpath = tmp_path / "translations.json"
+        tpath.write_text(
+            json.dumps({
+                "version": 1, "lang": "ES",
+                "translations": {"&7Hello there": "&7Hola alli"},
+            }),
+            encoding="utf-8",
+        )
+        result = runner.invoke(app, [
+            "apply", str(tmp_path), "-t", str(tpath),
+            "--format", "ftbq", "--no-cache",
+        ])
+        assert result.exit_code == 0
+        assert "Applied" in result.output
+        out = tmp_path / "config" / "ftbquests" / "quests" / "lang" / "es_es.snbt"
+        assert out.exists()
+        assert "Hola alli" in out.read_text(encoding="utf-8")
+
+    def test_apply_mc_resource_pack(self, tmp_path):
+        _make_jar(tmp_path, "mod.jar", {
+            "assets/mod/lang/en_us.json": json.dumps({"a": "Hello"}),
+        })
+        tpath = tmp_path / "translations.json"
+        tpath.write_text(
+            json.dumps({
+                "version": 1, "lang": "ES",
+                "translations": {"Hello": "Hola"},
+            }),
+            encoding="utf-8",
+        )
+        rp = tmp_path / "pack.zip"
+        result = runner.invoke(app, [
+            "apply", str(tmp_path), "-t", str(tpath),
+            "--format", "mc", "--no-cache", "--resource-pack", str(rp),
+        ])
+        assert result.exit_code == 0
+        assert rp.exists()
+        import zipfile
+        with zipfile.ZipFile(rp) as zf:
+            assert "assets/mod/lang/es_es.json" in zf.namelist()

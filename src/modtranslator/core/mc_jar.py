@@ -50,12 +50,16 @@ def is_jar_signed(zf: zipfile.ZipFile) -> bool:
     return False
 
 
-def scan_jar(jar_path: Path, target_locale: str) -> JarScanResult:
+def scan_jar(
+    jar_path: Path, target_locale: str, include_signed: bool = False
+) -> JarScanResult:
     """Scan a JAR file for lang files.
 
     Args:
         jar_path: Path to the .jar file
         target_locale: Minecraft locale code (e.g. "es_es")
+        include_signed: If True, still collect lang entries for signed JARs
+            (the JAR itself is never modified — used for resource-pack output).
 
     Returns:
         JarScanResult with lang entries found.
@@ -66,7 +70,8 @@ def scan_jar(jar_path: Path, target_locale: str) -> JarScanResult:
         with zipfile.ZipFile(jar_path, "r") as zf:
             if is_jar_signed(zf):
                 result.is_signed = True
-                return result
+                if not include_signed:
+                    return result
 
             # Find all en_us.json files
             names = zf.namelist()

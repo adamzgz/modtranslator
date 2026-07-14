@@ -167,6 +167,9 @@ class ScanResult:
     has_mcm: bool = False
     mcm_directory: Path | None = None
     mc_files: list[Path] = field(default_factory=list)
+    kubejs_lang_files: list[Path] = field(default_factory=list)
+    ftbq_quests_dir: Path | None = None
+    archives: list[Path] = field(default_factory=list)
 
 
 @dataclass
@@ -176,6 +179,7 @@ class BatchAllResult:
     pex_result: BatchResult | None = None
     mcm_result: BatchResult | None = None
     mc_result: BatchResult | None = None
+    ftbq_result: BatchResult | None = None
     total_success: int = 0
     total_errors: int = 0
     elapsed_seconds: float = 0.0
